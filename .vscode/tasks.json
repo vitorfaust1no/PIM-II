@@ -1,0 +1,43 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compilar",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat\" >nul 2>&1 && cl /nologo /W3 /D_CRT_SECURE_NO_WARNINGS /Fe:simulacao_cardapio.exe simulacao_cardapio.c"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Compila simulacao_cardapio.c com o MSVC (Build Tools)."
+        },
+        {
+            "label": "Compilar e executar",
+            "type": "shell",
+            "command": "${workspaceFolder}\\simulacao_cardapio.exe",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": [
+                "Compilar"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": [],
+            "detail": "Compila e roda o simulador no terminal integrado (interativo)."
+        }
+    ]
+}

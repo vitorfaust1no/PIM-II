@@ -1,0 +1,155 @@
+PIM II - Sabor & Cia Bistro
+Pseudocodigo das principais funcionalidades (estilo Portugol)
+ 
+------------------------------------------------------------------
+Algoritmo 1: ExibirCardapio (RF07 e RF13)
+------------------------------------------------------------------
+funcao ExibirCardapio(filial: inteiro, somenteAtivos: logico)
+var
+    i, exibidos: inteiro
+inicio
+    exibidos <- 0
+    escreva("=== Sabor & Cia Bistro - ", FILIAIS[filial], " ===")
+    para i de 0 ate qtdProdutos - 1 faca
+        // o cliente so ve itens ativos; o gerente ve todos, com o status
+        se (somenteAtivos = falso) ou (disponibilidade[i][filial] = 1) entao
+            escreva(produtos[i].id, produtos[i].categoria,
+                produtos[i].nome, produtos[i].preco)
+            se somenteAtivos = falso entao
+                se disponibilidade[i][filial] = 1 entao
+                    escreva(" ATIVO")
+                senao
+                    escreva(" INATIVO")
+                fimse
+            fimse
+            exibidos <- exibidos + 1
+        fimse
+    fimpara
+    se exibidos = 0 entao
+        escreva("Nenhum produto disponivel no momento.")
+    fimse
+    se somenteAtivos = verdadeiro entao
+        escreva("AVISO: informacoes sobre alergenos sao de referencia.")
+        escreva("Em caso de alergia grave, confirme com o garcom.")
+    fimse
+fimfuncao
+ 
+------------------------------------------------------------------
+Algoritmo 2: AlterarDisponibilidade (RF06 e RF11)
+------------------------------------------------------------------
+funcao AlterarDisponibilidade(filial: inteiro, login: caractere)
+// "filial" vem do login do gerente; ele nunca informa outra unidade.
+// O novo estado e escolhido de forma explicita: repetir a operacao
+// nao desfaz a alteracao.
+var
+    id, pos, opcao, novoEstado: inteiro
+    acao: caractere
+inicio
+    ExibirCardapio(filial, falso)
+    escreva("ID do produto (0 para voltar): ")
+    leia(id)
+    se id = 0 entao
+        retorne
+    fimse
+    pos <- BuscarProdutoPorId(id)
+    se pos = -1 entao
+        escreva("Produto nao encontrado.")
+        retorne
+    fimse
+    repita
+        escreva("1 - Ativar 2 - Desativar: ")
+        leia(opcao)
+    ate (opcao = 1) ou (opcao = 2)
+    se opcao = 1 entao
+        novoEstado <- 1
+        acao <- "ATIVAR"
+    senao
+        novoEstado <- 0
+        acao <- "DESATIVAR"
+    fimse
+    se disponibilidade[pos][filial] = novoEstado entao
+        escreva("O produto ja estava nesse estado. Nada foi alterado.")
+        retorne
+    fimse
+    disponibilidade[pos][filial] <- novoEstado
+    SalvarDados()                                  // grava cardapio.txt
+    RegistrarHistorico(acao, id, filial, login)    // acrescenta em historico.txt
+    escreva("Alteracao registrada.")
+fimfuncao
+ 
+------------------------------------------------------------------
+Algoritmo 3: BuscarProdutoPorId (busca linear)
+------------------------------------------------------------------
+funcao BuscarProdutoPorId(id: inteiro): inteiro
+var
+    i: inteiro
+inicio
+    para i de 0 ate qtdProdutos - 1 faca
+        se produtos[i].id = id entao
+            retorne i
+        fimse
+    fimpara
+    retorne -1
+fimfuncao
+ 
+------------------------------------------------------------------
+Algoritmo 4: Autenticar (RF01, ate 3 tentativas)
+------------------------------------------------------------------
+funcao Autenticar(): inteiro
+var
+    tentativa, i: inteiro
+    login, senha: caractere
+inicio
+    para tentativa de 1 ate 3 faca
+        leia(login)
+        leia(senha)
+        para i de 0 ate NUM_USUARIOS - 1 faca
+            se (usuarios[i].login = login) e (usuarios[i].senha = senha) entao
+                retorne i
+            fimse
+        fimpara
+        escreva("Login ou senha incorretos (", tentativa, "/3).")
+    fimpara
+    retorne -1
+fimfuncao
+ 
+------------------------------------------------------------------
+Algoritmo 5: RelatorioFrequencia (RF12)
+------------------------------------------------------------------
+funcao RelatorioFrequencia()
+// conta, numa matriz produto x filial, quantas vezes cada item foi
+// desativado, lendo o arquivo historico.txt linha a linha
+var
+    frequencia: vetor[0..MAX_PRODUTOS-1, 0..NUM_FILIAIS-1] de inteiro
+    dataHora, acao, nomeFilial, login: caractere
+    idProduto, pos, filial, i, j: inteiro
+    arq: arquivo
+inicio
+    para i de 0 ate qtdProdutos - 1 faca
+        para j de 0 ate NUM_FILIAIS - 1 faca
+            frequencia[i][j] <- 0
+        fimpara
+    fimpara
+    abra(arq, "historico.txt", leitura)
+    se arq = nulo entao
+        escreva("Ainda nao ha historico de alteracoes.")
+        retorne
+    fimse
+    enquanto nao fimarquivo(arq) faca
+        leia(arq, dataHora, acao, idProduto, nomeFilial, login)
+        se acao = "DESATIVAR" entao
+            pos <- BuscarProdutoPorId(idProduto)
+            filial <- BuscarFilialPorNome(nomeFilial)
+            se (pos <> -1) e (filial <> -1) entao
+                frequencia[pos][filial] <- frequencia[pos][filial] + 1
+            fimse
+        fimse
+    fimenquanto
+    feche(arq)
+    para i de 0 ate qtdProdutos - 1 faca
+        escreva(produtos[i].nome)
+        para j de 0 ate NUM_FILIAIS - 1 faca
+            escreva(frequencia[i][j])
+        fimpara
+    fimpara
+fimfuncao
