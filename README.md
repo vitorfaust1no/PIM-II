@@ -1,15 +1,44 @@
-### Arquivos extraídos do documento PIM_II_Sabor_e_Cia_final.docx
+# Sabor & Cia — PIM II (ADS)
 
-1. simulacao_cardapio.c
-   Código-fonte da simulação de console em linguagem C (Apêndice A).
+Projeto Integrado Multidisciplinar da empresa fictícia **Sabor & Cia**: uma
+simulação de console em C para gestão de cardápio, acompanhada do modelo de
+banco de dados, pseudocódigo das funcionalidades e diagramas (UML, banco e rede).
 
-2. modelo_fisico_mysql.sql
-   Script SQL do modelo físico do banco de dados (Apêndice B).
-   ATENÇÃO: o script contém DROP DATABASE IF EXISTS sabor_cia;.
-   Revise o comando antes de executar, pois ele apaga um banco existente com esse nome.
+## Estrutura do projeto
 
-3. pseudocodigo_funcionalidades.txt
-   Pseudocódigo das principais funcionalidades (Apêndice C).
+```
+saborEcia/
+├── README.md        este guia
+├── LICENSE
+├── .vscode/         tarefas de build do VS Code (MSVC)
+├── src/             código-fonte em C
+├── database/        modelo e scripts do banco de dados
+├── docs/            documentação (pseudocódigo, manual, relatório)
+└── diagramas/       diagramas UML, conceitual/lógico e de rede
+```
+
+### `src/`
+- `simulacao_cardapio.c` — código-fonte da simulação de console em C (Apêndice A).
+
+### `database/`
+- `modelo_fisico_mysql.sql` — script SQL do modelo físico do banco (Apêndice B).
+  ATENÇÃO: o script contém `DROP DATABASE IF EXISTS sabor_cia;`. Revise o comando
+  antes de executar, pois ele apaga um banco existente com esse nome.
+- `sabor-cia.dbml` — modelo do banco em formato DBML.
+- `diagramaDB.pdf` — diagrama do banco de dados exportado.
+
+### `docs/`
+- `pseudocodigo_funcionalidades.txt` — pseudocódigo das principais funcionalidades (Apêndice C).
+- `Manual_PIM_II_ADS.pdf` — manual/enunciado do PIM II.
+- `PIM_II_Sabor_e_Cia.docx` — relatório final do projeto.
+- `PIM_II_Sabor_e_Cia_anterior.docx` — versão anterior do relatório.
+
+### `diagramas/`
+- Fontes editáveis: `atividades-sabor-cia.drawio`, `casos-de-uso-sabor-cia.drawio`,
+  `classes-sabor-cia.drawio` e `estilo.iuml` (estilo PlantUML).
+- Imagens exportadas: `01_arquitetura.png`, `02_casos_de_uso.png`, `03_classes.png`,
+  `04_atividades.png`, `05_conceitual.png`, `06_logico.png`, `07_fluxo_alterar.png`,
+  `08_fluxo_cardapio.png`, `09_rede_geral.png`, `10_rede_filial.png`.
 
 
 ## Como executar a simulação no Windows
@@ -48,7 +77,7 @@ programa na memória e já o executa, sem gerar arquivo `.exe`.
 No terminal, entre na pasta do projeto e rode:
 
 ```
-tcc -run simulacao_cardapio.c
+tcc -run src/simulacao_cardapio.c
 ```
 
 O programa cria os arquivos `cardapio.txt` (produtos e disponibilidade) e
@@ -67,7 +96,7 @@ Usuários disponíveis no acesso interno:
 
 ### Alternativa sem instalar nada
 
-Copie o conteúdo de `simulacao_cardapio.c` para um compilador online, como o
+Copie o conteúdo de `src/simulacao_cardapio.c` para um compilador online, como o
 [OnlineGDB](https://www.onlinegdb.com/online_c_compiler), e clique em **Run**.
 
 ### Problemas comuns

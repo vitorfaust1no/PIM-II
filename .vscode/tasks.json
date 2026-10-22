@@ -10,7 +10,7 @@
                 "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat\" >nul 2>&1 && cl /nologo /W3 /D_CRT_SECURE_NO_WARNINGS /Fe:simulacao_cardapio.exe simulacao_cardapio.c"
             ],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}\\src"
             },
             "group": {
                 "kind": "build",
@@ -22,9 +22,9 @@
         {
             "label": "Compilar e executar",
             "type": "shell",
-            "command": "${workspaceFolder}\\simulacao_cardapio.exe",
+            "command": "${workspaceFolder}\\src\\simulacao_cardapio.exe",
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}\\src"
             },
             "dependsOn": [
                 "Compilar"

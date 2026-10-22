@@ -1,0 +1,107 @@
+// ============================================================
+// Rede Sabor & Cia — Sistema de Gestão de Vendas (SGV)
+// Modelo lógico para dbdiagram.io  (linguagem DBML)
+// Cole este conteúdo em https://dbdiagram.io  (Import > paste)
+// Exporte o diagrama (PNG/PDF) e o SQL (Export > MySQL/PostgreSQL)
+// ============================================================
+
+Table papel {
+  id_papel   int [pk, increment]
+  nome       varchar(30) [not null]  // garcom, cozinheiro, gerente, admin
+}
+
+Table filial {
+  id_filial  int [pk, increment]
+  nome       varchar(80) [not null]
+  endereco   varchar(150)
+  is_matriz  boolean [not null, default: false]
+}
+
+Table usuario {
+  id_usuario  int [pk, increment]
+  nome        varchar(100) [not null]
+  login       varchar(40) [not null, unique]
+  senha_hash  varchar(255) [not null]
+  id_papel    int [not null]
+  id_filial   int [not null]
+}
+
+Table categoria {
+  id_categoria int [pk, increment]
+  nome         varchar(40) [not null]  // entradas, principais, sobremesas, bebidas
+}
+
+Table produto {
+  id_produto   int [pk, increment]
+  nome         varchar(100) [not null]
+  descricao    varchar(255)
+  preco        decimal(10,2) [not null]  // dinheiro sempre decimal, nunca float
+  id_categoria int [not null]
+  ativo        boolean [not null, default: true]  // controle GLOBAL da matriz
+}
+
+// disponibilidade LOCAL: matriz mantem o produto; a filial diz se tem hoje
+Table produto_filial {
+  id_produto  int [not null]
+  id_filial   int [not null]
+  disponivel  boolean [not null, default: true]
+
+  indexes {
+    (id_produto, id_filial) [pk]  // chave primaria composta -> garante 2FN
+  }
+}
+
+Table mesa {
+  id_mesa   int [pk, increment]
+  numero    int [not null]
+  status    varchar(20) [not null, default: 'livre']  // livre / ocupada
+  id_filial int [not null]
+}
+
+Table comanda {
+  id_comanda      int [pk, increment]
+  id_mesa         int [not null]
+  id_usuario      int [not null]  // garcom que abriu (trilha)
+  id_filial       int [not null]
+  data_abertura   datetime [not null]
+  data_fechamento datetime
+  status          varchar(20) [not null, default: 'aberta']  // aberta / fechada
+}
+
+Table item_comanda {
+  id_item        int [pk, increment]
+  id_comanda     int [not null]
+  id_produto     int [not null]
+  quantidade     int [not null, default: 1]
+  preco_unitario decimal(10,2) [not null]  // preco COPIADO no momento do pedido
+}
+
+Table pagamento {
+  id_pagamento   int [pk, increment]
+  id_comanda     int [not null, unique]  // 1:1 com comanda (um pagamento por comanda)
+  forma          varchar(20) [not null]  // dinheiro / cartao / pix
+  valor          decimal(10,2) [not null]
+  data_pagamento datetime [not null]
+}
+
+Table auditoria {
+  id_auditoria int [pk, increment]
+  id_usuario   int [not null]
+  acao         varchar(255) [not null]
+  data_hora    datetime [not null]
+}
+
+// ----------------- Relacionamentos -----------------
+Ref: usuario.id_papel        > papel.id_papel
+Ref: usuario.id_filial       > filial.id_filial
+Ref: produto.id_categoria    > categoria.id_categoria
+Ref: produto_filial.id_produto > produto.id_produto
+Ref: produto_filial.id_filial  > filial.id_filial
+Ref: mesa.id_filial          > filial.id_filial
+Ref: comanda.id_mesa         > mesa.id_mesa
+Ref: comanda.id_usuario      > usuario.id_usuario
+Ref: comanda.id_filial       > filial.id_filial
+Ref: item_comanda.id_comanda > comanda.id_comanda
+Ref: item_comanda.id_produto > produto.id_produto
+Ref: pagamento.id_comanda    - comanda.id_comanda   // "-" = relacao 1:1
+Ref: auditoria.id_usuario    > usuario.id_usuario

@@ -1,0 +1,11 @@
+# Saídas da simulação em C
+cardapio.txt
+historico.txt
+*.exe
+*.obj
+
+# Backups de autosave do drawio
+.$*.drawio.bkp
+
+# Downloads incompletos
+*.crdownload

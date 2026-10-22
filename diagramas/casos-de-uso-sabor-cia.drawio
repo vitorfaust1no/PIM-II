@@ -1,0 +1,121 @@
+<mxfile host="Electron" agent="drawio">
+  <diagram name="Casos de Uso - Sabor &amp; Cia" id="sabor-cia-usecases">
+    <mxGraphModel dx="1871" dy="943" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="boundary" parent="1" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;fontStyle=1;fillColor=none;strokeColor=#333333;spacingTop=8;arcSize=3;" value="Sistema de Gestão de Vendas (SGV)" vertex="1">
+          <mxGeometry height="1110" width="830" x="440" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ator_cliente" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;" value="Cliente" vertex="1">
+          <mxGeometry height="90" width="40" x="280" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="ator_garcom" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;" value="Garçom" vertex="1">
+          <mxGeometry height="90" width="40" x="280" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="ator_cozinheiro" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;" value="Cozinheiro (KDS)" vertex="1">
+          <mxGeometry height="90" width="40" x="280" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="ator_gerente" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;" value="Gerente" vertex="1">
+          <mxGeometry height="90" width="40" x="280" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="ator_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;" value="Administrador (matriz)" vertex="1">
+          <mxGeometry height="90" width="40" x="280" y="970" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_login" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="Autenticar" vertex="1">
+          <mxGeometry height="60" width="150" x="920" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_cardapio" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="Consultar cardápio (QR)" vertex="1">
+          <mxGeometry height="60" width="170" x="500" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_abrir" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="Abrir comanda" vertex="1">
+          <mxGeometry height="60" width="160" x="505" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_lancar" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="Lançar pedido&lt;br&gt;&amp;nbsp;(PDV&amp;nbsp;&lt;span style=&quot;text-align: left;&quot;&gt;Ponto de Venda&lt;/span&gt;)" vertex="1">
+          <mxGeometry height="80" width="180" x="495" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_enviar" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="Enviar pedido à cozinha" vertex="1">
+          <mxGeometry height="60" width="160" x="505" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_pagar" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="Registrar pagamento" vertex="1">
+          <mxGeometry height="60" width="170" x="500" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_fechar" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="Fechar comanda" vertex="1">
+          <mxGeometry height="60" width="160" x="790" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_verpedidos" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" value="Visualizar pedidos (KDS)&lt;br&gt;Kitchen Display System&lt;div&gt;Sistema de Display para Cozinha&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="180" x="495" y="575" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_status" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" value="Atualizar status do item" vertex="1">
+          <mxGeometry height="60" width="170" x="500" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_caixa" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="Gerar fechamento de caixa" vertex="1">
+          <mxGeometry height="60" width="180" x="500" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_disp" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="Marcar produto indisponível na filial" vertex="1">
+          <mxGeometry height="70" width="180" x="500" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_cardapiomanter" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="Manter cardápio" vertex="1">
+          <mxGeometry height="60" width="170" x="500" y="990" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_consolidado" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="Consultar vendas consolidadas" vertex="1">
+          <mxGeometry height="60" width="190" x="495" y="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="a_cli" edge="1" parent="1" source="ator_cliente" style="endArrow=none;html=1;" target="uc_cardapio">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_gar1" edge="1" parent="1" source="ator_garcom" style="endArrow=none;html=1;" target="uc_abrir">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_gar2" edge="1" parent="1" source="ator_garcom" style="endArrow=none;html=1;" target="uc_lancar">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_gar3" edge="1" parent="1" source="ator_garcom" style="endArrow=none;html=1;" target="uc_enviar">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_gar4" edge="1" parent="1" source="ator_garcom" style="endArrow=none;html=1;" target="uc_pagar">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_coz1" edge="1" parent="1" source="ator_cozinheiro" style="endArrow=none;html=1;" target="uc_verpedidos">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_coz2" edge="1" parent="1" source="ator_cozinheiro" style="endArrow=none;html=1;" target="uc_status">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_ger1" edge="1" parent="1" source="ator_gerente" style="endArrow=none;html=1;" target="uc_caixa">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_ger2" edge="1" parent="1" source="ator_gerente" style="endArrow=none;html=1;" target="uc_disp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_adm1" edge="1" parent="1" source="ator_admin" style="endArrow=none;html=1;" target="uc_cardapiomanter">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_adm2" edge="1" parent="1" source="ator_admin" style="endArrow=none;html=1;" target="uc_consolidado">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i_gar" edge="1" parent="1" source="uc_abrir" style="endArrow=open;endFill=0;dashed=1;html=1;fontSize=10;" target="uc_login" value="&lt;&lt;include&gt;&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i_coz" edge="1" parent="1" source="uc_verpedidos" style="endArrow=open;endFill=0;dashed=1;html=1;fontSize=10;" target="uc_login" value="&lt;&lt;include&gt;&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i_ger" edge="1" parent="1" source="uc_caixa" style="endArrow=open;endFill=0;dashed=1;html=1;fontSize=10;" target="uc_login" value="&lt;&lt;include&gt;&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i_adm" edge="1" parent="1" source="uc_cardapiomanter" style="endArrow=open;endFill=0;dashed=1;html=1;fontSize=10;" target="uc_login" value="&lt;&lt;include&gt;&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_fechar" edge="1" parent="1" source="uc_fechar" style="endArrow=open;endFill=0;dashed=1;html=1;fontSize=10;" target="uc_pagar" value="&lt;&lt;extend&gt;&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nota_ext" parent="1" style="text;html=1;align=left;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#cccccc;fontSize=10;spacing=6;whiteSpace=wrap;" value="Fechar comanda só ocorre quando a soma dos pagamentos cobre o total (conta pode ser dividida)." vertex="1">
+          <mxGeometry height="70" width="200" x="770" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="nota_link" edge="1" parent="1" source="nota_ext" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;" target="uc_fechar">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
