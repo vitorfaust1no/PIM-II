@@ -20,12 +20,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
  
 #define MAX_PRODUTOS  100
 #define NUM_FILIAIS   3
 #define NUM_USUARIOS  4
 #define TAM_NOME      60
 #define TAM_CATEGORIA 30
+#define TAM_ALERGENOS 80
 #define ARQ_DADOS     "cardapio.txt"
 #define ARQ_HISTORICO "historico.txt"
  
@@ -38,7 +40,8 @@ typedef struct {
     int id;
     char nome[TAM_NOME];
     char categoria[TAM_CATEGORIA];
-    float preco;
+    int preco_cent; /* preco em centavos; evita erro de arredondamento do float */
+    char alergenos[TAM_ALERGENOS]; /* lista separada por virgula; "nenhum" se vazio */
 } Produto;
  
 typedef struct {
@@ -93,8 +96,9 @@ int lerInteiro(const char *mensagem) {
     }
 }
  
-/* Le um preco positivo; aceita virgula ou ponto como separador */
-float lerPreco(const char *mensagem) {
+/* Le um preco positivo e o devolve em centavos (inteiro), evitando erros de
+   arredondamento do float. Aceita virgula ou ponto como separador decimal. */
+int lerPreco(const char *mensagem) {
     char linha[50];
     float valor;
     int i;
@@ -105,7 +109,7 @@ float lerPreco(const char *mensagem) {
                 linha[i] = '.';
         }
         if (sscanf(linha, "%f", &valor) == 1 && valor > 0) {
-            return valor;
+            return (int)(valor * 100.0 + 0.5); /* reais -> centavos, arredondado */
         }
         printf("Preco invalido. Digite um valor maior que zero.\n");
     }
@@ -131,7 +135,7 @@ void registrarHistorico(const char *acao, int idProduto, int filial,
 }
  
 /* Grava produtos e matriz de disponibilidade no arquivo texto.
-   Formato de cada linha: id;categoria;nome;preco;disp1;disp2;disp3 */
+   Formato de cada linha: id;categoria;nome;preco;alergenos;disp1;disp2;disp3 */
 int salvarDados(void) {
     FILE *arq = fopen(ARQ_DADOS, "w");
     int i, j;
@@ -142,8 +146,8 @@ int salvarDados(void) {
     }
     fprintf(arq, "%d\n", qtdProdutos);
     for (i = 0; i < qtdProdutos; i++) {
-        fprintf(arq, "%d;%s;%s;%.2f", produtos[i].id, produtos[i].categoria,
-                produtos[i].nome, produtos[i].preco);
+        fprintf(arq, "%d;%s;%s;%d;%s", produtos[i].id, produtos[i].categoria,
+                produtos[i].nome, produtos[i].preco_cent, produtos[i].alergenos);
         for (j = 0; j < NUM_FILIAIS; j++) {
             fprintf(arq, ";%d", disponibilidade[i][j]);
         }
@@ -166,8 +170,8 @@ int carregarDados(void) {
         return 0;
     }
     for (i = 0; i < total; i++) {
-        if (fscanf(arq, "%d;%29[^;];%59[^;];%f", &produtos[i].id, produtos[i].categoria,
-                   produtos[i].nome, &produtos[i].preco) != 4) {
+        if (fscanf(arq, "%d;%29[^;];%59[^;];%d;%79[^;]", &produtos[i].id, produtos[i].categoria,
+                   produtos[i].nome, &produtos[i].preco_cent, produtos[i].alergenos) != 5) {
             break;
         }
  
@@ -195,7 +199,8 @@ int buscarProdutoPorId(int id) {
 }
  
 /* Adiciona um produto no vetor, ativo em todas as filiais */
-int adicionarProduto(const char *nome, const char *categoria, float preco) {
+int adicionarProduto(const char *nome, const char *categoria, int precoCent,
+                     const char *alergenos) {
     int j;
     if (qtdProdutos >= MAX_PRODUTOS) {
         return -1;
@@ -206,7 +211,14 @@ int adicionarProduto(const char *nome, const char *categoria, float preco) {
     produtos[qtdProdutos].nome[TAM_NOME - 1] = '\0';
     strncpy(produtos[qtdProdutos].categoria, categoria, TAM_CATEGORIA - 1);
     produtos[qtdProdutos].categoria[TAM_CATEGORIA - 1] = '\0';
-    produtos[qtdProdutos].preco = preco;
+    produtos[qtdProdutos].preco_cent = precoCent;
+    /* lista vazia vira "nenhum" para nao gerar campo em branco no arquivo */
+    if (alergenos == NULL || alergenos[0] == '\0') {
+        strcpy(produtos[qtdProdutos].alergenos, "nenhum");
+    } else {
+        strncpy(produtos[qtdProdutos].alergenos, alergenos, TAM_ALERGENOS - 1);
+        produtos[qtdProdutos].alergenos[TAM_ALERGENOS - 1] = '\0';
+    }
     for (j = 0; j < NUM_FILIAIS; j++) {
         disponibilidade[qtdProdutos][j] = 1;
     }
@@ -216,18 +228,18 @@ int adicionarProduto(const char *nome, const char *categoria, float preco) {
  
 /* Dados de exemplo usados na primeira execucao */
 void carregarExemplo(void) {
-    adicionarProduto("Burrata com tomates confitados", "Entradas", 68.00f);
-    adicionarProduto("Risoto de cogumelos", "Pratos principais", 98.00f);
-    adicionarProduto("Salmao em crosta de castanhas", "Pratos principais", 112.00f);
-    adicionarProduto("Petit gateau", "Sobremesas", 42.00f);
-    adicionarProduto("Chardonnay (taca)", "Vinhos", 45.00f);
+    adicionarProduto("Burrata com tomates confitados", "Entradas", 6800, "Leite");
+    adicionarProduto("Risoto de cogumelos", "Pratos principais", 9800, "Leite");
+    adicionarProduto("Salmao em crosta de castanhas", "Pratos principais", 11200, "Peixe,Castanhas");
+    adicionarProduto("Petit gateau", "Sobremesas", 4200, "Leite,Ovos,Trigo");
+    adicionarProduto("Chardonnay (taca)", "Vinhos", 4500, "Sulfitos");
     salvarDados();
 }
  
 /* RF05 (simplificado): cadastro de produto pelo administrador */
 void cadastrarProduto(const char *login) {
-    char nome[TAM_NOME], categoria[TAM_CATEGORIA];
-    float preco;
+    char nome[TAM_NOME], categoria[TAM_CATEGORIA], alergenos[TAM_ALERGENOS];
+    int preco; /* em centavos (retorno de lerPreco) */
     int id;
  
     printf("\n--- Cadastrar produto ---\n");
@@ -237,13 +249,16 @@ void cadastrarProduto(const char *login) {
         printf("Nome e categoria sao obrigatorios.\n");
         return;
     }
-    if (strchr(nome, ';') != NULL || strchr(categoria, ';') != NULL) {
+    lerTexto("Alergenos (separe por virgula, enter para nenhum): ", alergenos,
+             sizeof(alergenos));
+    if (strchr(nome, ';') != NULL || strchr(categoria, ';') != NULL ||
+        strchr(alergenos, ';') != NULL) {
         printf("O caractere ';' nao e permitido.\n");
         return;
     }
     preco = lerPreco("Preco (R$): ");
  
-    id = adicionarProduto(nome, categoria, preco);
+    id = adicionarProduto(nome, categoria, preco, alergenos);
     if (id == -1) {
         printf("Limite de %d produtos atingido.\n", MAX_PRODUTOS);
         return;
@@ -253,29 +268,59 @@ void cadastrarProduto(const char *login) {
     printf("Produto %d cadastrado e ativo em todas as filiais.\n", id);
 }
  
-/* RF07: mostra o cardapio de uma filial.
-   somenteAtivos = 1 -> visao do cliente; 0 -> visao do gerente (com status) */
-void exibirCardapio(int filial, int somenteAtivos) {
-    int i, exibidos = 0;
+/* Retorna 1 se a lista de alergenos contem o termo informado (ignora
+   maiusculas/minusculas). Comparacao por substring, suficiente para a
+   simulacao. Lista "nenhum" nunca casa com um filtro valido. */
+int contemAlergeno(const char *lista, const char *termo) {
+    char l[TAM_ALERGENOS], t[TAM_ALERGENOS];
+    int i;
+    if (termo == NULL || termo[0] == '\0') {
+        return 0;
+    }
+    for (i = 0; lista[i] != '\0' && i < TAM_ALERGENOS - 1; i++) {
+        l[i] = (char)tolower((unsigned char)lista[i]);
+    }
+    l[i] = '\0';
+    for (i = 0; termo[i] != '\0' && i < TAM_ALERGENOS - 1; i++) {
+        t[i] = (char)tolower((unsigned char)termo[i]);
+    }
+    t[i] = '\0';
+    return strstr(l, t) != NULL;
+}
+
+/* RF07/RF13: mostra o cardapio de uma filial com os alergenos de cada item.
+   somenteAtivos = 1 -> visao do cliente; 0 -> visao do gerente (com status).
+   filtroAlergeno (se nao vazio) oculta, na visao do cliente, os pratos que
+   contem o alergeno informado. */
+void exibirCardapio(int filial, int somenteAtivos, const char *filtroAlergeno) {
+    int i, exibidos = 0, ocultados = 0;
  
     printf("\n=== Sabor & Cia Bistro - %s ===\n", FILIAIS[filial]);
     for (i = 0; i < qtdProdutos; i++) {
         if (somenteAtivos && disponibilidade[i][filial] == 0) {
             continue; /* cliente nao ve itens esgotados */
         }
-        printf("[%3d] %-20s %-35s R$ %7.2f", produtos[i].id, produtos[i].categoria,
-               produtos[i].nome, produtos[i].preco);
+        if (somenteAtivos && contemAlergeno(produtos[i].alergenos, filtroAlergeno)) {
+            ocultados++; /* cliente filtrou este alergeno */
+            continue;
+        }
+        printf("[%3d] %-20s %-35s R$ %5d,%02d", produtos[i].id, produtos[i].categoria,
+               produtos[i].nome, produtos[i].preco_cent / 100, produtos[i].preco_cent % 100);
         if (!somenteAtivos) {
             printf(" %s", disponibilidade[i][filial] ? "ATIVO" : "INATIVO");
         }
-        printf("\n");
+        printf(" | Alergenos: %s\n", produtos[i].alergenos);
         exibidos++;
     }
     if (exibidos == 0) {
         printf("Nenhum produto disponivel no momento.\n");
     }
+    if (somenteAtivos && ocultados > 0) {
+        printf("(%d item(ns) oculto(s) pelo filtro de alergeno \"%s\".)\n",
+               ocultados, filtroAlergeno);
+    }
     if (somenteAtivos) {
-        /* RF13: aviso fixo sobre alergenos */
+        /* RF13: aviso sobre alergenos */
         printf("\nAVISO: informacoes sobre alergenos sao de referencia.\n");
         printf("Em caso de alergia grave, confirme com o garcom.\n");
     }
@@ -306,7 +351,7 @@ void listarTodos(void) {
 void alterarDisponibilidade(int filial, const char *login) {
     int id, pos, opcao, novoEstado;
  
-    exibirCardapio(filial, 0);
+    exibirCardapio(filial, 0, "");
     id = lerInteiro("\nID do produto (0 para voltar): ");
     if (id == 0) {
         return;
@@ -482,7 +527,7 @@ void menuGerente(int filial, const char *login) {
         opcao = lerInteiro("Opcao: ");
         switch (opcao) {
         case 1:
-            exibirCardapio(filial, 0);
+            exibirCardapio(filial, 0, "");
             break;
         case 2:
             alterarDisponibilidade(filial, login);
@@ -496,7 +541,8 @@ void menuGerente(int filial, const char *login) {
 }
  
 int main(void) {
-    int opcao, indice;
+    int opcao, indice, filialCliente;
+    char filtro[TAM_ALERGENOS];
  
     if (!carregarDados()) {
         carregarExemplo();
@@ -510,7 +556,10 @@ int main(void) {
         opcao = lerInteiro("Opcao: ");
  
         if (opcao == 1) {
-            exibirCardapio(escolherFilial(), 1);
+            filialCliente = escolherFilial();
+            lerTexto("Filtrar por alergeno (enter para ver tudo): ", filtro,
+                     sizeof(filtro));
+            exibirCardapio(filialCliente, 1, filtro);
         } else if (opcao == 2) {
             indice = autenticar();
             if (indice == -1) {

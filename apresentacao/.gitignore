@@ -1,0 +1,5 @@
+build/
+demo/demo_output.txt
+*.wav
+__pycache__/
+*.pyc

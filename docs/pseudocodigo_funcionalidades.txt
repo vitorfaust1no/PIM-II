@@ -4,29 +4,41 @@ Pseudocodigo das principais funcionalidades (estilo Portugol)
 ------------------------------------------------------------------
 Algoritmo 1: ExibirCardapio (RF07 e RF13)
 ------------------------------------------------------------------
-funcao ExibirCardapio(filial: inteiro, somenteAtivos: logico)
+// "filtroAlergeno" (opcional) oculta, na visao do cliente, os pratos que
+// contem o alergeno informado. Vazio = sem filtro. Usa ContemAlergeno (Alg. 6).
+funcao ExibirCardapio(filial: inteiro, somenteAtivos: logico, filtroAlergeno: caractere)
 var
-    i, exibidos: inteiro
+    i, exibidos, ocultados: inteiro
 inicio
     exibidos <- 0
+    ocultados <- 0
     escreva("=== Sabor & Cia Bistro - ", FILIAIS[filial], " ===")
     para i de 0 ate qtdProdutos - 1 faca
         // o cliente so ve itens ativos; o gerente ve todos, com o status
         se (somenteAtivos = falso) ou (disponibilidade[i][filial] = 1) entao
-            escreva(produtos[i].id, produtos[i].categoria,
-                produtos[i].nome, produtos[i].preco)
-            se somenteAtivos = falso entao
-                se disponibilidade[i][filial] = 1 entao
-                    escreva(" ATIVO")
-                senao
-                    escreva(" INATIVO")
+            // na visao do cliente, oculta os itens que contem o alergeno filtrado
+            se (somenteAtivos = verdadeiro) e ContemAlergeno(produtos[i].alergenos, filtroAlergeno) entao
+                ocultados <- ocultados + 1
+            senao
+                escreva(produtos[i].id, produtos[i].categoria,
+                    produtos[i].nome, produtos[i].preco)
+                se somenteAtivos = falso entao
+                    se disponibilidade[i][filial] = 1 entao
+                        escreva(" ATIVO")
+                    senao
+                        escreva(" INATIVO")
+                    fimse
                 fimse
+                escreva(" | Alergenos: ", produtos[i].alergenos)
+                exibidos <- exibidos + 1
             fimse
-            exibidos <- exibidos + 1
         fimse
     fimpara
     se exibidos = 0 entao
         escreva("Nenhum produto disponivel no momento.")
+    fimse
+    se (somenteAtivos = verdadeiro) e (ocultados > 0) entao
+        escreva("(", ocultados, " item(ns) oculto(s) pelo filtro de alergeno \"", filtroAlergeno, "\".)")
     fimse
     se somenteAtivos = verdadeiro entao
         escreva("AVISO: informacoes sobre alergenos sao de referencia.")
@@ -45,7 +57,7 @@ var
     id, pos, opcao, novoEstado: inteiro
     acao: caractere
 inicio
-    ExibirCardapio(filial, falso)
+    ExibirCardapio(filial, falso, "")   // visao do gerente: sem filtro de alergeno
     escreva("ID do produto (0 para voltar): ")
     leia(id)
     se id = 0 entao
@@ -152,4 +164,25 @@ inicio
             escreva(frequencia[i][j])
         fimpara
     fimpara
+fimfuncao
+
+------------------------------------------------------------------
+Algoritmo 6: ContemAlergeno (apoio ao filtro do RF13)
+------------------------------------------------------------------
+funcao ContemAlergeno(lista: caractere, termo: caractere): logico
+// retorna verdadeiro se "termo" aparece em "lista" (lista separada por
+// virgula), ignorando maiusculas/minusculas. Termo vazio retorna falso.
+var
+    listaMin, termoMin: caractere
+inicio
+    se termo = "" entao
+        retorne falso
+    fimse
+    listaMin <- ParaMinusculas(lista)
+    termoMin <- ParaMinusculas(termo)
+    se termoMin e subcadeia de listaMin entao
+        retorne verdadeiro
+    senao
+        retorne falso
+    fimse
 fimfuncao

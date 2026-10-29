@@ -1,0 +1,122 @@
+{
+  ".vscode/launch.json": {
+    "mtime": 1793131567.2868989,
+    "seen": 1793132344.5900064,
+    "ast_hash": "8799f3582b7bab5f4fd39bc454c02787",
+    "semantic_hash": "8799f3582b7bab5f4fd39bc454c02787"
+  },
+  ".vscode/tasks.json": {
+    "mtime": 1793131567.2892475,
+    "seen": 1793132344.5900211,
+    "ast_hash": "358e7df2ef1bdbcefb511f944b99c439",
+    "semantic_hash": "358e7df2ef1bdbcefb511f944b99c439"
+  },
+  "database/modelo_fisico_mysql.sql": {
+    "mtime": 1793131567.2996855,
+    "seen": 1793132344.590027,
+    "ast_hash": "dc2a987bf88b2d5fa01bce7f7e01978c",
+    "semantic_hash": "dc2a987bf88b2d5fa01bce7f7e01978c"
+  },
+  "src/simulacao_cardapio.c": {
+    "mtime": 1793131567.377471,
+    "seen": 1793132344.590031,
+    "ast_hash": "219d3a6d84d4257a1caef1ffa4ec99fb",
+    "semantic_hash": "219d3a6d84d4257a1caef1ffa4ec99fb"
+  },
+  "README.md": {
+    "mtime": 1793131567.2930005,
+    "seen": 1793132344.5900345,
+    "ast_hash": "72056abfa7df6c964c8f227a06ee47e4",
+    "semantic_hash": "72056abfa7df6c964c8f227a06ee47e4"
+  },
+  "docs/pseudocodigo_funcionalidades.txt": {
+    "mtime": 1793131567.373597,
+    "seen": 1793132344.5900373,
+    "ast_hash": "396c801b9b078bf472f001b678480ad8",
+    "semantic_hash": "396c801b9b078bf472f001b678480ad8"
+  },
+  "graphify-out/converted/PIM_II_Sabor_e_Cia_085a17ab.md": {
+    "mtime": 1793131757.720264,
+    "seen": 1793132344.5900407,
+    "ast_hash": "cf40ea103412eeba5d1029d08db78d7f",
+    "semantic_hash": "cf40ea103412eeba5d1029d08db78d7f"
+  },
+  "graphify-out/converted/PIM_II_Sabor_e_Cia_anterior_e276a389.md": {
+    "mtime": 1793131757.8002682,
+    "seen": 1793132344.5900428,
+    "ast_hash": "2e12853445ed2cf21d1f4f06c6ecd122",
+    "semantic_hash": "2e12853445ed2cf21d1f4f06c6ecd122"
+  },
+  "database/diagramaDB.pdf": {
+    "mtime": 1793131567.2987168,
+    "seen": 1793132344.5900452,
+    "ast_hash": "9bb57790f27ce4013fb12ec0f5550c33",
+    "semantic_hash": "9bb57790f27ce4013fb12ec0f5550c33"
+  },
+  "docs/Manual_PIM_II_ADS.pdf": {
+    "mtime": 1793131567.3661397,
+    "seen": 1793132344.590047,
+    "ast_hash": "9bbcdb47420b7841345ecfe2a40d7442",
+    "semantic_hash": "9bbcdb47420b7841345ecfe2a40d7442"
+  },
+  "diagramas/01_arquitetura.png": {
+    "mtime": 1793131567.3076808,
+    "seen": 1793132344.5900495,
+    "ast_hash": "bc92e082336b8845e79fd350f79325e2",
+    "semantic_hash": "bc92e082336b8845e79fd350f79325e2"
+  },
+  "diagramas/02_casos_de_uso.png": {
+    "mtime": 1793131567.3115478,
+    "seen": 1793132344.5900526,
+    "ast_hash": "5dca06ea80b7a9292aa085b72f4fa4b1",
+    "semantic_hash": "5dca06ea80b7a9292aa085b72f4fa4b1"
+  },
+  "diagramas/03_classes.png": {
+    "mtime": 1793131567.3194413,
+    "seen": 1793132344.590055,
+    "ast_hash": "4dbc595929c575a9f9e7354f282c1471",
+    "semantic_hash": "4dbc595929c575a9f9e7354f282c1471"
+  },
+  "diagramas/04_atividades.png": {
+    "mtime": 1793131567.3232193,
+    "seen": 1793132344.5900571,
+    "ast_hash": "0c3639595fe7210c6d005047b8a485b2",
+    "semantic_hash": "0c3639595fe7210c6d005047b8a485b2"
+  },
+  "diagramas/05_conceitual.png": {
+    "mtime": 1793131567.3288932,
+    "seen": 1793132344.5900595,
+    "ast_hash": "42af9bcd6bbd28cc19307a5c48e34ed6",
+    "semantic_hash": "42af9bcd6bbd28cc19307a5c48e34ed6"
+  },
+  "diagramas/06_logico.png": {
+    "mtime": 1793131567.3302832,
+    "seen": 1793132344.5900617,
+    "ast_hash": "dccdf1db55b76b833bba0f069eb38080",
+    "semantic_hash": "dccdf1db55b76b833bba0f069eb38080"
+  },
+  "diagramas/07_fluxo_alterar.png": {
+    "mtime": 1793131567.3353124,
+    "seen": 1793132344.5900636,
+    "ast_hash": "64f8702434dfcbcfaa0ca93b5bd1620d",
+    "semantic_hash": "64f8702434dfcbcfaa0ca93b5bd1620d"
+  },
+  "diagramas/08_fluxo_cardapio.png": {
+    "mtime": 1793131567.3377333,
+    "seen": 1793132344.5900657,
+    "ast_hash": "730cc871ec7e5f17a84ec5ec4a1cd8bb",
+    "semantic_hash": "730cc871ec7e5f17a84ec5ec4a1cd8bb"
+  },
+  "diagramas/09_rede_geral.png": {
+    "mtime": 1793131567.3452818,
+    "seen": 1793132344.5900683,
+    "ast_hash": "562773b16e7ff3c4a9499bbd04afeee9",
+    "semantic_hash": "562773b16e7ff3c4a9499bbd04afeee9"
+  },
+  "diagramas/10_rede_filial.png": {
+    "mtime": 1793131567.349946,
+    "seen": 1793132344.59007,
+    "ast_hash": "5ec52fcdf63bf7ae4e361b4075b0b31f",
+    "semantic_hash": "5ec52fcdf63bf7ae4e361b4075b0b31f"
+  }
+}
