@@ -156,7 +156,8 @@ CITACOES = [
 SIGLAS = [
     ("por meio de um QR code próprio", "por meio de um QR code (Quick Response code) próprio"),
     ("versão em PDF", "versão em PDF (Portable Document Format)"),
-    ("Restaurantes (2023)", "Restaurantes ([2023])"),
+    # data exata da materia (15 maio 2023), ver referencias_docx.py
+    ("Restaurantes ([2023])", "Restaurantes (2023)"),
     ("discutir o uso de um banco NoSQL para", "discutir o uso de um banco NoSQL (Not Only SQL) para"),
     ("modelagem do sistema com a UML", "modelagem do sistema com a UML (Unified Modeling Language)"),
     ("é a WCAG 2.2,", "é a WCAG (Web Content Accessibility Guidelines) 2.2,"),
@@ -202,7 +203,7 @@ TITULOS_REF = [
     ("RADKE,", "Journal of Food Protection"),
     ("SCHWABER,", "O guia do Scrum"),
     ("SOMMERVILLE,", "Engenharia de software"),
-    ("W3C.", "Web Content Accessibility Guidelines (WCAG) 2.2"),
+    ("WORLD WIDE WEB CONSORTIUM.", "Web Content Accessibility Guidelines (WCAG) 2.2"),
 ]
 
 LISTA_SIGLAS = [
@@ -252,7 +253,7 @@ REFERENCIAS_NOVAS = [
      "https://scrumguides.org/docs/scrumguide/v2020/2020-Scrum-Guide-PortugueseBR-3.0.pdf. "
      "Acesso em: 12 nov. 2026.", "SOLÉ,"),
     ("SOMMERVILLE, Ian. Engenharia de software. 10. ed. São Paulo: Pearson Education do Brasil, 2018.",
-     "W3C."),
+     "WORLD WIDE WEB CONSORTIUM."),
 ]
 
 CONCLUSAO_ANCORA = "à proteção de dados e aos direitos do consumidor."

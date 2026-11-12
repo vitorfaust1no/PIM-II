@@ -11,9 +11,12 @@ Uso:  python docs/scripts/ajustar_figuras.py
 from __future__ import annotations
 
 import io
+import re
 from pathlib import Path
 
 from docx import Document
+from docx.oxml.ns import qn
+from docx.shape import InlineShape
 from docx.shared import Cm
 from PIL import Image, ImageChops
 
@@ -22,20 +25,27 @@ DIAG = RAIZ / "diagramas"
 SAIDA = DIAG / "sem_titulo"
 ALVO = RAIZ / "docs" / "PIM_II_Sabor_e_Cia.docx"
 
-# ordem das figuras no documento -> (arquivo, largura final em cm ou None = manter)
+# legenda da figura no documento (inicio do titulo, sem o numero) ->
+# (arquivo, largura final em cm ou None = manter). A figura e localizada pela
+# legenda, e nao pela ordem, para que outras imagens (ex.: os prints do
+# Apendice D) ou uma figura nova no corpo nao desloquem o pareamento.
 FIGURAS = [
-    ("02_casos_de_uso.png", 16.0),   # Figura 1
-    ("03_classes.png", 16.0),        # Figura 2
-    ("04_atividades.png", None),     # Figura 3
-    ("01_arquitetura.png", 16.0),    # Figura 4
-    ("05_conceitual.png", 16.0),     # Figura 5
-    ("06_logico.png", None),         # Figura 6
-    ("08_fluxo_cardapio.png", None), # Figura 7
-    ("07_fluxo_alterar.png", None),  # Figura 8
-    ("09_rede_geral.png", 16.0),     # Figura 9
-    ("10_rede_filial.png", 16.0),    # Figura 10
+    ("Diagrama de casos de uso", "02_casos_de_uso.png", 16.0),
+    ("Diagrama de classes", "03_classes.png", 16.0),
+    ("Diagrama de atividades", "04_atividades.png", None),
+    ("Arquitetura do sistema", "01_arquitetura.png", 16.0),
+    ("Modelo conceitual", "05_conceitual.png", 16.0),
+    ("Modelo lógico", "06_logico.png", None),
+    ("Fluxograma – exibição do cardápio", "08_fluxo_cardapio.png", None),
+    ("Fluxograma – alteração de disponibilidade", "07_fluxo_alterar.png", None),
+    ("Topologia geral", "09_rede_geral.png", 16.0),
+    ("Topologia da rede local", "10_rede_filial.png", 16.0),
 ]
-LIMIAR = 200      # pixel com algum canal abaixo disso conta como "tinta"
+# Diagramas renderizados sem titulo embutido e redesenhados com outra proporcao
+# (arquitetura na vertical, modelo conceitual compacto, para ficarem legiveis
+# impressos; o logico vem direto do PlantUML): so apara as bordas e nao confere a proporcao antiga no docx.
+SEM_TITULO = {"01_arquitetura.png", "05_conceitual.png", "06_logico.png"}
+LIMIAR = 200     # pixel com algum canal abaixo disso conta como "tinta"
 GAP_MIN = 8       # linhas em branco que separam o titulo do diagrama
 
 
@@ -76,21 +86,40 @@ def recortar_titulo(caminho: Path) -> Image.Image:
     return aparar(im.crop((0, y, im.width, im.height)))
 
 
+def localizar_figura(doc, titulo: str) -> InlineShape:
+    """Devolve a imagem do paragrafo seguinte a legenda 'Figura n – <titulo>...'."""
+    achadas = []
+    for p in doc.paragraphs:
+        if p.style.name == "table of figures":
+            continue
+        m = re.match(r"Figura \d+ – (.*)", p.text)
+        if m and m.group(1).startswith(titulo):
+            inline = p._p.getnext().find(".//" + qn("wp:inline"))
+            if inline is None:
+                raise SystemExit(f"legenda '{p.text}' sem imagem logo abaixo")
+            achadas.append(InlineShape(inline))
+    if len(achadas) != 1:
+        raise SystemExit(f"esperava 1 figura com legenda '{titulo}', achei {len(achadas)}")
+    return achadas[0]
+
+
 def main() -> None:
     SAIDA.mkdir(exist_ok=True)
     doc = Document(ALVO)
-    formas = list(doc.inline_shapes)
-    if len(formas) != len(FIGURAS):
-        raise SystemExit(f"esperava {len(FIGURAS)} figuras, achei {len(formas)}")
-    for n, (forma, (arquivo, largura)) in enumerate(zip(formas, FIGURAS), 1):
+    pares = [(localizar_figura(doc, titulo), arquivo, largura)
+             for titulo, arquivo, largura in FIGURAS]
+    for n, (forma, arquivo, largura) in enumerate(pares, 1):
         original = Image.open(DIAG / arquivo)
         prop_doc = forma.width / forma.height
         prop_png = original.width / original.height
-        nova = recortar_titulo(DIAG / arquivo)
+        if arquivo in SEM_TITULO:
+            nova = aparar(original.convert("RGB"))
+        else:
+            nova = recortar_titulo(DIAG / arquivo)
         prop_nova = nova.width / nova.height
         # confere o pareamento: a figura no docx deve ter a proporcao do PNG original
         # ou a da versao ja recortada (execucao repetida)
-        if min(abs(prop_doc - prop_png) / prop_png, abs(prop_doc - prop_nova) / prop_nova) > 0.05:
+        if arquivo not in SEM_TITULO and min(abs(prop_doc - prop_png) / prop_png, abs(prop_doc - prop_nova) / prop_nova) > 0.05:
             raise SystemExit(f"Figura {n}: proporcao {prop_doc:.2f} nao bate com {arquivo} ({prop_png:.2f})")
         nova.save(SAIDA / arquivo, dpi=(300, 300))
         buf = io.BytesIO()
