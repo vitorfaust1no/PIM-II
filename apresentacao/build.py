@@ -35,31 +35,10 @@ import slides   # noqa: E402
 
 BANNER = "===== SABOR & CIA - CARDAPIO DIGITAL ====="
 
-# Prompt -> input digitado, na ordem exata da sessao (ver demo_input.txt)
-PROMPTS = [
-    ("Opcao: ", "1"),
-    ("Escolha a filial: ", "1"),
-    ("Filtrar por alergeno (enter para ver tudo): ", ""),
-    ("Opcao: ", "1"),
-    ("Escolha a filial: ", "1"),
-    ("Filtrar por alergeno (enter para ver tudo): ", "Leite"),
-    ("Opcao: ", "2"),
-    ("Login: ", "itaim"),
-    ("Senha: ", "1234"),
-    ("Opcao: ", "2"),
-    ("ID do produto (0 para voltar): ", "2"),
-    ("1 - Ativar 2 - Desativar: ", "2"),
-    ("Opcao: ", "1"),
-    ("Opcao: ", "0"),
-    ("Opcao: ", "2"),
-    ("Login: ", "admin"),
-    ("Senha: ", "admin123"),
-    ("Opcao: ", "2"),
-    ("Opcao: ", "3"),
-    ("Opcao: ", "4"),
-    ("Opcao: ", "0"),
-    ("Opcao: ", "0"),
-]
+# Prompts da simulacao e intercalacao das entradas: compartilhados com os testes
+# (tests/sessao_console.py), para haver uma so lista de prompts no projeto.
+sys.path.insert(0, os.path.join(PROJ, "tests"))
+from sessao_console import intercalar, como_texto  # noqa: E402
 
 TCC_CANDIDATES = [
     r"C:\Users\Vitor Faustino\tools\tcc\tcc.exe",
@@ -101,20 +80,12 @@ def build_demo_parts():
                           encoding="utf-8", errors="replace")
     raw = proc.stdout.replace("\r\n", "\n")
 
-    # interleave das entradas digitadas logo apos cada prompt
-    pieces, cursor = [], 0
-    for sub, tok in PROMPTS:
-        i = raw.find(sub, cursor)
-        if i == -1:
-            break
-        end = i + len(sub)
-        pieces.append(raw[cursor:end])
-        nextch = raw[end] if end < len(raw) else ""
-        piece = tok + ("" if nextch == "\n" else "\n")
-        pieces.append(piece)
-        cursor = end
-    pieces.append(raw[cursor:])
-    transcript = "".join(pieces)
+    # interleave das entradas digitadas logo apos cada prompt (ver demo_input.txt)
+    entradas = entrada.splitlines()
+    trechos, usadas = intercalar(raw, entradas, quebra_sempre=False)
+    if usadas != len(entradas):
+        print(f"[demo] AVISO: {len(entradas) - usadas} entrada(s) sem prompt correspondente")
+    transcript = como_texto(trechos)
 
     with open(os.path.join(BUILD, "demo_output.txt"), "w", encoding="utf-8") as f:
         f.write(transcript)
