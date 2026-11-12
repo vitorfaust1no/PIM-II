@@ -16,3 +16,8 @@ docs/_backups/
 *.pre-*.docx
 # Arquivo temporário do Word
 ~$*.docx
+
+# Cache do Python
+__pycache__/
+# Pastas temporarias dos geradores de evidencias (tests/)
+docs/evidencias/*.novo/

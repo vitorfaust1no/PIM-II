@@ -1,0 +1,175 @@
+"""Casos de teste da simulacao em C (src/simulacao_cardapio.c).
+
+Os casos rodam EM SEQUENCIA no mesmo diretorio de trabalho, cada um numa
+execucao nova do programa: o estado gravado em cardapio.txt e historico.txt
+por um caso e lido pelo seguinte, o que tambem testa a persistencia.
+
+Campos de cada caso:
+  id, titulo   -> identificacao (aparece no Quadro 4 e nas figuras)
+  requisito    -> requisito(s) coberto(s)
+  descricao    -> o que o caso faz (texto curto para o quadro)
+  esperado     -> resultado esperado (texto curto para o quadro)
+  entradas     -> linhas digitadas no console, na ordem
+  contem       -> expressoes regulares que DEVEM aparecer na saida
+  nao_contem   -> expressoes regulares que NAO podem aparecer na saida
+  arquivos     -> arquivos que devem existir no diretorio apos a execucao
+"""
+
+CASOS = [
+    {
+        "id": "CT01",
+        "titulo": "Primeira execução e cardápio do cliente",
+        "requisito": "RF07, RF13",
+        "descricao": "Sem arquivos de dados, o cliente abre o cardápio da filial Jardins.",
+        "esperado": "Carga de exemplo criada (cardapio.txt); 5 itens com alérgenos e aviso ao cliente.",
+        "entradas": ["1", "1", "", "0"],
+        "contem": [r"=== Sabor & Cia Bistro - Jardins ===", r"Burrata com tomates confitados",
+                   r"Chardonnay \(taca\).*Alergenos: nenhum",
+                   r"AVISO: informacoes sobre alergenos sao de referencia\."],
+        "nao_contem": [],
+        "arquivos": ["cardapio.txt"],
+    },
+    {
+        "id": "CT02",
+        "titulo": "Filtro de alérgeno",
+        "requisito": "RF09, RF13",
+        "descricao": "Cliente da filial Jardins filtra o alérgeno \"leite\".",
+        "esperado": "Itens com leite ocultados (3) e itens sem leite exibidos.",
+        "entradas": ["1", "1", "leite", "0"],
+        "contem": [r"Salmao em crosta de castanhas", r"Chardonnay",
+                   r"\(3 item\(ns\) oculto\(s\) pelo filtro de alergeno \"leite\"\.\)"],
+        "nao_contem": [r"Burrata", r"Risoto", r"Petit gateau"],
+        "arquivos": [],
+    },
+    {
+        "id": "CT03",
+        "titulo": "Login inválido três vezes",
+        "requisito": "RF01",
+        "descricao": "Três tentativas de login com senha errada.",
+        "esperado": "Mensagens 1/3, 2/3 e 3/3 e acesso negado.",
+        "entradas": ["2", "jardins", "0000", "jardins", "senha", "admin", "123", "0"],
+        "contem": [r"Login ou senha incorretos \(1/3\)", r"Login ou senha incorretos \(3/3\)",
+                   r"Acesso negado\."],
+        "nao_contem": [r"Painel do"],
+        "arquivos": [],
+    },
+    {
+        "id": "CT04",
+        "titulo": "Gerente desativa produto da própria filial",
+        "requisito": "RF01, RF06, RF11",
+        "descricao": "Gerente jardins entra e desativa o produto 2 (Risoto).",
+        "esperado": "Risoto INATIVO em Jardins; alteração gravada no histórico.",
+        "entradas": ["2", "jardins", "1234", "2", "2", "2", "0", "0"],
+        "contem": [r"--- Painel do Gerente - Jardins ---",
+                   r"'Risoto de cogumelos' agora esta INATIVO na filial Jardins\."],
+        "nao_contem": [],
+        "arquivos": ["historico.txt"],
+    },
+    {
+        "id": "CT05",
+        "titulo": "Cliente não vê item esgotado",
+        "requisito": "RF07",
+        "descricao": "Nova execução: cliente abre o cardápio de Jardins.",
+        "esperado": "Risoto não aparece (estado lido do arquivo).",
+        "entradas": ["1", "1", "", "0"],
+        "contem": [r"=== Sabor & Cia Bistro - Jardins ===", r"Burrata"],
+        "nao_contem": [r"Risoto"],
+        "arquivos": [],
+    },
+    {
+        "id": "CT06",
+        "titulo": "Outra filial não é afetada",
+        "requisito": "RF06, RF07",
+        "descricao": "Cliente abre o cardápio da filial Itaim Bibi.",
+        "esperado": "Risoto continua disponível no Itaim Bibi.",
+        "entradas": ["1", "2", "", "0"],
+        "contem": [r"=== Sabor & Cia Bistro - Itaim Bibi ===", r"Risoto de cogumelos"],
+        "nao_contem": [],
+        "arquivos": [],
+    },
+    {
+        "id": "CT07",
+        "titulo": "Repetir a desativação não desfaz a alteração",
+        "requisito": "RF06",
+        "descricao": "Gerente jardins pede de novo para desativar o produto 2.",
+        "esperado": "Aviso de que já estava INATIVO; nada é alterado.",
+        "entradas": ["2", "jardins", "1234", "2", "2", "2", "0", "0"],
+        "contem": [r"'Risoto de cogumelos' ja estava INATIVO\. Nada foi alterado\."],
+        "nao_contem": [r"agora esta"],
+        "arquivos": [],
+    },
+    {
+        "id": "CT08",
+        "titulo": "Entrada não numérica e produto inexistente",
+        "requisito": "RNF (robustez)",
+        "descricao": "Gerente digita \"abc\" no menu e depois o ID 99.",
+        "esperado": "Pede um inteiro de novo; informa produto não encontrado.",
+        "entradas": ["2", "itaim", "1234", "abc", "2", "99", "0", "0"],
+        "contem": [r"Valor invalido\. Digite um numero inteiro\.", r"Produto nao encontrado\."],
+        "nao_contem": [],
+        "arquivos": [],
+    },
+    {
+        "id": "CT09",
+        "titulo": "Caractere ';' rejeitado no cadastro",
+        "requisito": "RF05",
+        "descricao": "Administrador tenta cadastrar um nome contendo ';'.",
+        "esperado": "Cadastro recusado, arquivo de dados preservado.",
+        "entradas": ["2", "admin", "admin123", "1", "Suco;laranja", "Bebidas", "", "0", "0"],
+        "contem": [r"O caractere ';' nao e permitido\."],
+        "nao_contem": [r"cadastrado"],
+        "arquivos": [],
+    },
+    {
+        "id": "CT10",
+        "titulo": "Cadastro com validação de preço",
+        "requisito": "RF05",
+        "descricao": "Administrador cadastra produto informando preços inválidos (zero, negativo e texto) antes de 12,50.",
+        "esperado": "Preços inválidos recusados; produto 6 ativo nas 3 filiais.",
+        "entradas": ["2", "admin", "admin123", "1", "Suco de laranja", "Bebidas", "",
+                     "0", "-5", "x", "12,50", "2", "0", "0"],
+        "contem": [r"Preco invalido\. Digite um valor maior que zero\.",
+                   r"Produto 6 cadastrado e ativo em todas as filiais\.",
+                   r"6\s+Suco de laranja\s+ativo\s+ativo\s+ativo"],
+        "nao_contem": [],
+        "arquivos": [],
+    },
+    {
+        "id": "CT11",
+        "titulo": "Relatório de indisponibilidade",
+        "requisito": "RF12",
+        "descricao": "Administrador consulta os itens indisponíveis agora.",
+        "esperado": "Jardins: 1 de 6; Itaim Bibi e Pinheiros: 0 de 6.",
+        "entradas": ["2", "admin", "admin123", "3", "0", "0"],
+        "contem": [r"Jardins\s*: 1 de 6 itens", r"Itaim Bibi\s*: 0 de 6 itens",
+                   r"Pinheiros\s*: 0 de 6 itens"],
+        "nao_contem": [],
+        "arquivos": [],
+    },
+    {
+        "id": "CT12",
+        "titulo": "Relatório de frequência de esgotamento",
+        "requisito": "RF11, RF12",
+        "descricao": "Administrador gera o relatório a partir do historico.txt.",
+        "esperado": "Risoto com 1 desativação em Jardins; total 1.",
+        "entradas": ["2", "admin", "admin123", "4", "0", "0"],
+        "contem": [r"Risoto de cogumelos\s+1\s+0\s+0",
+                   r"Total de desativacoes registradas: 1"],
+        "nao_contem": [],
+        "arquivos": [],
+    },
+    {
+        "id": "CT13",
+        "titulo": "Reativação do produto",
+        "requisito": "RF06, RF07",
+        "descricao": "Gerente jardins reativa o produto 2 e o cliente abre o cardápio.",
+        "esperado": "Risoto ATIVO e de volta ao cardápio de Jardins.",
+        "entradas": ["2", "jardins", "1234", "2", "2", "1", "0", "1", "1", "", "0"],
+        "contem": [r"'Risoto de cogumelos' agora esta ATIVO na filial Jardins\.",
+                   r"\[  2\] Pratos principais\s+Risoto de cogumelos"],
+        "nao_contem": [],
+        "arquivos": [],
+    },
+]
+
+# A lista de prompts do programa fica em tests/sessao_console.py (compartilhada com o video).
