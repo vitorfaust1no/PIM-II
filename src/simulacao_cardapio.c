@@ -14,6 +14,14 @@
  *
  * Obs.: os textos do programa estao sem acento para evitar problemas
  * de exibicao no console do Windows.
+ *
+ * AVISO DE SEGURANCA - SIMULACAO ACADEMICA
+ * Por simplificacao didatica, os usuarios de teste estao fixos no codigo,
+ * as senhas ficam em texto puro, os arquivos .txt nao tem controle de
+ * acesso e o limite de 3 tentativas vale apenas por execucao. Isso NAO
+ * representa o sistema real: em producao as senhas ficam somente como
+ * hash bcrypt no banco (coluna usuario.senha_hash, RNF04), conforme a
+ * secao 6.7 do relatorio e o script database/modelo_fisico_mysql.sql.
  */
  
 #include <stdio.h>
@@ -60,8 +68,10 @@ Produto produtos[MAX_PRODUTOS]; /* vetor de produtos */
 int disponibilidade[MAX_PRODUTOS][NUM_FILIAIS]; /* matriz: 1 = ativo, 0 = inativo */
 int qtdProdutos = 0;
  
-/* Usuarios fixos para a simulacao. No sistema real a senha
-   seria armazenada como hash no banco de dados (RNF04). */
+/* Credenciais de TESTE, fixas no codigo e em texto puro, APENAS para a
+   simulacao. No sistema real os usuarios ficam na tabela usuario do banco,
+   a senha e guardada so como hash bcrypt e conferida pela funcao de
+   verificacao da biblioteca (RNF04); nenhuma senha fica no codigo-fonte. */
 Usuario usuarios[NUM_USUARIOS] = {{"admin", "admin123", PERFIL_ADMIN, -1},
                                   {"jardins", "1234", PERFIL_GERENTE, 0},
                                   {"itaim", "1234", PERFIL_GERENTE, 1},
@@ -230,9 +240,9 @@ int adicionarProduto(const char *nome, const char *categoria, int precoCent,
 void carregarExemplo(void) {
     adicionarProduto("Burrata com tomates confitados", "Entradas", 6800, "Leite");
     adicionarProduto("Risoto de cogumelos", "Pratos principais", 9800, "Leite");
-    adicionarProduto("Salmao em crosta de castanhas", "Pratos principais", 11200, "Peixe,Castanhas");
+    adicionarProduto("Salmao em crosta de castanhas", "Pratos principais", 11200, "Peixe,Castanha-de-caju");
     adicionarProduto("Petit gateau", "Sobremesas", 4200, "Leite,Ovos,Trigo");
-    adicionarProduto("Chardonnay (taca)", "Vinhos", 4500, "Sulfitos");
+    adicionarProduto("Chardonnay (taca)", "Vinhos", 4500, "");
     salvarDados();
 }
  
@@ -460,6 +470,8 @@ int autenticar(void) {
     char login[20], senha[20];
     int tentativa, i;
  
+    printf("[SIMULACAO ACADEMICA] Usuarios de teste fixos no codigo; "
+           "nao representa a seguranca do sistema real.\n");
     for (tentativa = 1; tentativa <= 3; tentativa++) {
         lerTexto("Login: ", login, sizeof(login));
         lerTexto("Senha: ", senha, sizeof(senha));

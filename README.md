@@ -32,10 +32,13 @@ saborEcia/
 - `Manual_PIM_II_ADS.pdf` — manual/enunciado do PIM II.
 - `PIM_II_Sabor_e_Cia.docx` — relatório final do projeto.
 - `PIM_II_Sabor_e_Cia_anterior.docx` — versão anterior do relatório.
+- `scripts/` — scripts Python que aplicam a revisão no relatório `.docx`
+  (requerem `python-docx` e `Pillow`; ex.: `python docs/scripts/reparar_docx.py`).
 
 ### `diagramas/`
 - Fontes editáveis: `atividades-sabor-cia.drawio`, `casos-de-uso-sabor-cia.drawio`,
   `classes-sabor-cia.drawio` e `estilo.iuml` (estilo PlantUML).
+- `sem_titulo/` — mesmas imagens sem a faixa de título, usadas no relatório.
 - Imagens exportadas: `01_arquitetura.png`, `02_casos_de_uso.png`, `03_classes.png`,
   `04_atividades.png`, `05_conceitual.png`, `06_logico.png`, `07_fluxo_alterar.png`,
   `08_fluxo_cardapio.png`, `09_rede_geral.png`, `10_rede_filial.png`.
@@ -93,6 +96,14 @@ Usuários disponíveis no acesso interno:
 | `jardins`   | 1234     | Gerente da filial Jardins       |
 | `itaim`     | 1234     | Gerente da filial Itaim Bibi    |
 | `pinheiros` | 1234     | Gerente da filial Pinheiros     |
+
+> **Atenção — apenas para a simulação acadêmica:** essas credenciais estão
+> fixas no código e em texto puro de propósito, para que a simulação rode sem
+> banco de dados. Não as reutilize em nenhum outro lugar. Na implementação
+> prevista para produção, nenhuma senha fica no código: os usuários ficam na
+> tabela `usuario` e a senha é guardada só como hash bcrypt (coluna
+> `senha_hash` em `database/modelo_fisico_mysql.sql`, RNF04). A comparação
+> completa entre simulação e produção está na seção 6.7 do relatório.
 
 ### Alternativa sem instalar nada
 
