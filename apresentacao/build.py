@@ -157,28 +157,45 @@ def _srt_time(t):
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
-def narrate_edge(text, mp3_path):
-    """Gera mp3 e devolve lista de (inicio_s, fim_s, palavra). Lanca excecao se falhar."""
+def narrate_edge(text, mp3_path, tentativas=4):
+    """Gera mp3 e devolve lista de (inicio_s, fim_s, palavra).
+
+    O servico edge-tts as vezes responde 'No audio was received' de forma
+    transitoria; por isso tentamos varias vezes antes de desistir (e so
+    entao o chamador cai no fallback SAPI). Cada tentativa recomeca do zero.
+    """
     import asyncio
+    import time
     import edge_tts
 
-    words = []
+    def uma_tentativa():
+        words = []
 
-    async def go():
-        comm = edge_tts.Communicate(text, roteiro.VOZ, boundary="WordBoundary")
-        with open(mp3_path, "wb") as f:
-            async for ch in comm.stream():
-                if ch["type"] == "audio":
-                    f.write(ch["data"])
-                elif ch["type"] == "WordBoundary":
-                    start = ch["offset"] / 1e7
-                    dur = ch["duration"] / 1e7
-                    words.append((start, start + dur, ch["text"]))
+        async def go():
+            comm = edge_tts.Communicate(text, roteiro.VOZ, boundary="WordBoundary")
+            with open(mp3_path, "wb") as f:
+                async for ch in comm.stream():
+                    if ch["type"] == "audio":
+                        f.write(ch["data"])
+                    elif ch["type"] == "WordBoundary":
+                        start = ch["offset"] / 1e7
+                        dur = ch["duration"] / 1e7
+                        words.append((start, start + dur, ch["text"]))
 
-    asyncio.run(go())
-    if os.path.getsize(mp3_path) == 0:
-        raise RuntimeError("edge-tts retornou audio vazio")
-    return words
+        asyncio.run(go())
+        if os.path.getsize(mp3_path) == 0:
+            raise RuntimeError("edge-tts retornou audio vazio")
+        return words
+
+    ultimo_erro = None
+    for n in range(1, tentativas + 1):
+        try:
+            return uma_tentativa()
+        except Exception as ex:  # noqa: BLE001
+            ultimo_erro = ex
+            print(f"   tentativa edge-tts {n}/{tentativas} falhou: {ex}")
+            time.sleep(1.5 * n)
+    raise RuntimeError(f"edge-tts falhou apos {tentativas} tentativas: {ultimo_erro}")
 
 
 def narrate_sapi(text, mp3_path):

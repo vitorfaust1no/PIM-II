@@ -259,7 +259,7 @@ SEGMENTOS = [
         "narracao": (
             "Na camada de infraestrutura, esta é a topologia geral, cobrindo a nuvem e a "
             "rede de longa distância. As três filiais e a matriz se conectam à nuvem por "
-            "HTTPS. Dentro do provedor, temos uma rede virtual privada com sub-redes públicas "
+            "uma conexão segura. Dentro do provedor, temos uma rede virtual privada com sub-redes públicas "
             "e privadas distribuídas em zonas de disponibilidade diferentes, o que dá "
             "tolerância a falhas. Os serviços incluem o banco MySQL gerenciado, o MongoDB, "
             "múltiplas instâncias da API atrás de um balanceador, além de CDN e WAF. "
@@ -273,12 +273,13 @@ SEGMENTOS = [
         "titulo": "Rede local da filial — VLANs",
         "asset": "10_rede_filial.png",
         "narracao": (
-            "Já esta é a rede local de uma filial. O tráfego é segmentado em VLANs por "
-            "função: uma VLAN de operação para os servidores e a gestão, uma VLAN dedicada "
-            "às maquininhas de pagamento, uma VLAN isolada para o Wi-Fi de visitantes, uma "
-            "VLAN de segurança para as câmeras com PoE, e uma VLAN de gerência dos próprios "
-            "equipamentos de rede. Um firewall UTM faz o roteamento entre VLANs e mantém um "
-            "túnel VPN IPsec com a matriz. A cobertura sem fio usa Wi-Fi seis, e a segmentação "
+            "Já esta é a rede local de uma filial. O tráfego é segmentado em vê-lans por "
+            "função: uma vê-lan de operação para os servidores e a gestão, uma vê-lan dedicada "
+            "às maquininhas de pagamento, uma vê-lan isolada para o Wi-Fi de visitantes, uma "
+            "vê-lan de segurança para as câmeras alimentadas pela própria rede, e uma vê-lan "
+            "de gerência dos próprios equipamentos de rede. Um firewall corporativo faz o "
+            "roteamento entre as vê-lans e mantém um túnel VPN criptografado com a matriz. "
+            "A cobertura sem fio usa Wi-Fi seis, e a segmentação "
             "garante que a rede de visitantes nunca tenha acesso aos sistemas internos."
         ),
     },
