@@ -9,3 +9,10 @@ historico.txt
 
 # Downloads incompletos
 *.crdownload
+
+# Backups intermediários gerados pelos scripts de revisão do relatório
+docs/_backups/
+*.bak.docx
+*.pre-*.docx
+# Arquivo temporário do Word
+~$*.docx
