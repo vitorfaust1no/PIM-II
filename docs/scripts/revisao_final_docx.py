@@ -2,12 +2,12 @@
 
 1. Requisitos completos (secao 4.1): os RF02, RF03, RF04 e RF08, que faltavam na
    numeracao, passam a ser definidos a partir do que ja estava modelado (UC09 Gerar
-   QR code, UC02 Trocar idioma, tabela dispositivo e UC03 Filtrar por categoria). O
-   Quadro 2 ganha o item do QR code (RF02).
+   QR code, UC02 Trocar idioma, UC08 Manter filiais, que inclui o cadastro das
+   maquininhas, e UC03 Filtrar por categoria). O Quadro 2 ganha o item do QR code (RF02).
 2. Descricao textual do caso de uso principal (UC05 Alterar disponibilidade), que o
    Manual pede alem do diagrama (Etapa 3).
 3. Resumo e Abstract: pontuacao da lista de disciplinas e frase com os resultados
-   dos testes.
+   dos testes, lidos de docs/evidencias/{c,sql}/resumo.json (rode os testes antes).
 4. Secao 6.2 com todas as funcoes do Apendice A; secao 5.5 explicita que o
    historico nao usa exclusao em cascata.
 5. Limite de 30 paginas do desenvolvimento: o capitulo 3 e enxugado (metodologia,
@@ -23,7 +23,7 @@ Uso:  python docs/scripts/revisao_final_docx.py
 
 from __future__ import annotations
 
-import copy
+import json
 import re
 import shutil
 import sys
@@ -35,11 +35,12 @@ from docx.shared import Pt
 from docx.text.paragraph import Paragraph
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from evidencias_docx import substituir_regex  # noqa: E402
+from evidencias_docx import INDICADORES, clonar, definir_texto, substituir_regex  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
 BACKUP = DOCS / "_backups" / "PIM_II_Sabor_e_Cia.pre-revisao-final.docx"
+EVIDENCIAS = DOCS / "evidencias"
 
 # ------------------------------------------------------------ textos novos
 RF_NOVO = (
@@ -47,7 +48,7 @@ RF_NOVO = (
     "após três tentativas inválidas; RF02 — gerar o QR code de acesso ao cardápio de cada "
     "filial (administrador); RF03 — alternar o idioma do cardápio entre português e inglês; "
     "RF04 — cadastrar as maquininhas de cada filial e emitir ou revogar seus tokens de "
-    "acesso; RF05 — cadastrar e manter produtos, categorias, filiais e usuários "
+    "acesso (administrador, no UC08 Manter filiais); RF05 — cadastrar e manter produtos, categorias, filiais e usuários "
     "(administrador); RF06 — ativar e desativar produtos por filial (gerente); RF07 — exibir "
     "o cardápio ativo da filial ao cliente; RF08 — filtrar o cardápio por categoria; RF09 — "
     "filtrar o cardápio por alérgeno; RF10 — expor o catálogo disponível às maquininhas dos "
@@ -110,36 +111,37 @@ DIFERENCIAIS = [
     "g) complemento ao atendimento, sem substituir o garçom.",
 ]
 
-# (paragrafo identificado por um trecho, trecho antigo, trecho novo)
+RESUMO = "com controle de disponibilidade de pratos por unidade, para a rede"
+ABSTRACT = "This paper presents the design of an accessible digital menu"
+
+# (paragrafo, trecho antigo, trecho novo). O paragrafo e identificado por um trecho
+# do seu texto; o trecho antigo e None (troca o paragrafo inteiro) ou o texto a
+# substituir. Ambos aceitam uma tupla de alternativas (versoes anteriores do texto).
 TROCAS = [
-    # Resumo: lista de disciplinas e resultados
-    ("com controle de disponibilidade de pratos por unidade, para a rede",
-     "pesquisa, tecnologia e inovação; engenharia de software, modelagem de banco de dados, "
-     "programação estruturada, redes de computadores e sistemas distribuídos, e direitos "
-     "humanos, inclusão e segurança.",
+    # Resumo e Abstract: lista de disciplinas (a ultima e "direitos humanos,
+    # inclusao e seguranca", nome do capitulo 8)
+    (RESUMO,
+     ("pesquisa, tecnologia e inovação; engenharia de software, modelagem de banco de dados, "
+      "programação estruturada, redes de computadores e sistemas distribuídos, e direitos "
+      "humanos, inclusão e segurança.",
+      "pesquisa, tecnologia e inovação; engenharia de software ágil; modelagem de banco de "
+      "dados; programação estruturada em C; redes de computadores e sistemas distribuídos; e "
+      "direitos humanos."),
      "pesquisa, tecnologia e inovação; engenharia de software ágil; modelagem de banco de "
      "dados; programação estruturada em C; redes de computadores e sistemas distribuídos; e "
-     "direitos humanos."),
-    ("com controle de disponibilidade de pratos por unidade, para a rede",
-     "resultando em uma proposta bilíngue, responsiva e centrada na privacidade.",
-     "resultando em uma proposta bilíngue, responsiva e centrada na privacidade. A "
-     "simulação e o modelo físico foram verificados por testes executados, com 13 de 13 "
-     "casos aprovados em cada um."),
-    # Abstract
-    ("This paper presents the design of an accessible digital menu",
-     "research, technology and innovation; software engineering, database modeling, "
-     "structured programming, computer networks and distributed systems, and human rights, "
-     "inclusion and security.",
+     "direitos humanos, inclusão e segurança."),
+    (ABSTRACT,
+     ("research, technology and innovation; software engineering, database modeling, "
+      "structured programming, computer networks and distributed systems, and human rights, "
+      "inclusion and security.",
+      "research, technology and innovation; agile software engineering; database modeling; "
+      "structured programming in C; computer networks and distributed systems; and human "
+      "rights."),
      "research, technology and innovation; agile software engineering; database modeling; "
      "structured programming in C; computer networks and distributed systems; and human "
-     "rights."),
-    ("This paper presents the design of an accessible digital menu",
-     "resulting in a bilingual, responsive and privacy-centered proposal.",
-     "resulting in a bilingual, responsive and privacy-centered proposal. The simulation "
-     "and the physical model were verified by executed tests, with 13 out of 13 cases "
-     "passing in each."),
+     "rights, inclusion and security."),
     # 4.1
-    ("Os principais requisitos funcionais são:", None, RF_NOVO),
+    (("Os principais requisitos funcionais são:", "Os requisitos funcionais são:"), None, RF_NOVO),
     # 3.4.1: frase do paragrafo seguinte incorporada
     ("A literatura internacional sobre cardápios por QR code",
      "influenciam positivamente a intenção de usar esses cardápios após a pandemia.",
@@ -167,13 +169,17 @@ TROCAS = [
      "depende do valor que agrega ao negócio."),
     # 4.3.1: a lista de atores fica mais curta; o UC05 vem em paragrafo proprio
     (UC_INICIO_ANTIGO,
-     "Os atores são o Cliente, que visualiza o cardápio, troca o idioma e filtra por "
-     "categoria ou alérgeno; o Gerente de filial, que faz login e altera a disponibilidade "
-     "dos produtos da sua unidade; o Administrador da matriz, que mantém produtos, "
-     "categorias, filiais e usuários, gera o QR code e consulta os relatórios; e a "
-     "Maquininha, sistema externo que consulta o catálogo disponível por API.",
+     ("Os atores são o Cliente, que visualiza o cardápio, troca o idioma e filtra por "
+      "categoria ou alérgeno; o Gerente de filial, que faz login e altera a disponibilidade "
+      "dos produtos da sua unidade; o Administrador da matriz, que mantém produtos, "
+      "categorias, filiais e usuários, gera o QR code e consulta os relatórios; e a "
+      "Maquininha, sistema externo que consulta o catálogo disponível por API.",
+      "Os atores são o Cliente (UC01 a UC03), o Gerente de filial (UC05), o Administrador da "
+      "matriz (UC06 a UC11) e a Maquininha, sistema externo que consulta o catálogo por API "
+      "(UC12)."),
      "Os atores são o Cliente (UC01 a UC03), o Gerente de filial (UC05), o Administrador da "
-     "matriz (UC06 a UC11) e a Maquininha, sistema externo que consulta o catálogo por API "
+     "matriz (UC06 a UC11; o cadastro das maquininhas e de seus tokens, RF04, integra o UC08 "
+     "Manter filiais) e a Maquininha, sistema externo que consulta o catálogo por API "
      "(UC12)."),
     # 4.3.1: o login (UC04) e incluido pelos outros casos, nao ligado a um ator
     (UC_INICIO_ANTIGO, "incluem o caso Fazer login", "incluem o caso UC04 Fazer login"),
@@ -199,52 +205,87 @@ TROCAS = [
 
 
 # ------------------------------------------------------------ utilitarios
-def paragrafo(doc, trecho: str):
-    achados = [p for p in doc.paragraphs if trecho in p.text]
+def alternativas(x) -> tuple:
+    return x if isinstance(x, tuple) else (x,)
+
+
+def normal(texto: str) -> str:
+    """Texto com espacos colapsados (o Word deixa espacos e quebras extras)."""
+    return " ".join(texto.split())
+
+
+def paragrafo(doc, trecho):
+    """O unico paragrafo que contem o trecho (ou uma das alternativas da tupla)."""
+    achados = [p for p in doc.paragraphs if any(t in p.text for t in alternativas(trecho))]
     if len(achados) != 1:
-        raise SystemExit(f"trecho {trecho[:50]!r} casou {len(achados)} vezes")
+        raise SystemExit(f"trecho {alternativas(trecho)[0][:50]!r} casou {len(achados)} vezes")
     return achados[0]
 
 
-# filhos de w:p preservados por definir_texto (propriedades e indicadores de referencia cruzada)
-MANTER = {qn("w:pPr"), qn("w:bookmarkStart"), qn("w:bookmarkEnd")}
+def texto(p, novo: str) -> None:
+    """definir_texto de evidencias_docx, preservando os indicadores do paragrafo."""
+    definir_texto(p._p, novo, manter_indicadores=True)
 
 
-def definir_texto(p, texto: str) -> None:
-    """Troca o texto do paragrafo mantendo a formatacao do primeiro run direto.
-
-    Remove todo o resto do conteudo (outros runs, w:hyperlink, w:ins, w:del,
-    w:fldSimple...), para nao sobrar texto antigo; sem run direto, cria um."""
-    primeiro = p._p.find(qn("w:r"))
-    for filho in list(p._p):
-        if filho is not primeiro and filho.tag not in MANTER:
-            p._p.remove(filho)
-    if primeiro is None:
-        p.add_run(texto)
-    else:
-        p.runs[0].text = texto
-
-
-def inserir_depois(p, texto: str):
-    novo = copy.deepcopy(p._p)
-    p._p.addnext(novo)
-    q = Paragraph(novo, p._parent)
-    definir_texto(q, texto)
+def inserir_depois(p, novo: str):
+    """Paragrafo novo apos p, com a mesma formatacao e sem os indicadores de p
+    (copia-los duplicaria nomes e ids de referencia cruzada)."""
+    el = clonar(p._p)
+    for ind in [e for e in el.iter() if e.tag in INDICADORES]:
+        ind.getparent().remove(ind)
+    p._p.addnext(el)
+    q = Paragraph(el, p._parent)
+    texto(q, novo)
     return q
 
 
-def aplicar_trocas(doc) -> int:
+def aplicar_trocas(doc, trocas=None) -> int:
     feitas = 0
-    for trecho, antigo, novo in TROCAS:
-        if any(novo in q.text for q in doc.paragraphs):
-            continue
-        p = paragrafo(doc, trecho)
+    for trecho, antigo, novo in (TROCAS if trocas is None else trocas):
         if antigo is None:
-            definir_texto(p, novo)
+            # o trecho pode ter sumido com a troca: confere o paragrafo inteiro
+            if any(p.text == novo for p in doc.paragraphs):
+                continue
+            texto(paragrafo(doc, trecho), novo)
         else:
+            p = paragrafo(doc, trecho)
+            if novo in p.text:
+                continue
             # funcao em vez de string: o texto entra literal, sem escapar barras
-            if substituir_regex(p._p, re.escape(antigo), lambda m, t=novo: t) != 1:
-                raise SystemExit(f"trecho antigo nao encontrado em {trecho[:50]!r}")
+            if not any(substituir_regex(p._p, re.escape(a), lambda m, t=novo: t, limite=1)
+                       for a in alternativas(antigo)):
+                raise SystemExit(f"trecho antigo nao encontrado em {alternativas(trecho)[0][:50]!r}")
+        feitas += 1
+    return feitas
+
+
+def resultados_testes(doc) -> int:
+    """Frase do Resumo e do Abstract com o resultado dos testes, lido dos resumo.json."""
+    def contagem(pasta: str) -> tuple[int, int]:
+        dados = json.loads((EVIDENCIAS / pasta / "resumo.json").read_text(encoding="utf-8"))
+        return dados["passou"], dados["total"]
+    (pc, tc), (ps, ts) = contagem("c"), contagem("sql")
+    frases = [
+        (RESUMO, "centrada na privacidade.",
+         "A simulação e o modelo físico foram verificados por testes executados",
+         f"A simulação e o modelo físico foram verificados por testes executados, com {pc} de "
+         f"{tc} casos aprovados na simulação e {ps} de {ts} no modelo físico."),
+        (ABSTRACT, "privacy-centered proposal.",
+         "The simulation and the physical model were verified by executed tests",
+         f"The simulation and the physical model were verified by executed tests, with {pc} out "
+         f"of {tc} cases passing in the simulation and {ps} out of {ts} in the physical model."),
+    ]
+    feitas = 0
+    for trecho, ancora, inicio, frase in frases:
+        p = paragrafo(doc, trecho)
+        if frase in p.text:
+            continue
+        if inicio in p.text:  # frase de uma execucao anterior: troca ate o ponto final
+            n = substituir_regex(p._p, re.escape(inicio) + r"[^.]*\.", lambda m, t=frase: t, limite=1)
+        else:
+            n = substituir_regex(p._p, re.escape(ancora), lambda m, t=ancora + " " + frase: t, limite=1)
+        if n != 1:
+            raise SystemExit(f"frase dos testes nao inserida em {trecho[:50]!r}")
         feitas += 1
     return feitas
 
@@ -285,9 +326,9 @@ def diferenciais(doc) -> int:
         return 0
     if len(itens) not in (6, 7):
         raise SystemExit(f"esperava 6 ou 7 itens na 3.7, achei {len(itens)}")
-    definir_texto(P[k], DIFERENCIAIS_INTRO)
-    for p, texto in zip(itens, DIFERENCIAIS):
-        definir_texto(p, texto)
+    texto(P[k], DIFERENCIAIS_INTRO)
+    for p, novo in zip(itens, DIFERENCIAIS):
+        texto(p, novo)
     if len(itens) == 6:
         inserir_depois(itens[-1], DIFERENCIAIS[-1])
     return 1
@@ -298,18 +339,19 @@ def backlog(doc) -> int:
                and "história do usuário" in t.rows[0].cells[1].text)
     feitas = 0
     b07 = next(r for r in tab.rows if r.cells[0].text.strip() == "B07")
-    if b07.cells[1].text != B07_NOVO:
-        definir_texto(b07.cells[1].paragraphs[0], B07_NOVO)
+    if normal(b07.cells[1].text) != B07_NOVO:
+        texto(b07.cells[1].paragraphs[0], B07_NOVO)
         feitas += 1
-    if any(r.cells[1].text == ITEM_QR[1] for r in tab.rows):
+    # o item do QR ja existe (mesmo que editado no Word): nada a inserir
+    if any("QR code" in r.cells[1].text for r in tab.rows):
         return feitas
     b08 = next(r for r in tab.rows if r.cells[0].text.strip() == "B08")
-    definir_texto(b08.cells[0].paragraphs[0], "B09")
-    novo = copy.deepcopy(b07._tr)
+    texto(b08.cells[0].paragraphs[0], "B09")
+    novo = clonar(b07._tr)
     b07._tr.addnext(novo)
     linha = next(r for r in tab.rows if r._tr is novo)
-    for cel, texto in zip(linha.cells, ITEM_QR):
-        definir_texto(cel.paragraphs[0], texto)
+    for cel, valor in zip(linha.cells, ITEM_QR):
+        texto(cel.paragraphs[0], valor)
     return feitas + 1
 
 
@@ -317,10 +359,10 @@ def quadro1(doc) -> int:
     tab = next(t for t in doc.tables if t.rows[0].cells[0].text.strip() == "Trabalho")
     linha = next(r for r in tab.rows if r.cells[0].text.startswith("Iskender, Sirakaya"))
     feitas = 0
-    for col, texto in QUADRO1_LINHA1.items():
+    for col, novo in QUADRO1_LINHA1.items():
         p = linha.cells[col].paragraphs[0]
-        if p.text != texto:
-            definir_texto(p, texto)
+        if normal(p.text) != novo:
+            texto(p, novo)
             feitas += 1
     return feitas
 
@@ -349,6 +391,7 @@ def main() -> None:
         print("Backup:", BACKUP)
     doc = Document(ALVO)
     trocas = aplicar_trocas(doc)
+    testes = resultados_testes(doc)
     removidos = remover_paragrafo_qr(doc)
     uc = inserir_uc05(doc)
     dif = diferenciais(doc)
@@ -356,7 +399,7 @@ def main() -> None:
     q1 = quadro1(doc)
     runs10 = quadros_corpo_10(doc)
     doc.save(ALVO)
-    print(f"trechos={trocas} paragrafos removidos={removidos} UC05={uc} "
+    print(f"trechos={trocas} frases de testes={testes} paragrafos removidos={removidos} UC05={uc} "
           f"diferenciais={dif} itens de backlog={bk} celulas do Quadro 1={q1} runs em corpo 10={runs10}")
 
 

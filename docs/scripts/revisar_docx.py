@@ -13,8 +13,9 @@ from pathlib import Path
 
 from docx import Document
 from docx.shared import Cm, Emu
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-from reparar_docx import RECUO_ABNT  # fonte unica do recuo (Manual do PIM)
+from reparar_docx import RECUO_ABNT, _tem_fonte_mono  # fonte unica do recuo (Manual do PIM)
 
 ALVO = Path(__file__).resolve().parent.parent / "PIM_II_Sabor_e_Cia.docx"
 
@@ -344,17 +345,23 @@ def negritar_titulos(doc) -> int:
 def ajustar_recuo_e_resumos(doc) -> None:
     """Recuo de 1a linha = RECUO_ABNT e espaco simples no resumo e no abstract.
 
-    So o resumo e o abstract: o recuo do corpo e de reparar_docx.padronizar_corpo,
-    que pula titulos, legendas, codigo e apendices. Normaliza recuos de 1,0 a
-    1,5 cm (ex.: 1,25 da ABNT ou 1,27 do Word) para o valor do Manual do PIM.
+    O recuo vale para qualquer paragrafo com recuo direto de 1,0 a 1,5 cm (ex.:
+    1,25 da ABNT ou 1,27 do Word), inclusive fora do corpo que
+    reparar_docx.padronizar_corpo cobre (pre-textuais e apendices). Nao mexe em
+    titulos, sumario, paragrafos centralizados, blocos de codigo nem em recuos
+    zerados, pendentes ou maiores (citacoes longas).
     """
     for p in doc.paragraphs:
         f = p.paragraph_format
+        recuo = f.first_line_indent
+        if (recuo is not None and 1.0 <= recuo.cm <= 1.5
+                and abs(int(recuo) - int(RECUO_ABNT)) > 1000
+                and not p.style.name.startswith(("Heading", "toc"))
+                and p.alignment != WD_ALIGN_PARAGRAPH.CENTER
+                and not _tem_fonte_mono(p)):
+            f.first_line_indent = RECUO_ABNT
         if p.text.startswith(("Este trabalho apresenta o projeto de um cardápio digital acessível, com controle de disponibilidade de pratos",
                               "This paper presents the design")):
-            recuo = f.first_line_indent
-            if recuo is not None and 1.0 <= recuo.cm <= 1.5 and abs(int(recuo) - int(RECUO_ABNT)) > 1000:
-                f.first_line_indent = RECUO_ABNT
             f.line_spacing = 1.0
         if p.text.startswith(("Palavras-chave:", "Keywords:")):
             f.space_before = Emu(152400)  # 12 pt separando do resumo

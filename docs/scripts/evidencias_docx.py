@@ -134,13 +134,21 @@ def indicador(id_: int, nome: str | None = None):
     return b
 
 
-def definir_texto(p_el, texto: str):
-    """Deixa o paragrafo so com o pPr e um run (formatacao do primeiro run) com o texto."""
+INDICADORES = (qn("w:bookmarkStart"), qn("w:bookmarkEnd"))
+
+
+def definir_texto(p_el, texto: str, manter_indicadores: bool = False):
+    """Deixa o paragrafo so com o pPr e um run (formatacao do primeiro run) com o texto.
+
+    Remove todo o resto (outros runs, w:hyperlink, w:ins, w:del, w:fldSimple...).
+    Com manter_indicadores=True, preserva os indicadores (bookmarks) de referencia
+    cruzada do proprio paragrafo."""
+    manter = {qn("w:pPr")} | (set(INDICADORES) if manter_indicadores else set())
     primeiro = next((r for r in p_el.iter(qn("w:r")) if r.find(qn("w:t")) is not None), None)
     rpr = None if primeiro is None else primeiro.find(qn("w:rPr"))
     rpr = None if rpr is None else copy.deepcopy(rpr)
     for e in list(p_el):
-        if e.tag != qn("w:pPr"):
+        if e.tag not in manter:
             p_el.remove(e)
     p_el.append(run_texto(rpr, texto))
     return p_el
