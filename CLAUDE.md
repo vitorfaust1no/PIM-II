@@ -10,6 +10,10 @@ Idioma do projeto: português (pt-BR), em código, commits e conversa.
 - `database/modelo_fisico_mysql.sql` — modelo físico MySQL (Apêndice B). Contém
   `DROP DATABASE IF EXISTS sabor_cia;`: nunca execute contra um banco real sem avisar.
 - `docs/pseudocodigo_funcionalidades.txt` — Apêndice C.
+- `tests/` — testes que geram as evidências do relatório: `executar_testes_c.py` (casos em
+  `casos_simulacao.py`) e `executar_testes_sql.py` (MySQL 8.0 em Docker descartável, roda
+  `database/testes_modelo_fisico.sql`). Saídas em `docs/evidencias/` (PNG, logs, `resumo.json`),
+  que `docs/scripts/evidencias_docx.py` leva às seções 5.7/6.8 e ao Apêndice D.
 - `docs/scripts/` — scripts `python-docx` que editam o relatório (revisão, ABNT, figuras,
   seção 6.7 de segurança).
 - `diagramas/` — PNGs originais + fontes `.drawio`/`.iuml`; `diagramas/sem_titulo/` são os
@@ -22,7 +26,8 @@ Idioma do projeto: português (pt-BR), em código, commits e conversa.
 - **Apêndices sincronizados:** ao mudar `src/simulacao_cardapio.c` ou o SQL, o texto do
   Apêndice A/B dentro do `.docx` fica desatualizado. Atualize o relatório (ex.:
   `python docs/scripts/seguranca_simulacao_docx.py` faz o diff do C para o Apêndice A) e
-  avise que o `.pdf` precisa ser reexportado pelo Word.
+  avise que o `.pdf` precisa ser reexportado pelo Word. Rode também os testes de `tests/`:
+  as evidências (Quadros 3 e 4, Apêndice D) refletem a versão testada.
 - **C:** mantenha compatível com TCC 0.9.27 e MSVC (`.vscode/tasks.json`); C simples, estilo
   didático, comentários em português. Strings exibidas **sem acento** (console do Windows).
 - **Segurança da simulação:** as credenciais fixas em texto puro são intencionais e

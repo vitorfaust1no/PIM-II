@@ -13,7 +13,8 @@ saborEcia/
 ├── .vscode/         tarefas de build do VS Code (MSVC)
 ├── src/             código-fonte em C
 ├── database/        modelo e scripts do banco de dados
-├── docs/            documentação (pseudocódigo, manual, relatório)
+├── tests/           testes automatizados (simulação em C e modelo SQL)
+├── docs/            documentação (pseudocódigo, manual, relatório, evidências)
 └── diagramas/       diagramas UML, conceitual/lógico e de rede
 ```
 
@@ -24,6 +25,9 @@ saborEcia/
 - `modelo_fisico_mysql.sql` — script SQL do modelo físico do banco (Apêndice B).
   ATENÇÃO: o script contém `DROP DATABASE IF EXISTS sabor_cia;`. Revise o comando
   antes de executar, pois ele apaga um banco existente com esse nome.
+- `testes_modelo_fisico.sql` — testes do modelo físico (estrutura, transação,
+  ROLLBACK e testes negativos de CHECK, trigger, FK e UNIQUE). Rode depois do script
+  acima, com `mysql --force`, pois os testes negativos devem terminar em erro.
 - `sabor-cia.dbml` — modelo do banco em formato DBML.
 - `diagramaDB.pdf` — diagrama do banco de dados exportado.
 
@@ -32,6 +36,8 @@ saborEcia/
 - `Manual_PIM_II_ADS.pdf` — manual/enunciado do PIM II.
 - `PIM_II_Sabor_e_Cia.docx` — relatório final do projeto.
 - `PIM_II_Sabor_e_Cia_anterior.docx` — versão anterior do relatório.
+- `evidencias/` — saídas dos testes (transcrições, logs, prints PNG e `resumo.json`)
+  usadas na seção 5.7, na seção 6.8 e no Apêndice D do relatório.
 - `scripts/` — scripts Python que aplicam a revisão no relatório `.docx`
   (requerem `python-docx` e `Pillow`; ex.: `python docs/scripts/reparar_docx.py`).
 
@@ -109,6 +115,25 @@ Usuários disponíveis no acesso interno:
 
 Copie o conteúdo de `src/simulacao_cardapio.c` para um compilador online, como o
 [OnlineGDB](https://www.onlinegdb.com/online_c_compiler), e clique em **Run**.
+
+## Testes e evidências de funcionamento
+
+Os scripts de `tests/` executam o programa e o banco de verdade e gravam as
+evidências em `docs/evidencias/` (requerem Python com `Pillow`):
+
+```bash
+python tests/executar_testes_c.py     # 13 casos da simulação (requer tcc)
+python tests/executar_testes_sql.py   # MySQL 8.0 em contêiner Docker descartável
+python docs/scripts/evidencias_docx.py  # leva os resultados para o relatório
+```
+
+- `executar_testes_c.py` compila o `.c` com o TCC, roda os casos de
+  `tests/casos_simulacao.py` em sequência (o estado dos `.txt` passa de um caso
+  para o outro), confere a saída e gera um print de terminal por caso.
+- `executar_testes_sql.py` sobe um contêiner `mysql:8.0` temporário, roda o
+  modelo físico e os testes, e o remove ao final. O `DROP DATABASE` do script só
+  atinge esse contêiner. Requer o Docker em execução.
+- Os dois scripts terminam com código 1 se algum teste falhar.
 
 ### Problemas comuns
 
