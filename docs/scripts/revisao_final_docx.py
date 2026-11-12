@@ -30,6 +30,7 @@ import sys
 from pathlib import Path
 
 from docx import Document
+from docx.oxml.ns import qn
 from docx.shared import Pt
 from docx.text.paragraph import Paragraph
 
@@ -69,6 +70,8 @@ UC05 = (
 )
 
 ITEM_QR = ["B08", "Como administrador, gerar o QR code de cada filial (RF02).", "Média"]
+# B07: a troca de idioma e o RF03 (funcional) e o RNF03 (idioma marcado na pagina)
+B07_NOVO = "Como cliente, alternar o idioma entre português e inglês (RF03/RNF03)."
 
 METODOLOGIA_ANTIGA = "O trabalho foi desenvolvido nas seguintes etapas:"
 METODOLOGIA_NOVA = (
@@ -92,6 +95,7 @@ QUADRO1_LINHA1 = {
 }
 
 QR_ANTIGO_FIM = "dois requisitos incorporados à solução proposta."
+QR_INCORPORADO = "Logo, o cardápio deve ser simples e seguro quanto aos dados do cliente."
 
 DIFERENCIAIS_INTRO_ANTIGA = "Em relação às soluções encontradas na literatura e no mercado"
 DIFERENCIAIS_INTRO = "Em relação ao mercado, a proposta apresenta os seguintes diferenciais:"
@@ -171,6 +175,8 @@ TROCAS = [
      "Os atores são o Cliente (UC01 a UC03), o Gerente de filial (UC05), o Administrador da "
      "matriz (UC06 a UC11) e a Maquininha, sistema externo que consulta o catálogo por API "
      "(UC12)."),
+    # 4.3.1: o login (UC04) e incluido pelos outros casos, nao ligado a um ator
+    (UC_INICIO_ANTIGO, "incluem o caso Fazer login", "incluem o caso UC04 Fazer login"),
     # 6.2: funcoes que faltavam
     ("O código foi decomposto em funções de responsabilidade única",
      "manipulação de produtos e da disponibilidade (buscarProdutoPorId, adicionarProduto, "
@@ -200,11 +206,23 @@ def paragrafo(doc, trecho: str):
     return achados[0]
 
 
+# filhos de w:p preservados por definir_texto (propriedades e indicadores de referencia cruzada)
+MANTER = {qn("w:pPr"), qn("w:bookmarkStart"), qn("w:bookmarkEnd")}
+
+
 def definir_texto(p, texto: str) -> None:
-    """Troca o texto do paragrafo mantendo a formatacao do primeiro run."""
-    for r in p.runs[1:]:
-        r._r.getparent().remove(r._r)
-    p.runs[0].text = texto
+    """Troca o texto do paragrafo mantendo a formatacao do primeiro run direto.
+
+    Remove todo o resto do conteudo (outros runs, w:hyperlink, w:ins, w:del,
+    w:fldSimple...), para nao sobrar texto antigo; sem run direto, cria um."""
+    primeiro = p._p.find(qn("w:r"))
+    for filho in list(p._p):
+        if filho is not primeiro and filho.tag not in MANTER:
+            p._p.remove(filho)
+    if primeiro is None:
+        p.add_run(texto)
+    else:
+        p.runs[0].text = texto
 
 
 def inserir_depois(p, texto: str):
@@ -224,18 +242,24 @@ def aplicar_trocas(doc) -> int:
         if antigo is None:
             definir_texto(p, novo)
         else:
-            if substituir_regex(p._p, re.escape(antigo), novo.replace("\\", "\\\\")) != 1:
+            # funcao em vez de string: o texto entra literal, sem escapar barras
+            if substituir_regex(p._p, re.escape(antigo), lambda m, t=novo: t) != 1:
                 raise SystemExit(f"trecho antigo nao encontrado em {trecho[:50]!r}")
         feitas += 1
     return feitas
 
 
 def remover_paragrafo_qr(doc) -> int:
-    """Remove o paragrafo curto da 3.4.1 incorporado ao anterior."""
+    """Remove o paragrafo curto da 3.4.1, so depois que a frase dele foi incorporada."""
     alvo = [p for p in doc.paragraphs if p.text.strip().endswith(QR_ANTIGO_FIM)]
-    for p in alvo:
-        p._p.getparent().remove(p._p)
-    return len(alvo)
+    if not alvo:
+        return 0
+    if len(alvo) > 1:
+        raise SystemExit(f"{len(alvo)} paragrafos terminam em {QR_ANTIGO_FIM!r}; remova a mao")
+    if QR_INCORPORADO not in paragrafo(doc, "A literatura internacional sobre cardápios por QR code").text:
+        raise SystemExit("frase da 3.4.1 nao incorporada; paragrafo curto mantido")
+    alvo[0]._p.getparent().remove(alvo[0]._p)
+    return 1
 
 
 def inserir_uc05(doc) -> int:
@@ -272,9 +296,13 @@ def diferenciais(doc) -> int:
 def backlog(doc) -> int:
     tab = next(t for t in doc.tables if t.rows[0].cells[0].text.strip() == "ID"
                and "história do usuário" in t.rows[0].cells[1].text)
-    if any("QR code" in r.cells[1].text for r in tab.rows):
-        return 0
+    feitas = 0
     b07 = next(r for r in tab.rows if r.cells[0].text.strip() == "B07")
+    if b07.cells[1].text != B07_NOVO:
+        definir_texto(b07.cells[1].paragraphs[0], B07_NOVO)
+        feitas += 1
+    if any(r.cells[1].text == ITEM_QR[1] for r in tab.rows):
+        return feitas
     b08 = next(r for r in tab.rows if r.cells[0].text.strip() == "B08")
     definir_texto(b08.cells[0].paragraphs[0], "B09")
     novo = copy.deepcopy(b07._tr)
@@ -282,7 +310,7 @@ def backlog(doc) -> int:
     linha = next(r for r in tab.rows if r._tr is novo)
     for cel, texto in zip(linha.cells, ITEM_QR):
         definir_texto(cel.paragraphs[0], texto)
-    return 1
+    return feitas + 1
 
 
 def quadro1(doc) -> int:
@@ -298,8 +326,11 @@ def quadro1(doc) -> int:
 
 
 def quadros_corpo_10(doc) -> int:
+    """Corpo 10 nos runs sem tamanho dos Quadros 2 (backlog) e 3 (VLANs)."""
     n = 0
     for t in doc.tables:
+        if t.rows[0].cells[0].text.strip() not in ("ID", "VLAN"):
+            continue
         for r in t.rows:
             for c in r.cells:
                 for p in c.paragraphs:

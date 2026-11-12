@@ -210,7 +210,7 @@ def aplicar_trocas(doc) -> int:
         if len(achados) != 1:
             raise SystemExit(f"trecho de '{inicio}' casou {len(achados)} vezes")
         q, a = achados[0]
-        substituir_regex(q._p, re.escape(a), novo.replace("\\", "\\\\"))
+        substituir_regex(q._p, re.escape(a), lambda m, t=novo: t)  # texto literal
         feitas += 1
     return feitas
 

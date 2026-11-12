@@ -344,17 +344,17 @@ def negritar_titulos(doc) -> int:
 def ajustar_recuo_e_resumos(doc) -> None:
     """Recuo de 1a linha = RECUO_ABNT e espaco simples no resumo e no abstract.
 
-    Normaliza qualquer recuo positivo entre 1,0 e 1,5 cm (ex.: 1,25 da ABNT ou
-    1,27 do Word) para o valor do Manual do PIM; nao mexe em recuos zerados,
-    pendentes (negativos) ou maiores (citacoes longas, blocos de codigo).
+    So o resumo e o abstract: o recuo do corpo e de reparar_docx.padronizar_corpo,
+    que pula titulos, legendas, codigo e apendices. Normaliza recuos de 1,0 a
+    1,5 cm (ex.: 1,25 da ABNT ou 1,27 do Word) para o valor do Manual do PIM.
     """
     for p in doc.paragraphs:
         f = p.paragraph_format
-        recuo = f.first_line_indent
-        if recuo is not None and 1.0 <= recuo.cm <= 1.5 and abs(int(recuo) - int(RECUO_ABNT)) > 1000:
-            f.first_line_indent = RECUO_ABNT
         if p.text.startswith(("Este trabalho apresenta o projeto de um cardápio digital acessível, com controle de disponibilidade de pratos",
                               "This paper presents the design")):
+            recuo = f.first_line_indent
+            if recuo is not None and 1.0 <= recuo.cm <= 1.5 and abs(int(recuo) - int(RECUO_ABNT)) > 1000:
+                f.first_line_indent = RECUO_ABNT
             f.line_spacing = 1.0
         if p.text.startswith(("Palavras-chave:", "Keywords:")):
             f.space_before = Emu(152400)  # 12 pt separando do resumo
