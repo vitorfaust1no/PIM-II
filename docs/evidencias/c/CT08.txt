@@ -1,0 +1,41 @@
+C:\PIM-II> simulacao_cardapio.exe
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 2
+[SIMULACAO ACADEMICA] Usuarios de teste fixos no codigo; nao representa a seguranca do sistema real.
+Login: itaim
+Senha: 1234
+
+--- Painel do Gerente - Itaim Bibi ---
+1 - Ver cardapio da filial
+2 - Ativar/desativar produto
+0 - Sair
+Opcao: abc
+Valor invalido. Digite um numero inteiro.
+Opcao: 2
+
+=== Sabor & Cia Bistro - Itaim Bibi ===
+[  1] Entradas             Burrata com tomates confitados      R$    68,00 ATIVO | Alergenos: Leite
+[  2] Pratos principais    Risoto de cogumelos                 R$    98,00 ATIVO | Alergenos: Leite
+[  3] Pratos principais    Salmao em crosta de castanhas       R$   112,00 ATIVO | Alergenos: Peixe,Castanha-de-caju
+[  4] Sobremesas           Petit gateau                        R$    42,00 ATIVO | Alergenos: Leite,Ovos,Trigo
+[  5] Vinhos               Chardonnay (taca)                   R$    45,00 ATIVO | Alergenos: nenhum
+
+ID do produto (0 para voltar): 99
+Produto nao encontrado.
+
+--- Painel do Gerente - Itaim Bibi ---
+1 - Ver cardapio da filial
+2 - Ativar/desativar produto
+0 - Sair
+Opcao: 0
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 0
+Sistema encerrado.

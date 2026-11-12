@@ -1,0 +1,25 @@
+C:\PIM-II> simulacao_cardapio.exe
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 2
+[SIMULACAO ACADEMICA] Usuarios de teste fixos no codigo; nao representa a seguranca do sistema real.
+Login: jardins
+Senha: 0000
+Login ou senha incorretos (1/3).
+Login: jardins
+Senha: senha
+Login ou senha incorretos (2/3).
+Login: admin
+Senha: 123
+Login ou senha incorretos (3/3).
+Acesso negado.
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 0
+Sistema encerrado.

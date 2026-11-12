@@ -1,0 +1,38 @@
+C:\PIM-II> simulacao_cardapio.exe
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 2
+[SIMULACAO ACADEMICA] Usuarios de teste fixos no codigo; nao representa a seguranca do sistema real.
+Login: admin
+Senha: admin123
+
+--- Painel do Administrador (matriz) ---
+1 - Cadastrar produto
+2 - Listar produtos e disponibilidade
+3 - Relatorio de indisponibilidade (agora)
+4 - Relatorio de frequencia de esgotamento
+0 - Sair
+Opcao: 3
+
+--- Itens indisponiveis por filial ---
+Jardins     : 1 de 6 itens
+Itaim Bibi  : 0 de 6 itens
+Pinheiros   : 0 de 6 itens
+
+--- Painel do Administrador (matriz) ---
+1 - Cadastrar produto
+2 - Listar produtos e disponibilidade
+3 - Relatorio de indisponibilidade (agora)
+4 - Relatorio de frequencia de esgotamento
+0 - Sair
+Opcao: 0
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 0
+Sistema encerrado.

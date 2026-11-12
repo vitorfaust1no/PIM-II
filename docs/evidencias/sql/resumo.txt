@@ -1,0 +1,15 @@
+ST00  [PASSOU]  Execução completa de modelo_fisico_mysql.sql
+ST01  [PASSOU]  Estrutura: tabelas e triggers criados
+ST02  [PASSOU]  Carga de exemplo
+ST03  [PASSOU]  Transação RF06/RF11 do script
+ST04  [PASSOU]  Repetição da desativação
+ST05  [PASSOU]  ROLLBACK
+ST06  [PASSOU]  CHECK de preço (preço 0)
+ST07  [PASSOU]  CHECK de perfil (gerente sem filial; admin com filial)
+ST08  [PASSOU]  Triggers de harmonização (inclusão e alteração)
+ST09  [PASSOU]  Chave estrangeira (produto inexistente)
+ST10  [PASSOU]  UNIQUE de e-mail
+ST11  [PASSOU]  Exclusão de produto com histórico
+ST12  [PASSOU]  Dados intactos após os testes negativos
+
+13 de 13 testes passaram (MySQL 8.0.46).

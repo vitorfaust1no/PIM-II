@@ -1,0 +1,29 @@
+C:\PIM-II> simulacao_cardapio.exe
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 1
+
+Filiais:
+1 - Jardins
+2 - Itaim Bibi
+3 - Pinheiros
+Escolha a filial: 1
+Filtrar por alergeno (enter para ver tudo): leite
+
+=== Sabor & Cia Bistro - Jardins ===
+[  3] Pratos principais    Salmao em crosta de castanhas       R$   112,00 | Alergenos: Peixe,Castanha-de-caju
+[  5] Vinhos               Chardonnay (taca)                   R$    45,00 | Alergenos: nenhum
+(3 item(ns) oculto(s) pelo filtro de alergeno "leite".)
+
+AVISO: informacoes sobre alergenos sao de referencia.
+Em caso de alergia grave, confirme com o garcom.
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 0
+Sistema encerrado.

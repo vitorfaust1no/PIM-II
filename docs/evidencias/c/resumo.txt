@@ -1,0 +1,15 @@
+CT01  [PASSOU]  Primeira execução e cardápio do cliente
+CT02  [PASSOU]  Filtro de alérgeno
+CT03  [PASSOU]  Login inválido três vezes
+CT04  [PASSOU]  Gerente desativa produto da própria filial
+CT05  [PASSOU]  Cliente não vê item esgotado
+CT06  [PASSOU]  Outra filial não é afetada
+CT07  [PASSOU]  Repetir a desativação não desfaz a alteração
+CT08  [PASSOU]  Entrada não numérica e produto inexistente
+CT09  [PASSOU]  Caractere ';' rejeitado no cadastro
+CT10  [PASSOU]  Cadastro com validação de preço
+CT11  [PASSOU]  Relatório de indisponibilidade
+CT12  [PASSOU]  Relatório de frequência de esgotamento
+CT13  [PASSOU]  Reativação do produto
+
+13 de 13 casos passaram (tcc version 0.9.27 (x86_64 Windows)).

@@ -1,0 +1,131 @@
+{
+  "mysql": "8.0.46",
+  "total": 13,
+  "passou": 13,
+  "testes": [
+    {
+      "id": "ST00",
+      "descricao": "Execução completa de modelo_fisico_mysql.sql",
+      "esperado": "Todos os comandos executados sem erro",
+      "obtido": "38 comandos executados, 0 erros",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST01",
+      "descricao": "Estrutura: tabelas e triggers criados",
+      "esperado": "10 tabelas e 2 triggers",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST02",
+      "descricao": "Carga de exemplo",
+      "esperado": "3 filiais, 3 usuários, 5 produtos, 15 disponibilidades",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST03",
+      "descricao": "Transação RF06/RF11 do script",
+      "esperado": "Risoto inativo só na filial 1 e evento DESATIVAR no histórico",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST04",
+      "descricao": "Repetição da desativação",
+      "esperado": "0 linhas alteradas e nenhum evento novo",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST05",
+      "descricao": "ROLLBACK",
+      "esperado": "Valor alterado dentro da transação e restaurado após o ROLLBACK",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST06",
+      "descricao": "CHECK de preço (preço 0)",
+      "esperado": "Recusado: erro 3819 ck_produto_preco",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST07",
+      "descricao": "CHECK de perfil (gerente sem filial; admin com filial)",
+      "esperado": "Ambos recusados: erro 3819 ck_usuario_perfil",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST08",
+      "descricao": "Triggers de harmonização (inclusão e alteração)",
+      "esperado": "Ambas recusadas: erro 1644 da trigger",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST09",
+      "descricao": "Chave estrangeira (produto inexistente)",
+      "esperado": "Recusado: erro 1452",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST10",
+      "descricao": "UNIQUE de e-mail",
+      "esperado": "Recusado: erro 1062",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST11",
+      "descricao": "Exclusão de produto com histórico",
+      "esperado": "Recusado: erro 1451 (histórico preservado)",
+      "status": "PASSOU"
+    },
+    {
+      "id": "ST12",
+      "descricao": "Dados intactos após os testes negativos",
+      "esperado": "5 produtos, 3 usuários, 2 harmonizações, 15 disponibilidades",
+      "status": "PASSOU"
+    }
+  ],
+  "imagens": {
+    "SQL_01_criacao": [
+      "SQL_01_criacao.png"
+    ],
+    "SQL_02_comandos": [
+      "SQL_02_comandos_p1.png",
+      "SQL_02_comandos_p2.png",
+      "SQL_02_comandos_p3.png"
+    ],
+    "SQL_03_testes": [
+      "SQL_03_testes_p1.png",
+      "SQL_03_testes_p2.png",
+      "SQL_03_testes_p3.png",
+      "SQL_03_testes_p4.png",
+      "SQL_03_testes_p5.png",
+      "SQL_03_testes_p6.png"
+    ]
+  },
+  "testes_por_imagem": [
+    [
+      "ST01",
+      "ST02"
+    ],
+    [
+      "ST03"
+    ],
+    [
+      "ST04"
+    ],
+    [
+      "ST04",
+      "ST05",
+      "ST06"
+    ],
+    [
+      "ST07",
+      "ST08",
+      "ST09",
+      "ST10"
+    ],
+    [
+      "ST11",
+      "ST12"
+    ]
+  ]
+}

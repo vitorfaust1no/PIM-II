@@ -1,0 +1,31 @@
+C:\PIM-II> simulacao_cardapio.exe
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 1
+
+Filiais:
+1 - Jardins
+2 - Itaim Bibi
+3 - Pinheiros
+Escolha a filial: 2
+Filtrar por alergeno (enter para ver tudo): 
+
+=== Sabor & Cia Bistro - Itaim Bibi ===
+[  1] Entradas             Burrata com tomates confitados      R$    68,00 | Alergenos: Leite
+[  2] Pratos principais    Risoto de cogumelos                 R$    98,00 | Alergenos: Leite
+[  3] Pratos principais    Salmao em crosta de castanhas       R$   112,00 | Alergenos: Peixe,Castanha-de-caju
+[  4] Sobremesas           Petit gateau                        R$    42,00 | Alergenos: Leite,Ovos,Trigo
+[  5] Vinhos               Chardonnay (taca)                   R$    45,00 | Alergenos: nenhum
+
+AVISO: informacoes sobre alergenos sao de referencia.
+Em caso de alergia grave, confirme com o garcom.
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 0
+Sistema encerrado.

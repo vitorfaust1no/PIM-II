@@ -1,0 +1,62 @@
+C:\PIM-II> simulacao_cardapio.exe
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 2
+[SIMULACAO ACADEMICA] Usuarios de teste fixos no codigo; nao representa a seguranca do sistema real.
+Login: admin
+Senha: admin123
+
+--- Painel do Administrador (matriz) ---
+1 - Cadastrar produto
+2 - Listar produtos e disponibilidade
+3 - Relatorio de indisponibilidade (agora)
+4 - Relatorio de frequencia de esgotamento
+0 - Sair
+Opcao: 1
+
+--- Cadastrar produto ---
+Nome: Suco de laranja
+Categoria: Bebidas
+Alergenos (separe por virgula, enter para nenhum): 
+Preco (R$): 0
+Preco invalido. Digite um valor maior que zero.
+Preco (R$): -5
+Preco invalido. Digite um valor maior que zero.
+Preco (R$): x
+Preco invalido. Digite um valor maior que zero.
+Preco (R$): 12,50
+Produto 6 cadastrado e ativo em todas as filiais.
+
+--- Painel do Administrador (matriz) ---
+1 - Cadastrar produto
+2 - Listar produtos e disponibilidade
+3 - Relatorio de indisponibilidade (agora)
+4 - Relatorio de frequencia de esgotamento
+0 - Sair
+Opcao: 2
+
+ID    Produto                             Jardins     Itaim Bibi  Pinheiros  
+1     Burrata com tomates confitados      ativo       ativo       ativo      
+2     Risoto de cogumelos                 INATIVO     ativo       ativo      
+3     Salmao em crosta de castanhas       ativo       ativo       ativo      
+4     Petit gateau                        ativo       ativo       ativo      
+5     Chardonnay (taca)                   ativo       ativo       ativo      
+6     Suco de laranja                     ativo       ativo       ativo      
+
+--- Painel do Administrador (matriz) ---
+1 - Cadastrar produto
+2 - Listar produtos e disponibilidade
+3 - Relatorio de indisponibilidade (agora)
+4 - Relatorio de frequencia de esgotamento
+0 - Sair
+Opcao: 0
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 0
+Sistema encerrado.
