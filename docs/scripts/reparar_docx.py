@@ -9,7 +9,7 @@ Corrige (sem alterar conteudo, margens, fonte ou espacamento):
 3. Imagens/quadros partindo entre paginas: mantem legenda+figura+fonte juntas
    (keep_with_next) e impede linhas de tabela de quebrarem (w:cantSplit).
 4. Corpo de texto desalinhado (ABNT): justifica os paragrafos narrativos e aplica
-   recuo de 1a linha de 1,25 cm de forma uniforme, PRESERVANDO legendas/fontes
+   recuo de 1a linha de 1,5 cm de forma uniforme, PRESERVANDO legendas/fontes
    (centralizadas), titulos, blocos de codigo (fonte monoespacada) e apendices.
 5. Referencias (ABNT): alinhadas a esquerda e sem recuo de 1a linha.
 
@@ -106,7 +106,7 @@ def _limites_corpo(doc):
 
 
 def padronizar_corpo(doc):
-    """Justifica + recuo 1,25 cm nos paragrafos narrativos do corpo (ABNT).
+    """Justifica + recuo 1,5 cm nos paragrafos narrativos do corpo (ABNT).
 
     Preserva: titulos (Heading*), legendas/fontes (centralizadas ou com prefixo
     Figura/Fonte/Quadro/Tabela) e blocos de codigo (fonte monoespacada).
@@ -294,7 +294,7 @@ def main() -> None:
     print(f"  2. pageBreakBefore em {ESTILO_CAPITULO} ....... {'inserido' if c2 else 'ja estava'}")
     print(f"  3. keep_with_next (figuras/legendas)  {c3} paragrafo(s)")
     print(f"  4. cantSplit em linhas de tabela ...  {c4} linha(s)")
-    print(f"  5. corpo justificado / recuo 1,25cm   {c5j} / {c5r} paragrafo(s)")
+    print(f"  5. corpo justificado / recuo 1,5cm   {c5j} / {c5r} paragrafo(s)")
     print(f"  6. referencias (esquerda, sem recuo)  {c6} paragrafo(s)")
     print(f"  7. figuras reduzidas (<= {FIG_LARG_MAX_CM}x{FIG_ALT_MAX_CM} cm)  {c7} figura(s)")
     print(f"  8. paragrafos vazios removidos no corpo  {c8}")
