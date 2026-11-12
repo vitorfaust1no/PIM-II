@@ -287,22 +287,24 @@ SEGMENTOS = [
     {
         "id": "16_requisitos",
         "tipo": "texto",
-        "titulo": "Requisitos funcionais atendidos",
+        "titulo": "Requisitos funcionais na simulação",
         "bullets": [
             "RF01 Autenticar  •  RF05 Cadastrar produto  •  RF06 Alterar disponibilidade",
-            "RF07 Exibir cardápio  •  RF09 Filtrar alérgeno",
-            "RF10 Integração com maquininhas  •  RF11 Registrar histórico",
-            "RF12 Relatórios (indisponibilidade e frequência)  •  RF13 Aviso de alérgenos",
+            "RF07 Exibir cardápio  •  RF09 Filtrar alérgeno  •  RF11 Registrar histórico",
+            "RF12 Relatórios (indisponibilidade e frequência)  •  RF13 Informação de alérgenos",
+            "Só na proposta: RF02 QR code  •  RF03 Idioma  •  RF04 e RF10 Maquininhas  •  RF08 Categoria",
         ],
         "narracao": (
-            "Vamos consolidar os requisitos funcionais atendidos. O erre efe zero um é a "
+            "Vamos consolidar os requisitos funcionais. O erre efe zero um é a "
             "autenticação. O cinco, o cadastro de produtos. O seis, a alteração de "
             "disponibilidade. O sete, a exibição do cardápio, e o nove, o filtro por "
-            "alérgeno. O dez prevê a integração com as maquininhas de pagamento, e o onze, "
-            "o registro de histórico para auditoria. O doze cobre os relatórios gerenciais, "
-            "tanto o de indisponibilidade atual quanto o de frequência de esgotamento. "
-            "E o treze é o aviso obrigatório sobre alérgenos, por responsabilidade com a "
-            "saúde do cliente. Todos esses requisitos estão implementados no simulador."
+            "alérgeno. O onze é o registro de histórico para auditoria, e o doze cobre os "
+            "relatórios gerenciais, tanto o de indisponibilidade atual quanto o de frequência "
+            "de esgotamento. O treze apresenta a informação de alérgenos, com o aviso "
+            "obrigatório; no sistema real, ela vem também em inglês. Esses requisitos aparecem "
+            "no simulador. Já o dois, o QR code de cada filial, o três, a troca de idioma, o "
+            "quatro e o dez, o cadastro e a integração das maquininhas, e o oito, o filtro por "
+            "categoria, fazem parte da proposta para o sistema real."
         ),
     },
     {
