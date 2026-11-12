@@ -1,0 +1,106 @@
+@startuml 06_logico
+' Modelo logico (DER) do Sabor & Cia Bistro - Figura 6 do relatorio.
+' Renderizar: docker run --rm -v "$PWD/diagramas:/data" -w /data plantuml/plantuml -tpng 06_logico.puml
+!include estilo.iuml
+hide circle
+hide methods
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 60
+
+entity filial {
+  * id_filial : INT <<PK>>
+  --
+  * nome : VARCHAR(80)
+  * endereco : VARCHAR(150)
+  * bairro : VARCHAR(60)
+  * url_qrcode : VARCHAR(255) <<UK>>
+}
+
+entity usuario {
+  * id_usuario : INT <<PK>>
+  --
+  * nome : VARCHAR(100)
+  * email : VARCHAR(120) <<UK>>
+  * senha_hash : CHAR(60)
+  * perfil : ENUM(ADMIN, GERENTE)
+  id_filial : INT <<FK>>
+}
+
+entity dispositivo {
+  * id_dispositivo : INT <<PK>>
+  --
+  * id_filial : INT <<FK>>
+  * descricao : VARCHAR(60)
+  * token_hash : CHAR(64) <<UK>>
+  * ativo : BOOLEAN
+}
+
+entity categoria {
+  * id_categoria : INT <<PK>>
+  --
+  * nome_pt : VARCHAR(60) <<UK>>
+  * nome_en : VARCHAR(60)
+  * ordem_exibicao : INT
+}
+
+entity produto {
+  * id_produto : INT <<PK>>
+  --
+  * id_categoria : INT <<FK>>
+  * nome_pt : VARCHAR(100)
+  * nome_en : VARCHAR(100)
+  descricao_pt / descricao_en : TEXT
+  ingredientes_pt / ingredientes_en : TEXT
+  * preco : DECIMAL(10,2)
+  url_foto : VARCHAR(255)
+}
+
+entity alergeno {
+  * id_alergeno : INT <<PK>>
+  --
+  * nome_pt : VARCHAR(50) <<UK>>
+  * nome_en : VARCHAR(50)
+}
+
+entity produto_alergeno {
+  * id_produto : INT <<PK, FK>>
+  * id_alergeno : INT <<PK, FK>>
+}
+
+entity harmonizacao {
+  * id_prato : INT <<PK, FK>>
+  * id_vinho : INT <<PK, FK>>
+}
+
+entity disponibilidade {
+  * id_produto : INT <<PK, FK>>
+  * id_filial : INT <<PK, FK>>
+  --
+  * ativo : BOOLEAN
+  * atualizado_em : DATETIME
+}
+
+entity historico_disponibilidade {
+  * id_historico : BIGINT <<PK>>
+  --
+  * id_produto : INT <<FK>>
+  * id_filial : INT <<FK>>
+  * id_usuario : INT <<FK>>
+  * acao : ENUM(ATIVAR, DESATIVAR)
+  * data_hora : DATETIME
+}
+
+categoria ||--o{ produto
+alergeno ||--o{ produto_alergeno
+produto ||--o{ produto_alergeno
+produto ||--o{ harmonizacao : prato
+produto ||--o{ harmonizacao : vinho
+produto ||--o{ disponibilidade
+filial ||--o{ disponibilidade
+filial |o..o{ usuario : gerenciada por
+filial ||--o{ dispositivo
+produto ||--o{ historico_disponibilidade
+filial ||--o{ historico_disponibilidade
+usuario ||--o{ historico_disponibilidade
+@enduml

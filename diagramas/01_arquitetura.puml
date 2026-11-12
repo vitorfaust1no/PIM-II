@@ -1,0 +1,54 @@
+@startuml 01_arquitetura
+' Arquitetura em camadas do Sabor & Cia Bistro - Figura 1 do relatorio.
+' A API grava so no MySQL; o servico de replicacao copia o historico para o MongoDB
+' (caixa de saida transacional, secao 5.4 do relatorio).
+' Layout de cima para baixo (camadas empilhadas) e fonte maior para ficar legivel
+' impresso na largura de 16 cm.
+' Renderizar: docker run --rm -v "$PWD/diagramas:/data" -w /data plantuml/plantuml -tpng 01_arquitetura.puml
+!include estilo.iuml
+skinparam defaultFontSize 18
+skinparam dpi 300
+skinparam nodesep 40
+skinparam ranksep 55
+
+rectangle "Clientes (acesso pela internet)" as clientes {
+  node "Celular do cliente\n(navegador, via QR code)" as celular
+  node "Navegador do painel\n(matriz e filiais)" as navegador
+  node "Maquininha smart\n(sistema externo)" as maquininha
+}
+
+cloud "Provedor de nuvem" {
+  node "CDN + HTTPS" as cdn
+  rectangle "Camada de apresentação" {
+    component "Painel administrativo\n(web)" as painel
+    component "Cardápio público\n(web responsivo, PT/EN)" as cardapio
+  }
+  rectangle "Camada de aplicação" {
+    component "API REST\n(autenticação, cardápio,\ndisponibilidade, relatórios)" as api
+    component "Serviço de replicação\n(lê o histórico do MySQL\ne copia para o MongoDB)" as replicacao
+  }
+  rectangle "Camada de dados" {
+    storage "Armazenamento\nde imagens" as imagens
+    database "Banco relacional\n(MySQL)\nprodutos, filiais, usuários,\ndisponibilidade e histórico" as mysql
+    database "Banco NoSQL\n(MongoDB)\ncópia analítica\ndo histórico" as mongo
+  }
+}
+
+celular -[hidden]right- navegador
+navegador -[hidden]right- maquininha
+api -[hidden]right- replicacao
+imagens -[hidden]right- mysql
+mysql -[hidden]right- mongo
+
+celular --> cdn : HTTPS
+navegador --> cdn : HTTPS + login
+cdn --> cardapio
+cdn --> painel
+painel --> api : REST/JSON
+cardapio --> api : REST/JSON
+maquininha --> api : HTTPS + token\n(WebSocket)
+api --> mysql : transação\n(disponibilidade + histórico)
+api --> imagens
+replicacao --> mysql : lê eventos novos\n(a cada poucos segundos)
+replicacao --> mongo : grava cópia\n(assíncrona)
+@enduml

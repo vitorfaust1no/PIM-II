@@ -1,0 +1,76 @@
+// Modelo conceitual (notacao de Chen) do Sabor & Cia Bistro - Figura 5 do relatorio.
+// Layout compacto e fontes grandes para ficar legivel impresso na largura de 16 cm.
+// Renderizar (PNG a 300 dpi):
+//   docker run --rm --entrypoint neato -v "$PWD/diagramas:/data" -w /data
+//     plantuml/plantuml -Tpng -Gdpi=300 05_conceitual.dot -o 05_conceitual.png
+graph conceitual {
+    layout=neato; overlap=true; splines=true; pad=0.1;
+    node [fontname="Helvetica", fontsize=22];
+    edge [fontname="Helvetica", fontsize=19];
+
+    // entidades
+    node [shape=box, style=bold, width=1.8, height=0.6];
+    PRODUTO [pos="0,7!"]; CATEGORIA [pos="-5.2,7!"]; ALERGENO [pos="5.2,7!"];
+    FILIAL [pos="0,0!"]; USUARIO [pos="5.2,0!"]; DISPOSITIVO [pos="5.2,-2.9!"];
+    HISTORICO [label="HISTORICO_\nDISPONIBILIDADE", pos="5.2,3.4!"];
+
+    // relacionamentos
+    node [shape=diamond, style=solid, width=2.2, height=1.0];
+    pertence [pos="-2.6,7!"];
+    contem [label="contém", pos="2.6,7!"];
+    harmoniza [label="harmoniza\ncom", pos="-3.4,5.0!"];
+    disponivel [label="disponível\nem", pos="0,3.4!"];
+    gerencia [pos="2.6,0!"];
+    vinculado [label="vinculado\na", pos="2.6,-1.9!"];
+    refere [label="refere-se\na", pos="2.6,5.2!"];
+    ocorre [label="ocorre\nem", pos="2.0,1.7!"];
+    realizada [label="realizada\npor", pos="5.2,1.7!"];
+
+    // atributos
+    node [shape=ellipse, width=1.0, height=0.45, fontsize=19];
+    a_id_prod [label=<<u>id_produto</u>>, pos="-2.0,8.35!"];
+    a_nome_prod [label="nome", pos="-0.6,8.95!"];
+    a_ingr [label="ingredientes", pos="2.0,8.95!"];
+    a_preco [label="preço", pos="0.6,8.35!"];
+    a_id_cat [label=<<u>id_categoria</u>>, pos="-5.4,8.35!"]; a_nome_cat [label="nome", pos="-5.6,5.6!"];
+    a_id_al [label=<<u>id_alergeno</u>>, pos="4.6,8.35!"]; a_nome_al [label="nome", pos="6.5,8.95!"];
+    a_ativo [label="ativo", pos="-2.4,2.6!"]; a_atual [label="atualizado_em", pos="-2.8,3.7!"];
+    a_id_fil [label=<<u>id_filial</u>>, pos="-2.3,0.6!"]; a_qr [label="url_qrcode", pos="-2.5,-0.5!"];
+    a_nome_fil [label="nome", pos="-1.6,-1.4!"]; a_bairro [label="bairro", pos="0.3,-1.6!"];
+    a_id_usu [label=<<u>id_usuario</u>>, pos="7.5,0.9!"]; a_email [label="email", pos="7.7,0!"];
+    a_perfil [label="perfil", pos="7.5,-0.9!"];
+    a_id_disp [label=<<u>id_dispositivo</u>>, pos="7.6,-2.4!"]; a_desc [label="descrição", pos="7.6,-3.4!"];
+    a_ativo_d [label="ativo", pos="5.2,-4.1!"];
+    a_id_hist [label=<<u>id_historico</u>>, pos="7.6,4.4!"]; a_acao [label="ação", pos="7.9,3.4!"];
+    a_data [label="data_hora", pos="7.6,2.4!"];
+
+    // ligacoes entidade-relacionamento (cardinalidades)
+    CATEGORIA -- pertence [taillabel="(1,1)", labeldistance=2.6];
+    pertence -- PRODUTO [headlabel="(0,N)", labeldistance=2.6];
+    ALERGENO -- contem [taillabel="(0,N)", labeldistance=2.6];
+    contem -- PRODUTO [headlabel="(0,N)", labeldistance=2.6];
+    PRODUTO -- harmoniza [label="prato (0,N)"];
+    PRODUTO -- harmoniza [headlabel="vinho (0,N)", labelangle=40, labeldistance=4];
+    PRODUTO -- disponivel [taillabel="(0,N)", labeldistance=2.6];
+    disponivel -- FILIAL [headlabel="(0,N)", labeldistance=2.6];
+    FILIAL -- gerencia [taillabel="(0,1)", labeldistance=2.6];
+    gerencia -- USUARIO [headlabel="(0,N)", labeldistance=2.6];
+    FILIAL -- vinculado [taillabel="(1,1)", labeldistance=2.6];
+    vinculado -- DISPOSITIVO [headlabel="(0,N)", labeldistance=2.6];
+    PRODUTO -- refere [taillabel="(1,1)", labeldistance=2.6];
+    refere -- HISTORICO [headlabel="(0,N)", labeldistance=2.6];
+    FILIAL -- ocorre [taillabel="(1,1)", labeldistance=2.6];
+    ocorre -- HISTORICO [headlabel="(0,N)", labeldistance=3.5, labelangle=30];
+    USUARIO -- realizada [taillabel="(1,1)", labeldistance=2.6];
+    realizada -- HISTORICO [headlabel="(0,N)", labeldistance=2.6];
+
+    // ligacoes de atributos
+    PRODUTO -- {a_id_prod a_nome_prod a_preco a_ingr};
+    CATEGORIA -- {a_id_cat a_nome_cat};
+    ALERGENO -- {a_id_al a_nome_al};
+    disponivel -- {a_ativo a_atual};
+    FILIAL -- {a_id_fil a_nome_fil a_bairro a_qr};
+    USUARIO -- {a_id_usu a_email a_perfil};
+    DISPOSITIVO -- {a_id_disp a_desc a_ativo_d};
+    HISTORICO -- {a_id_hist a_acao a_data};
+}
