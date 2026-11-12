@@ -287,22 +287,22 @@ SEGMENTOS = [
     {
         "id": "16_requisitos",
         "tipo": "texto",
-        "titulo": "Requisitos funcionais na simulação",
+        "titulo": "Requisitos funcionais: simulação e proposta",
         "bullets": [
-            "RF01 Autenticar  •  RF05 Cadastrar produto  •  RF06 Alterar disponibilidade",
+            "RF01 Autenticar  •  RF05 Cadastrar produto (parcial)  •  RF06 Alterar disponibilidade",
             "RF07 Exibir cardápio  •  RF09 Filtrar alérgeno  •  RF11 Registrar histórico",
-            "RF12 Relatórios (indisponibilidade e frequência)  •  RF13 Informação de alérgenos",
+            "RF12 Relatórios (indisponibilidade e frequência)  •  RF13 Alérgenos (inglês só na proposta)",
             "Só na proposta: RF02 QR code  •  RF03 Idioma  •  RF04 e RF10 Maquininhas  •  RF08 Categoria",
         ],
         "narracao": (
             "Vamos consolidar os requisitos funcionais. O erre efe zero um é a "
-            "autenticação. O cinco, o cadastro de produtos. O seis, a alteração de "
-            "disponibilidade. O sete, a exibição do cardápio, e o nove, o filtro por "
-            "alérgeno. O onze é o registro de histórico para auditoria, e o doze cobre os "
-            "relatórios gerenciais, tanto o de indisponibilidade atual quanto o de frequência "
-            "de esgotamento. O treze apresenta a informação de alérgenos, com o aviso "
-            "obrigatório; no sistema real, ela vem também em inglês. Esses requisitos aparecem "
-            "no simulador. Já o dois, o QR code de cada filial, o três, a troca de idioma, o "
+            "autenticação. O cinco aparece em parte: o simulador cadastra só os produtos. O "
+            "seis é a alteração de disponibilidade. O sete, a exibição do cardápio, e o nove, "
+            "o filtro por alérgeno. O onze é o registro de histórico para auditoria, e o doze "
+            "cobre os relatórios gerenciais, tanto o de indisponibilidade atual quanto o de "
+            "frequência de esgotamento. O treze também aparece em parte: a informação de "
+            "alérgenos, com o aviso obrigatório, sem a versão em inglês. Esses requisitos "
+            "aparecem no simulador. Já o dois, o código quê-erre de cada filial, o três, a troca de idioma, o "
             "quatro e o dez, o cadastro e a integração das maquininhas, e o oito, o filtro por "
             "categoria, fazem parte da proposta para o sistema real."
         ),
