@@ -169,8 +169,9 @@ SEGMENTOS = [
             "O diagrama de atividades detalha essa mesma operação de ponta a ponta, "
             "com as raias de responsabilidade. A cozinha avisa que o item esgotou; o gerente "
             "acessa o painel e se autentica; o sistema valida as credenciais e, uma vez "
-            "confirmado, marca o produto como inativo. A mudança é persistida no MySQL e o "
-            "evento é gravado no MongoDB para auditoria. Por fim, o cardápio público e as "
+            "confirmado, marca o produto como inativo. A mudança e o registro de histórico são "
+            "gravados juntos no MySQL e, em seguida, copiados para o MongoDB, usado nas "
+            "análises. Por fim, o cardápio público e as "
             "maquininhas são atualizados, e o sistema confirma a operação ao gerente. "
             "É a visão dinâmica que complementa os fluxogramas anteriores."
         ),
