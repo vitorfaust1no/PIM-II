@@ -246,7 +246,7 @@ SEGMENTOS = [
             "categoria. E a tabela de disponibilidade, cuja chave primária é composta por "
             "produto e filial, garantindo um único registro de status para cada combinação, "
             "com a data da última atualização. Um ponto de segurança que destacamos no projeto: "
-            "as senhas dos usuários nunca ficam em texto puro — são armazenadas como hash "
+            "no banco, as senhas dos usuários nunca ficam em texto puro — são armazenadas como hash "
             "bcrypt. E cada alteração de disponibilidade alimenta uma trilha de auditoria, "
             "atendendo ao requisito de histórico."
         ),
@@ -310,19 +310,22 @@ SEGMENTOS = [
         "titulo": "Segurança e boas práticas",
         "bullets": [
             "Senhas em hash (bcrypt); tokens de dispositivo em SHA-256",
-            "Nenhuma credencial em texto puro no código",
+            "Em produção: nenhuma credencial no código ou em texto puro",
             "Permissões por perfil — gerente limitado à própria filial",
             "Operações idempotentes e trilha de auditoria completa",
+            "Simulador em C: usuários de teste fixos, só para fins didáticos",
         ],
         "narracao": (
             "Em segurança, adotamos boas práticas desde o projeto. As senhas de usuário são "
             "guardadas como hash bcrypt, e os tokens dos dispositivos usam SHA duzentos e "
-            "cinquenta e seis. Nenhuma credencial fica em texto puro. O controle de acesso é "
+            "cinquenta e seis. No sistema em produção, nenhuma credencial fica no código ou em "
+            "texto puro. O controle de acesso é "
             "por perfil, com o gerente restrito à sua própria filial. As operações críticas "
             "são idempotentes, evitando efeitos colaterais de cliques repetidos, e cada "
             "mudança gera um registro na trilha de auditoria. No simulador em C, por ser "
-            "didático, os usuários são fixos, mas o código deixa claro, em comentário, que "
-            "no sistema real a senha seria sempre um hash no banco."
+            "didático, os usuários de teste são fixos e as senhas ficam em texto puro; o "
+            "código e a tela de login avisam isso, e a seção seis ponto sete do relatório "
+            "compara a simulação com a implementação prevista."
         ),
     },
     {

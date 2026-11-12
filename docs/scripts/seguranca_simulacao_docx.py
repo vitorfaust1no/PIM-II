@@ -3,9 +3,11 @@
 1. Secao 6.1: indica que a senha da struct Usuario fica em texto puro so por didatica.
 2. Nova secao 6.7 (fim do capitulo 6): simplificacoes de seguranca da simulacao e o
    equivalente previsto para producao.
-3. Apendice A: sincroniza o codigo com src/simulacao_cardapio.c (diff linha a linha).
+3. Secao 9.3: remete a nova 6.7.
+4. Apendice A: sincroniza o codigo com src/simulacao_cardapio.c (diff linha a linha).
 
-Idempotente. Faz backup em PIM_II_Sabor_e_Cia.pre-seguranca.docx na primeira execucao.
+Idempotente. Faz backup em docs/_backups/PIM_II_Sabor_e_Cia.pre-seguranca.docx na
+primeira execucao.
 Uso:  python docs/scripts/seguranca_simulacao_docx.py
 """
 
@@ -21,14 +23,18 @@ from docx.text.paragraph import Paragraph
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
-BACKUP = DOCS / "PIM_II_Sabor_e_Cia.pre-seguranca.docx"
+BACKUP = DOCS / "_backups" / "PIM_II_Sabor_e_Cia.pre-seguranca.docx"
 FONTE_C = DOCS.parent / "src" / "simulacao_cardapio.c"
 
 ANTIGO_61 = "com login, senha, perfil e filial"
 NOVO_61 = ("com login, senha (mantida em texto puro apenas para fins didáticos, conforme a "
            "seção 6.7), perfil e filial")
 
-TITULO_67 = "6.7 Segurança: simulação acadêmica e implementação prevista"
+ANCORA_93 = "preservando os requisitos não funcionais de desempenho, segurança e acessibilidade."
+EXTRA_93 = (" As simplificações de segurança adotadas na simulação e o seu equivalente em "
+            "produção foram detalhados na seção 6.7.")
+
+TITULO_67 ="6.7 Segurança: simulação acadêmica e implementação prevista"
 PARAGRAFOS_67 = [
     "Para que a simulação pudesse ser executada sem servidor de banco de dados, algumas "
     "simplificações de segurança foram adotadas de forma deliberada e não devem ser tomadas "
@@ -71,6 +77,17 @@ def ajustar_61(doc) -> bool:
     if len(alvos) != 1:
         raise SystemExit(f"ancora 6.1 casou {len(alvos)} vezes")
     alvos[0].text = alvos[0].text.replace(ANTIGO_61, NOVO_61)
+    return True
+
+
+def ajustar_93(doc) -> bool:
+    """Remete a secao 9.3 (Da simulacao ao sistema em producao) a nova 6.7."""
+    if any(EXTRA_93.strip() in p.text for p in doc.paragraphs):
+        return False
+    alvos = [r for p in doc.paragraphs for r in p.runs if r.text.endswith(ANCORA_93)]
+    if len(alvos) != 1:
+        raise SystemExit(f"ancora 9.3 casou {len(alvos)} vezes")
+    alvos[0].text += EXTRA_93
     return True
 
 
@@ -126,9 +143,10 @@ def main() -> None:
     doc = Document(ALVO)
     s61 = ajustar_61(doc)
     s67 = inserir_67(doc)
+    s93 = ajustar_93(doc)
     apa = sincronizar_apendice_a(doc)
     doc.save(ALVO)
-    print(f"secao_6.1={s61} secao_6.7={s67} apendice_a_blocos={apa}")
+    print(f"secao_6.1={s61} secao_6.7={s67} secao_9.3={s93} apendice_a_blocos={apa}")
 
 
 if __name__ == "__main__":
