@@ -231,10 +231,11 @@ SET d.ativo = FALSE
 WHERE d.id_produto = @produto
   AND d.id_filial = u.id_filial
   AND d.ativo = TRUE;             -- só registra se o estado realmente mudar
+SET @alterou = ROW_COUNT();     -- lido logo após o UPDATE
 INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
 SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
 FROM usuario u
-WHERE u.id_usuario = @usuario AND ROW_COUNT() > 0;
+WHERE u.id_usuario = @usuario AND @alterou > 0;
 COMMIT;
  
 -- Mais alguns eventos de exemplo para o relatório de frequência (RF12)
