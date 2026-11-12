@@ -180,8 +180,9 @@ int carregarDados(void) {
         return 0;
     }
     for (i = 0; i < total; i++) {
-        if (fscanf(arq, "%d;%29[^;];%59[^;];%d;%79[^;]", &produtos[i].id, produtos[i].categoria,
-                   produtos[i].nome, &produtos[i].preco_cent, produtos[i].alergenos) != 5) {
+        if (fscanf(arq, "%d;%29[^;];%59[^;];%d;%79[^;]",
+                   &produtos[i].id, produtos[i].categoria, produtos[i].nome,
+                   &produtos[i].preco_cent, produtos[i].alergenos) != 5) {
             break;
         }
  
@@ -240,7 +241,8 @@ int adicionarProduto(const char *nome, const char *categoria, int precoCent,
 void carregarExemplo(void) {
     adicionarProduto("Burrata com tomates confitados", "Entradas", 6800, "Leite");
     adicionarProduto("Risoto de cogumelos", "Pratos principais", 9800, "Leite");
-    adicionarProduto("Salmao em crosta de castanhas", "Pratos principais", 11200, "Peixe,Castanha-de-caju");
+    adicionarProduto("Salmao em crosta de castanhas",
+        "Pratos principais", 11200, "Peixe,Castanha-de-caju");
     adicionarProduto("Petit gateau", "Sobremesas", 4200, "Leite,Ovos,Trigo");
     adicionarProduto("Chardonnay (taca)", "Vinhos", 4500, "");
     salvarDados();

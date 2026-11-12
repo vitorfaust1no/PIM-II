@@ -169,14 +169,20 @@ DELIMITER ;
 -- ---------------------------------------------------------------------
  
 INSERT INTO filial (nome, endereco, bairro, url_qrcode) VALUES
-('Sabor & Cia Bistrô Jardins',   'Rua Exemplo, 100', 'Jardins',    'https://cardapio.saborecia.com.br/f/1'),
-('Sabor & Cia Bistrô Itaim',     'Rua Exemplo, 200', 'Itaim Bibi', 'https://cardapio.saborecia.com.br/f/2'),
-('Sabor & Cia Bistrô Pinheiros', 'Rua Exemplo, 300', 'Pinheiros',  'https://cardapio.saborecia.com.br/f/3');
+('Sabor & Cia Bistrô Jardins',   'Rua Exemplo, 100', 'Jardins',
+    'https://cardapio.saborecia.com.br/f/1'),
+('Sabor & Cia Bistrô Itaim',     'Rua Exemplo, 200', 'Itaim Bibi',
+    'https://cardapio.saborecia.com.br/f/2'),
+('Sabor & Cia Bistrô Pinheiros', 'Rua Exemplo, 300', 'Pinheiros',
+    'https://cardapio.saborecia.com.br/f/3');
  
-INSERT INTO usuario (nome, email, senha_hash, perfil, id_filial) VALUES
-('Ana Matriz',    'ana@saborecia.com.br',   '$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234', 'ADMIN',   NULL),
-('Bruno Jardins', 'bruno@saborecia.com.br', '$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01235', 'GERENTE', 1),
-('Carla Itaim',   'carla@saborecia.com.br', '$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01236', 'GERENTE', 2);
+INSERT INTO usuario (nome, email, perfil, id_filial, senha_hash) VALUES
+('Ana Matriz',    'ana@saborecia.com.br',   'ADMIN',   NULL,
+    '$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234'),
+('Bruno Jardins', 'bruno@saborecia.com.br', 'GERENTE', 1,
+    '$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01235'),
+('Carla Itaim',   'carla@saborecia.com.br', 'GERENTE', 2,
+    '$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01236');
  
 -- Tokens de exemplo (valores de SHA-256 fictícios)
 INSERT INTO dispositivo (id_filial, descricao, token_hash) VALUES
@@ -189,15 +195,19 @@ INSERT INTO categoria (nome_pt, nome_en, ordem_exibicao) VALUES
 ('Sobremesas', 'Desserts', 3),
 ('Vinhos', 'Wines', 4);
  
-INSERT INTO produto (id_categoria, nome_pt, nome_en, ingredientes_pt, ingredientes_en, preco) VALUES
+INSERT INTO produto (id_categoria, nome_pt, nome_en,
+                     ingredientes_pt, ingredientes_en, preco) VALUES
 (1, 'Burrata com tomates confitados', 'Burrata with confit tomatoes',
     'burrata, tomate, manjericão, azeite', 'burrata, tomato, basil, olive oil', 68.00),
 (2, 'Risoto de cogumelos', 'Mushroom risotto',
-    'arroz arbóreo, cogumelos, parmesão, manteiga', 'arborio rice, mushrooms, parmesan, butter', 98.00),
+    'arroz arbóreo, cogumelos, parmesão, manteiga',
+    'arborio rice, mushrooms, parmesan, butter', 98.00),
 (2, 'Salmão em crosta de castanhas', 'Nut-crusted salmon',
-    'salmão, castanha-de-caju, purê de mandioquinha', 'salmon, cashew nuts, arracacha purée', 112.00),
+    'salmão, castanha-de-caju, purê de mandioquinha',
+    'salmon, cashew nuts, arracacha purée', 112.00),
 (3, 'Petit gâteau', 'Petit gâteau',
-    'chocolate, ovos, farinha de trigo, sorvete', 'chocolate, eggs, wheat flour, ice cream', 42.00),
+    'chocolate, ovos, farinha de trigo, sorvete',
+    'chocolate, eggs, wheat flour, ice cream', 42.00),
 (4, 'Chardonnay (taça)', 'Chardonnay (glass)', NULL, NULL, 45.00);
  
 INSERT INTO alergeno (nome_pt, nome_en) VALUES
@@ -239,7 +249,8 @@ WHERE u.id_usuario = @usuario AND @alterou > 0;
 COMMIT;
  
 -- Mais alguns eventos de exemplo para o relatório de frequência (RF12)
-INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao, data_hora) VALUES
+INSERT INTO historico_disponibilidade
+    (id_produto, id_filial, id_usuario, acao, data_hora) VALUES
 (3, 2, 3, 'DESATIVAR', '2026-09-20 20:15:00'),
 (3, 2, 3, 'ATIVAR',    '2026-09-21 11:00:00'),
 (3, 2, 3, 'DESATIVAR', '2026-09-26 21:05:00'),

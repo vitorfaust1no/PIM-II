@@ -17,7 +17,8 @@ inicio
         // o cliente so ve itens ativos; o gerente ve todos, com o status
         se (somenteAtivos = falso) ou (disponibilidade[i][filial] = 1) entao
             // na visao do cliente, oculta os itens que contem o alergeno filtrado
-            se (somenteAtivos = verdadeiro) e ContemAlergeno(produtos[i].alergenos, filtroAlergeno) entao
+            se (somenteAtivos = verdadeiro) e
+               ContemAlergeno(produtos[i].alergenos, filtroAlergeno) entao
                 ocultados <- ocultados + 1
             senao
                 escreva(produtos[i].id, produtos[i].categoria,
@@ -38,7 +39,8 @@ inicio
         escreva("Nenhum produto disponivel no momento.")
     fimse
     se (somenteAtivos = verdadeiro) e (ocultados > 0) entao
-        escreva("(", ocultados, " item(ns) oculto(s) pelo filtro de alergeno \"", filtroAlergeno, "\".)")
+        escreva("(", ocultados, " item(ns) oculto(s) pelo filtro de alergeno \"",
+            filtroAlergeno, "\".)")
     fimse
     se somenteAtivos = verdadeiro entao
         escreva("AVISO: informacoes sobre alergenos sao de referencia.")
