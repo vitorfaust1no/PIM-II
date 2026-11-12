@@ -14,6 +14,8 @@ from pathlib import Path
 from docx import Document
 from docx.shared import Cm, Emu
 
+from reparar_docx import RECUO_ABNT  # fonte unica do recuo (Manual do PIM)
+
 ALVO = Path(__file__).resolve().parent.parent / "PIM_II_Sabor_e_Cia.docx"
 
 # (trecho antigo, trecho novo) -- aplicados em cada run de cada paragrafo
@@ -340,11 +342,17 @@ def negritar_titulos(doc) -> int:
 
 
 def ajustar_recuo_e_resumos(doc) -> None:
-    """Recuo de 1,5 cm (Manual 1.5) e espaco simples no resumo e no abstract."""
+    """Recuo de 1a linha = RECUO_ABNT e espaco simples no resumo e no abstract.
+
+    Normaliza qualquer recuo positivo entre 1,0 e 1,5 cm (ex.: 1,25 da ABNT ou
+    1,27 do Word) para o valor do Manual do PIM; nao mexe em recuos zerados,
+    pendentes (negativos) ou maiores (citacoes longas, blocos de codigo).
+    """
     for p in doc.paragraphs:
         f = p.paragraph_format
-        if f.first_line_indent is not None and abs(f.first_line_indent.cm - 1.25) < 0.01:
-            f.first_line_indent = Cm(1.5)
+        recuo = f.first_line_indent
+        if recuo is not None and 1.0 <= recuo.cm <= 1.5 and abs(int(recuo) - int(RECUO_ABNT)) > 1000:
+            f.first_line_indent = RECUO_ABNT
         if p.text.startswith(("Este trabalho apresenta o projeto de um cardápio digital acessível, com controle de disponibilidade de pratos",
                               "This paper presents the design")):
             f.line_spacing = 1.0

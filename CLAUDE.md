@@ -36,7 +36,8 @@ Idioma do projeto: português (pt-BR), em código, commits e conversa.
 - **Scripts do `.docx`:** são idempotentes e alguns criam backup `*.pre-*.docx` ao lado do
   relatório. Backups ficam em `docs/_backups/` e são ignorados pelo git — não commitar.
   Rode-os da raiz: `python docs/scripts/<script>.py`. Feche o `.docx` no Word antes.
-- **Relatório segue ABNT:** texto justificado, recuo de 1,5 cm (Manual do PIM), legendas "Figura n – ..."
+- **Relatório segue ABNT:** texto justificado, recuo de 1,5 cm (Manual do PIM; sobrepõe o 1,25 cm da ABNT — não "corrija"; constante
+  `RECUO_ABNT` em `docs/scripts/reparar_docx.py`), legendas "Figura n – ..."
   com fonte, referências alinhadas à esquerda. Preserve isso ao editar.
 - **Narração do vídeo (`roteiro.py`):** escreva siglas como devem ser lidas pelo TTS
   (ex.: "vê-lan") e evite jargão que a voz pronuncia mal.

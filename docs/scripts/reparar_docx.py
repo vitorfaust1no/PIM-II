@@ -8,8 +8,8 @@ Corrige (sem alterar conteudo, margens, fonte ou espacamento):
    de capitulo primario (Ttulo1).
 3. Imagens/quadros partindo entre paginas: mantem legenda+figura+fonte juntas
    (keep_with_next) e impede linhas de tabela de quebrarem (w:cantSplit).
-4. Corpo de texto desalinhado (ABNT): justifica os paragrafos narrativos e aplica
-   recuo de 1a linha de 1,5 cm de forma uniforme, PRESERVANDO legendas/fontes
+4. Corpo de texto desalinhado: justifica os paragrafos narrativos e aplica
+   recuo de 1a linha de 1,5 cm (Manual do PIM) de forma uniforme, PRESERVANDO legendas/fontes
    (centralizadas), titulos, blocos de codigo (fonte monoespacada) e apendices.
 5. Referencias (ABNT): alinhadas a esquerda e sem recuo de 1a linha.
 
@@ -32,7 +32,7 @@ DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
 BACKUP = DOCS / "PIM_II_Sabor_e_Cia.bak.docx"
 ESTILO_CAPITULO = "Ttulo1"  # python-docx remove acentos do styleId ("Titulo 1")
-RECUO_ABNT = Cm(1.5)        # recuo de 1a linha do corpo (Manual do PIM, 1.5)
+RECUO_ABNT = Cm(1.5)        # recuo de 1a linha: Manual do PIM (sobrepoe o 1,25 cm da ABNT NBR 14724)
 # prefixos de paragrafos que NAO sao corpo narrativo (legendas/fontes)
 PREFIXOS_LEGENDA = ("figura", "fonte", "quadro", "tabela", "grafico", "gráfico")
 FONTES_MONO = ("Consolas", "Courier", "Mono")  # blocos de codigo: nao justificar
@@ -106,7 +106,7 @@ def _limites_corpo(doc):
 
 
 def padronizar_corpo(doc):
-    """Justifica + recuo 1,5 cm nos paragrafos narrativos do corpo (ABNT).
+    """Justifica + recuo 1,5 cm (Manual do PIM, nao o 1,25 da ABNT) no corpo narrativo.
 
     Preserva: titulos (Heading*), legendas/fontes (centralizadas ou com prefixo
     Figura/Fonte/Quadro/Tabela) e blocos de codigo (fonte monoespacada).
@@ -294,7 +294,7 @@ def main() -> None:
     print(f"  2. pageBreakBefore em {ESTILO_CAPITULO} ....... {'inserido' if c2 else 'ja estava'}")
     print(f"  3. keep_with_next (figuras/legendas)  {c3} paragrafo(s)")
     print(f"  4. cantSplit em linhas de tabela ...  {c4} linha(s)")
-    print(f"  5. corpo justificado / recuo 1,5cm   {c5j} / {c5r} paragrafo(s)")
+    print(f"  5. corpo justificado / recuo 1,5cm    {c5j} / {c5r} paragrafo(s)")
     print(f"  6. referencias (esquerda, sem recuo)  {c6} paragrafo(s)")
     print(f"  7. figuras reduzidas (<= {FIG_LARG_MAX_CM}x{FIG_ALT_MAX_CM} cm)  {c7} figura(s)")
     print(f"  8. paragrafos vazios removidos no corpo  {c8}")
