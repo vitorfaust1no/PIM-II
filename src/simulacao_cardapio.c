@@ -31,6 +31,7 @@
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
+#include <errno.h>
 #ifdef _WIN32
 #include <windows.h> /* MoveFileExA: troca atomica de arquivo (salvarDados) */
 #endif
@@ -158,11 +159,12 @@ int registrarHistorico(const char *acao, int idProduto, int filial,
     return ok;
 }
  
-/* Troca o arquivo destino pelo origem numa unica operacao (atomica): quem
-   abrir o destino ve o conteudo antigo inteiro ou o novo inteiro, e o
-   destino nunca fica ausente. No Windows usa MoveFileEx, porque o rename
-   da biblioteca C nao substitui um arquivo existente; nos demais sistemas,
-   o rename ja substitui de forma atomica. Retorna 1 se trocou. */
+/* Troca o arquivo destino pelo origem numa so chamada do sistema, sem
+   apagar o destino antes. Num disco local NTFS (MoveFileEx) ou com o rename
+   do POSIX, quem abre o destino ve o conteudo antigo inteiro ou o novo
+   inteiro; se a troca falhar, o destino fica intacto. No Windows usa
+   MoveFileEx porque o rename da biblioteca C nao substitui um arquivo
+   existente. Retorna 1 se trocou. */
 int substituirArquivo(const char *origem, const char *destino) {
 #ifdef _WIN32
     return MoveFileExA(origem, destino,
@@ -213,15 +215,28 @@ int salvarDados(void) {
     return 1;
 }
  
-/* Le os dados do arquivo. Retorna 1 se conseguiu, 0 se o arquivo nao existe
-   e -1 se o arquivo e invalido. Arquivo invalido NAO e substituido pelos
-   dados de exemplo, para nao apagar os dados existentes. Um cardapio.tmp
-   que tenha sobrado e de uma gravacao nao concluida e nunca e lido. */
+/* Le os dados do arquivo. Retorna:
+    1 se conseguiu;
+    0 se o arquivo nao existe (primeira execucao);
+   -1 se o arquivo existe mas e invalido ou nao pode ser lido (bloqueado);
+   -2 se so existe o cardapio.tmp de uma gravacao interrompida.
+   Nos casos negativos o programa encerra sem gravar nada, para nao apagar
+   os dados existentes com os dados de exemplo. O cardapio.tmp nunca e lido
+   automaticamente, porque pode conter uma alteracao nao confirmada. */
 int carregarDados(void) {
     FILE *arq = fopen(ARQ_DADOS, "r");
+    FILE *tmp;
     int i, j, total;
- 
+
     if (arq == NULL) {
+        if (errno != ENOENT) {
+            return -1; /* existe, mas nao abriu (permissao, bloqueio...) */
+        }
+        tmp = fopen(ARQ_DADOS_TMP, "r");
+        if (tmp != NULL) {
+            fclose(tmp);
+            return -2;
+        }
         return 0;
     }
     if (fscanf(arq, "%d\n", &total) != 1 || total < 0 || total > MAX_PRODUTOS) {
@@ -341,7 +356,14 @@ void cadastrarProduto(const char *login) {
     }
     if (!registrarHistorico("CADASTRAR", id, -1, login)) {
         qtdProdutos--;
-        salvarDados();
+        if (!salvarDados()) {
+            /* nao deu para desfazer: o arquivo ja tem o produto novo, entao a
+               memoria volta a te-lo, para ficar igual ao disco */
+            qtdProdutos++;
+            printf("Erro: o produto %d ficou gravado no cardapio, mas sem registro "
+                   "no historico.\n", id);
+            return;
+        }
         printf("O cadastro foi desfeito.\n");
         return;
     }
@@ -463,7 +485,14 @@ void alterarDisponibilidade(int filial, const char *login) {
     }
     if (!registrarHistorico(novoEstado ? "ATIVAR" : "DESATIVAR", id, filial, login)) {
         disponibilidade[pos][filial] = !novoEstado;
-        salvarDados();
+        if (!salvarDados()) {
+            /* nao deu para desfazer: o arquivo ja tem o estado novo, entao a
+               memoria volta a te-lo, para ficar igual ao disco */
+            disponibilidade[pos][filial] = novoEstado;
+            printf("Erro: a alteracao ficou gravada no cardapio, mas sem registro "
+                   "no historico.\n");
+            return;
+        }
         printf("A alteracao foi desfeita.\n");
         return;
     }
@@ -639,7 +668,14 @@ int main(void) {
  
     carga = carregarDados();
     if (carga == -1) {
-        printf("Erro: %s invalido. Corrija ou apague o arquivo.\n", ARQ_DADOS);
+        printf("Erro: nao foi possivel ler %s (invalido ou bloqueado). "
+               "Corrija ou apague o arquivo.\n", ARQ_DADOS);
+        return 1;
+    }
+    if (carga == -2) {
+        printf("Aviso: %s ausente e %s encontrado (gravacao interrompida). "
+               "Renomeie-o para %s para recupera-lo ou apague-o.\n",
+               ARQ_DADOS, ARQ_DADOS_TMP, ARQ_DADOS);
         return 1;
     }
     if (carga == 0) {
