@@ -31,6 +31,9 @@
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
+#ifdef _WIN32
+#include <windows.h> /* MoveFileExA: troca atomica de arquivo (salvarDados) */
+#endif
  
 #define MAX_PRODUTOS  100
 #define NUM_FILIAIS   3
@@ -155,12 +158,27 @@ int registrarHistorico(const char *acao, int idProduto, int filial,
     return ok;
 }
 
+/* Troca o arquivo destino pelo origem numa unica operacao (atomica): quem
+   abrir o destino ve o conteudo antigo inteiro ou o novo inteiro, e o
+   destino nunca fica ausente. No Windows usa MoveFileEx, porque o rename
+   da biblioteca C nao substitui um arquivo existente; nos demais sistemas,
+   o rename ja substitui de forma atomica. Retorna 1 se trocou. */
+int substituirArquivo(const char *origem, const char *destino) {
+#ifdef _WIN32
+    return MoveFileExA(origem, destino,
+                       MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
+#else
+    return rename(origem, destino) == 0;
+#endif
+}
+
 /* Grava produtos e matriz de disponibilidade no arquivo texto.
    Formato de cada linha: id;categoria;nome;preco;alergenos;disp1;disp2;disp3
    Gravacao segura: escreve primeiro em cardapio.tmp e so troca o
    cardapio.txt quando a escrita terminou sem erro. Assim, uma falha no meio
    nunca deixa o cardapio.txt cortado pela metade.
-   Retorna 1 se gravou e 0 em caso de falha (o cardapio.txt fica como estava). */
+   Retorna 1 se gravou e 0 em caso de falha (o cardapio.txt fica como estava,
+   com o estado anterior, e o cardapio.tmp e apagado). */
 int salvarDados(void) {
     FILE *arq = fopen(ARQ_DADOS_TMP, "w");
     int i, j, ok;
@@ -187,29 +205,22 @@ int salvarDados(void) {
         printf("Erro: nao foi possivel gravar o arquivo %s.\n", ARQ_DADOS);
         return 0;
     }
-    /* no Windows o rename nao substitui um arquivo existente: remove antes.
-       Se o programa parar entre as duas linhas, o cardapio.tmp (completo)
-       e lido na proxima execucao (ver carregarDados). */
-    remove(ARQ_DADOS);
-    if (rename(ARQ_DADOS_TMP, ARQ_DADOS) != 0) {
+    if (!substituirArquivo(ARQ_DADOS_TMP, ARQ_DADOS)) {
+        remove(ARQ_DADOS_TMP); /* troca recusada: o cardapio.txt segue intacto */
         printf("Erro: nao foi possivel gravar o arquivo %s.\n", ARQ_DADOS);
         return 0;
     }
     return 1;
 }
 
-/* Le os dados do arquivo. Se o cardapio.txt nao existir, tenta o
-   cardapio.tmp (gravacao interrompida antes do rename).
-   Retorna 1 se conseguiu, 0 se nao ha arquivo e -1 se o arquivo e invalido.
-   Arquivo invalido NAO e substituido pelos dados de exemplo, para nao
-   apagar os dados existentes. */
+/* Le os dados do arquivo. Retorna 1 se conseguiu, 0 se o arquivo nao existe
+   e -1 se o arquivo e invalido. Arquivo invalido NAO e substituido pelos
+   dados de exemplo, para nao apagar os dados existentes. Um cardapio.tmp
+   que tenha sobrado e de uma gravacao nao concluida e nunca e lido. */
 int carregarDados(void) {
     FILE *arq = fopen(ARQ_DADOS, "r");
     int i, j, total;
 
-    if (arq == NULL) {
-        arq = fopen(ARQ_DADOS_TMP, "r");
-    }
     if (arq == NULL) {
         return 0;
     }
