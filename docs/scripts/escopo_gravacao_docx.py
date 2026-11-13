@@ -8,7 +8,7 @@ gravacao segura da simulacao (revisao externa, 13/11/2026).
    - Resumo, Abstract, cap. 8 e Conclusao: a solucao foi "analisada" (analise
      documental), e nao "avaliada" como se tivesse sido testada.
 2. Gravacao (src/simulacao_cardapio.c): 6.4 cita o desfazer da alteracao quando a
-   gravacao falha (CT14 a CT16).
+   gravacao falha (CT14 a CT18).
 
 O desenvolvimento (caps. 2 a 9) esta no limite de 30 paginas: as trocas dos caps. 8 e 9
 nao aumentam o texto, e os acrescimos ficam no fim dos caps. 4 e 6, onde ha folga.
@@ -58,11 +58,13 @@ TROCAS = [
     ("é exibida junto ao cardápio (RF13).",
      "é exibida junto ao cardápio (RF13, em parte)."),
     # 6.4: falha de gravacao (o arquivo temporario esta no Apendice A e no README)
-    # migracao opcional da versao anterior ao CT16; depois, a troca sobre o texto original
-    ("alteração é desfeita (CT14 e CT15).", "alteração é desfeita (CT14 a CT16).", OPCIONAL),
+    # migracoes opcionais das versoes anteriores (antes do CT16 e antes da pendencia, que
+    # trouxe o CT17 e o CT18); depois, a troca sobre o texto original
+    ("alteração é desfeita (CT14 e CT15).", "alteração é desfeita (CT14 a CT18).", OPCIONAL),
+    ("alteração é desfeita (CT14 a CT16).", "alteração é desfeita (CT14 a CT18).", OPCIONAL),
     ("descritos no capítulo 5.",
      "descritos no capítulo 5. Se o cardápio ou o histórico não puder ser gravado, a "
-     "alteração é desfeita (CT14 a CT16)."),
+     "alteração é desfeita (CT14 a CT18)."),
     # 9.1 e 9.2: o sistema completo ainda nao existe
     (TEXTO_91_ANTIGO, TEXTO_91),
     ("as redes levam essa lógica com segurança", "as redes levarão essa lógica com segurança"),

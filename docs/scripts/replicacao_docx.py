@@ -23,6 +23,7 @@ import sys
 from pathlib import Path
 
 from docx import Document
+from docx.oxml.ns import qn
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from evidencias_docx import aplicar_trocas, clonar, definir_texto  # noqa: E402
@@ -85,6 +86,30 @@ TROCAS = [
 ]
 
 
+def conferir_bloco_54(abertura, titulo_55, bloco) -> None:
+    """Recusa reescrever a 5.4 se o bloco a apagar tiver algo alem de texto corrido:
+    titulo, legenda, figura, indicador (alvo de referencia cruzada) ou tabela. Esses
+    elementos seriam perdidos (ou a tabela ficaria orfa) sem nenhum aviso."""
+    problemas = []
+    for p in bloco:
+        estilo = p.style.name
+        if estilo.startswith(("Heading", "Título", "Caption", "Legenda")):
+            problemas.append(f"paragrafo com estilo {estilo!r}: {p.text[:40]!r}")
+        if p._p.findall(".//" + qn("w:drawing")) or p._p.findall(".//" + qn("w:pict")):
+            problemas.append(f"figura no paragrafo {p.text[:40]!r}")
+        for bm in p._p.iter(qn("w:bookmarkStart")):
+            if bm.get(qn("w:name")) != "_GoBack":
+                problemas.append(f"indicador {bm.get(qn('w:name'))!r} em {p.text[:40]!r}")
+    el = abertura._p.getnext()
+    while el is not None and el is not titulo_55._p:
+        if el.tag == qn("w:tbl"):
+            problemas.append("tabela entre a abertura da 5.4 e o titulo 5.5")
+        el = el.getnext()
+    if problemas:
+        raise SystemExit("a 5.4 nao foi reescrita; o trecho a substituir tem:\n  "
+                         + "\n  ".join(problemas))
+
+
 def reescrever_54(doc) -> int:
     """Unica rotina que escreve a 5.4: tudo entre o paragrafo de abertura (ANCORA_54) e o
     titulo 5.5 passa a ser TEXTO_54 + [FECHO_54], em qualquer versao anterior do .docx.
@@ -92,14 +117,18 @@ def reescrever_54(doc) -> int:
     clonado do paragrafo de abertura, para todos terem a formatacao de corpo (recuo
     ABNT, justificado): reaproveitar paragrafos por posicao herdaria, por exemplo, a
     formatacao de lista de uma alinea antiga. Paragrafos vazios logo antes do 5.5 sao
-    mantidos. Usada tambem por sincronizacao_historico_docx.py e
+    mantidos. Se o bloco tiver titulo, legenda, figura, indicador ou tabela, recusa
+    (conferir_bloco_54) em vez de apagar. Usada tambem por sincronizacao_historico_docx.py e
     correcoes_avaliador_docx.py. Devolve quantos paragrafos escreveu (0 = ja atual)."""
     P = doc.paragraphs
     ini = [i for i, p in enumerate(P) if p.text.rstrip().endswith(ANCORA_54)]
     if len(ini) != 1:
         raise SystemExit(f"abertura da 5.4 casou {len(ini)} vezes")
     abertura = P[ini[0]]
-    i_55 = next(i for i in range(ini[0] + 1, len(P)) if P[i].style.name == "Heading 2")
+    i_55 = next((i for i in range(ini[0] + 1, len(P)) if P[i].style.name == "Heading 2"),
+                None)
+    if i_55 is None:
+        raise SystemExit("titulo 5.5 (estilo Heading 2) nao encontrado apos a 5.4")
     if not P[i_55].text.startswith("5.5 "):
         raise SystemExit(f"esperava o titulo 5.5 apos a 5.4, achei {P[i_55].text[:40]!r}")
     bloco = P[ini[0] + 1:i_55]
@@ -108,6 +137,7 @@ def reescrever_54(doc) -> int:
     esperado = TEXTO_54 + [FECHO_54]
     if [p.text for p in bloco] == esperado:
         return 0
+    conferir_bloco_54(abertura, P[i_55], bloco)
     for p in bloco:
         p._p.getparent().remove(p._p)
     ultimo = abertura._p

@@ -319,16 +319,19 @@ OPCIONAL = "opcional"  # troca que so se aplica se o trecho antigo existir (migr
 def aplicar_trocas(doc, trocas) -> int:
     """Aplica uma lista de (trecho atual, trecho novo[, OPCIONAL]), uma vez cada.
 
-    Idempotente: se o trecho novo ja esta no documento, nao faz nada. O trecho atual
-    precisa aparecer em exatamente um paragrafo, salvo nas trocas OPCIONAL, que sao
-    puladas quando o documento nunca teve aquela versao. Devolve quantas aplicou."""
+    O alvo e o paragrafo que ainda contem o trecho atual; quando o trecho novo inclui o
+    atual (troca que acrescenta texto), um paragrafo que ja tem o trecho novo nao conta.
+    O alvo precisa ser unico. Idempotente: sem alvo, a troca e dada como aplicada se o
+    trecho novo esta no documento; as trocas OPCIONAL tambem sao puladas quando o
+    documento nunca teve aquela versao. Devolve quantas aplicou."""
     feitas = 0
     for antigo, novo, *opcao in trocas:
-        if any(novo in p.text for p in doc.paragraphs):
-            continue  # ja aplicada
-        alvos = [p for p in doc.paragraphs if antigo in p.text]
-        if not alvos and opcao == [OPCIONAL]:
-            continue
+        alvos = [p for p in doc.paragraphs
+                 if antigo in p.text and not (antigo in novo and novo in p.text)]
+        if not alvos:
+            if opcao == [OPCIONAL] or any(novo in p.text for p in doc.paragraphs):
+                continue  # ja aplicada (ou versao que o documento nunca teve)
+            raise SystemExit(f"trecho {antigo[:60]!r} nao encontrado")
         if len(alvos) != 1:
             raise SystemExit(f"trecho {antigo[:60]!r} casou {len(alvos)} vezes")
         substituir_regex(alvos[0]._p, re.escape(antigo), lambda m, t=novo: t)
@@ -376,12 +379,6 @@ def aplicar_trocas_ancoradas(doc, trocas) -> int:
 
 
 # ----------------------------------------------------------------- resumo e abstract
-def _paragrafo_unico(doc, trecho: str):
-    achados = [p for p in doc.paragraphs if trecho in p.text]
-    if len(achados) != 1:
-        raise SystemExit(f"trecho {trecho[:50]!r} casou {len(achados)} vezes")
-    return achados[0]
-
 
 def resultados_testes(doc) -> int:
     """Frase do Resumo e do Abstract com o resultado dos testes, lido dos resumo.json."""
@@ -401,7 +398,7 @@ def resultados_testes(doc) -> int:
     ]
     feitas = 0
     for trecho, ancora, inicio, frase in frases:
-        p = _paragrafo_unico(doc, trecho)
+        p = paragrafo(doc, trecho)
         if frase in p.text:
             continue
         if inicio in p.text:  # frase de uma execucao anterior: troca ate o ponto final
