@@ -33,7 +33,10 @@
 #include <ctype.h>
 #include <errno.h>
 #ifdef _WIN32
-#include <windows.h> /* MoveFileExA: troca atomica de arquivo (salvarDados) */
+#include <windows.h> /* MoveFileExA: troca do arquivo (salvarDados) */
+#include <io.h>      /* _commit: forca a gravacao no disco */
+#else
+#include <unistd.h>  /* fsync: forca a gravacao no disco */
 #endif
  
 #define MAX_PRODUTOS  100
@@ -154,11 +157,26 @@ int registrarHistorico(const char *acao, int idProduto, int filial,
         ok = 0;
     }
     if (!ok) {
-        printf("Erro: nao foi possivel gravar o historico.\n");
+        /* o arquivo abriu, entao parte da linha pode ter chegado ao disco */
+        printf("Erro: nao foi possivel gravar o historico "
+               "(a ultima linha pode ter ficado incompleta).\n");
     }
     return ok;
 }
  
+/* Esvazia o buffer da biblioteca C e pede ao sistema que grave o arquivo no
+   disco (e nao so na memoria cache). Retorna 1 se conseguiu. */
+int gravarNoDisco(FILE *arq) {
+    if (fflush(arq) != 0) {
+        return 0;
+    }
+#ifdef _WIN32
+    return _commit(_fileno(arq)) == 0;
+#else
+    return fsync(fileno(arq)) == 0;
+#endif
+}
+
 /* Troca o arquivo destino pelo origem numa so chamada do sistema, sem
    apagar o destino antes. Num disco local NTFS (MoveFileEx) ou com o rename
    do POSIX, quem abre o destino ve o conteudo antigo inteiro ou o novo
@@ -176,9 +194,9 @@ int substituirArquivo(const char *origem, const char *destino) {
  
 /* Grava produtos e matriz de disponibilidade no arquivo texto.
    Formato de cada linha: id;categoria;nome;preco;alergenos;disp1;disp2;disp3
-   Gravacao segura: escreve primeiro em cardapio.tmp e so troca o
-   cardapio.txt quando a escrita terminou sem erro. Assim, uma falha no meio
-   nunca deixa o cardapio.txt cortado pela metade.
+   Gravacao segura: escreve primeiro em cardapio.tmp, forca o conteudo para
+   o disco e so entao troca o cardapio.txt. Assim, nem uma falha no meio nem
+   uma queda de energia logo apos a troca deixam o cardapio.txt pela metade.
    Retorna 1 se gravou e 0 em caso de falha (o cardapio.txt fica como estava,
    com o estado anterior, e o cardapio.tmp e apagado). */
 int salvarDados(void) {
@@ -198,7 +216,8 @@ int salvarDados(void) {
         }
         fprintf(arq, "\n");
     }
-    ok = !ferror(arq); /* algum fprintf falhou? */
+    ok = !ferror(arq) /* algum fprintf falhou? */
+         && gravarNoDisco(arq); /* conteudo no disco ANTES da troca */
     if (fclose(arq) != 0) {
         ok = 0;
     }
@@ -236,6 +255,9 @@ int carregarDados(void) {
         if (tmp != NULL) {
             fclose(tmp);
             return -2;
+        }
+        if (errno != ENOENT) {
+            return -2; /* o .tmp existe, mas esta bloqueado: tambem nao apaga */
         }
         return 0;
     }
