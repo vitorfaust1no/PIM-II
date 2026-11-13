@@ -16,6 +16,7 @@ Campos de cada caso:
   bloquear     -> (opcional) arquivos trocados por um diretorio durante o caso,
                   para simular falha de gravacao
   arquivos_inalterados -> (opcional) arquivos que devem terminar iguais
+  arquivos_ausentes    -> (opcional) arquivos que NAO podem existir apos a execucao
 """
 
 CASOS = [
@@ -183,6 +184,7 @@ CASOS = [
                     "arquivos ficam iguais.",
         "bloquear": ["cardapio.tmp"],  # o programa grava primeiro no cardapio.tmp
         "arquivos_inalterados": ["cardapio.txt", "historico.txt"],
+        "arquivos_ausentes": ["cardapio.tmp"],  # gravacao recusada nao deixa sobra
         "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
         "contem": [r"Erro: nao foi possivel gravar o arquivo cardapio\.txt\.",
                    r"A alteracao foi desfeita\.",
@@ -200,6 +202,7 @@ CASOS = [
                     "cardápio fica igual.",
         "bloquear": ["historico.txt"],
         "arquivos_inalterados": ["cardapio.txt"],
+        "arquivos_ausentes": ["cardapio.tmp"],
         "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
         "contem": [r"Erro: nao foi possivel gravar o historico\.",
                    r"A alteracao foi desfeita\.",

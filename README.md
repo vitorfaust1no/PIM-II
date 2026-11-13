@@ -95,7 +95,8 @@ execução são carregados 5 produtos de exemplo. Para voltar ao estado inicial,
 apague o `cardapio.txt` e o `historico.txt` (e o `cardapio.tmp`, se existir).
 
 A gravação é "tudo ou nada": o programa escreve primeiro em `cardapio.tmp` e só
-troca o `cardapio.txt` quando a escrita termina sem erro; se o cardápio ou o
+troca o `cardapio.txt` quando a escrita termina sem erro, numa operação atômica
+(`MoveFileEx` no Windows, `rename` nos demais sistemas); se o cardápio ou o
 histórico não puder ser gravado, a alteração é desfeita e uma mensagem de erro
 aparece. Se o `cardapio.txt` estiver corrompido, o programa avisa e encerra sem
 sobrescrevê-lo: corrija ou apague o arquivo.

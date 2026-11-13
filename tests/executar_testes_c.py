@@ -68,6 +68,9 @@ def verificar(caso: dict, saida: str, codigo: int | None, usadas: int,
     for arq in caso["arquivos"]:
         if not (trabalho / arq).exists():
             falhas.append(f"arquivo nao criado: {arq}")
+    for arq in caso.get("arquivos_ausentes", []):
+        if (trabalho / arq).exists():
+            falhas.append(f"arquivo nao deveria existir: {arq}")
     for arq, conteudo in antes.items():
         if (trabalho / arq).read_bytes() != conteudo:
             falhas.append(f"arquivo alterado (deveria ficar igual): {arq}")
