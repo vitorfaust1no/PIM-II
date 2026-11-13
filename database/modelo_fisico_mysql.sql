@@ -128,6 +128,19 @@ CREATE TABLE historico_disponibilidade (
     CONSTRAINT fk_hist_filial  FOREIGN KEY (id_filial)  REFERENCES filial (id_filial),
     CONSTRAINT fk_hist_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario)
 );
+
+-- Caixa de saída da replicação para o MongoDB (seção 5.4): cada evento do
+-- histórico ainda não copiado. A linha nasce pelo trigger
+-- trg_historico_pendente, na MESMA transação do evento, e é apagada pelo
+-- serviço de replicação (previsto para produção) depois que o MongoDB
+-- confirma a gravação. Não há "ponto de controle": um evento confirmado
+-- fora da ordem dos ids continua pendente até ser copiado.
+CREATE TABLE replicacao_pendente (
+    id_historico  BIGINT PRIMARY KEY,
+    criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pend_historico FOREIGN KEY (id_historico)
+        REFERENCES historico_disponibilidade (id_historico)
+);
  
 -- Índices para as consultas mais frequentes
 CREATE INDEX idx_disp_filial_ativo ON disponibilidade (id_filial, ativo);
@@ -161,6 +174,15 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Harmonizacao deve ligar um prato a um vinho';
     END IF;
+END //
+ 
+-- Todo evento do histórico entra na caixa de saída. O trigger faz parte da
+-- transação do INSERT: se ela for desfeita (ROLLBACK), a pendência também é.
+CREATE TRIGGER trg_historico_pendente
+AFTER INSERT ON historico_disponibilidade
+FOR EACH ROW
+BEGIN
+    INSERT INTO replicacao_pendente (id_historico) VALUES (NEW.id_historico);
 END //
 DELIMITER ;
  
