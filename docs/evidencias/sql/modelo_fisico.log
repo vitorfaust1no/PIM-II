@@ -2,7 +2,7 @@
 DROP DATABASE IF EXISTS sabor_cia
 --------------
 
-Query OK, 0 rows affected, 1 warning (0.00 sec)
+Query OK, 0 rows affected, 1 warning (0.01 sec)
 
 --------------
 CREATE DATABASE sabor_cia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
@@ -20,7 +20,7 @@ CREATE TABLE filial (
 )
 --------------
 
-Query OK, 0 rows affected (0.04 sec)
+Query OK, 0 rows affected (0.06 sec)
 
 --------------
 CREATE TABLE usuario (
@@ -39,7 +39,7 @@ CREATE TABLE usuario (
 )
 --------------
 
-Query OK, 0 rows affected (0.04 sec)
+Query OK, 0 rows affected (0.06 sec)
 
 --------------
 CREATE TABLE dispositivo (
@@ -53,7 +53,7 @@ CREATE TABLE dispositivo (
 )
 --------------
 
-Query OK, 0 rows affected (0.07 sec)
+Query OK, 0 rows affected (0.05 sec)
 
 --------------
 CREATE TABLE categoria (
@@ -64,7 +64,7 @@ CREATE TABLE categoria (
 )
 --------------
 
-Query OK, 0 rows affected (0.04 sec)
+Query OK, 0 rows affected (0.05 sec)
 
 --------------
 CREATE TABLE produto (
@@ -84,7 +84,7 @@ CREATE TABLE produto (
 )
 --------------
 
-Query OK, 0 rows affected (0.07 sec)
+Query OK, 0 rows affected (0.06 sec)
 
 --------------
 CREATE TABLE alergeno (
@@ -94,7 +94,7 @@ CREATE TABLE alergeno (
 )
 --------------
 
-Query OK, 0 rows affected (0.05 sec)
+Query OK, 0 rows affected (0.06 sec)
 
 --------------
 CREATE TABLE produto_alergeno (
@@ -108,7 +108,7 @@ CREATE TABLE produto_alergeno (
 )
 --------------
 
-Query OK, 0 rows affected (0.05 sec)
+Query OK, 0 rows affected (0.06 sec)
 
 --------------
 CREATE TABLE harmonizacao (
@@ -140,7 +140,7 @@ CREATE TABLE disponibilidade (
 )
 --------------
 
-Query OK, 0 rows affected (0.06 sec)
+Query OK, 0 rows affected (0.05 sec)
 
 --------------
 CREATE TABLE historico_disponibilidade (
@@ -162,14 +162,14 @@ Query OK, 0 rows affected (0.07 sec)
 CREATE INDEX idx_disp_filial_ativo ON disponibilidade (id_filial, ativo)
 --------------
 
-Query OK, 0 rows affected (0.08 sec)
+Query OK, 0 rows affected (0.06 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 
 --------------
 CREATE INDEX idx_hist_filial_data  ON historico_disponibilidade (id_filial, data_hora)
 --------------
 
-Query OK, 0 rows affected (0.07 sec)
+Query OK, 0 rows affected (0.04 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 
 --------------
@@ -187,7 +187,7 @@ BEGIN
 END
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.02 sec)
 
 --------------
 CREATE TRIGGER trg_harmonizacao_valida_upd
@@ -229,7 +229,7 @@ INSERT INTO usuario (nome, email, perfil, id_filial, senha_hash) VALUES
     '$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01236')
 --------------
 
-Query OK, 3 rows affected (0.01 sec)
+Query OK, 3 rows affected (0.00 sec)
 Records: 3  Duplicates: 0  Warnings: 0
 
 --------------
@@ -249,7 +249,7 @@ INSERT INTO categoria (nome_pt, nome_en, ordem_exibicao) VALUES
 ('Vinhos', 'Wines', 4)
 --------------
 
-Query OK, 4 rows affected (0.01 sec)
+Query OK, 4 rows affected (0.00 sec)
 Records: 4  Duplicates: 0  Warnings: 0
 
 --------------
@@ -269,7 +269,7 @@ INSERT INTO produto (id_categoria, nome_pt, nome_en,
 (4, 'Chardonnay (taça)', 'Chardonnay (glass)', NULL, NULL, 45.00)
 --------------
 
-Query OK, 5 rows affected (0.00 sec)
+Query OK, 5 rows affected (0.01 sec)
 Records: 5  Duplicates: 0  Warnings: 0
 
 --------------
@@ -278,7 +278,7 @@ INSERT INTO alergeno (nome_pt, nome_en) VALUES
 ('Ovos', 'Eggs'), ('Peixe', 'Fish')
 --------------
 
-Query OK, 5 rows affected (0.02 sec)
+Query OK, 5 rows affected (0.00 sec)
 Records: 5  Duplicates: 0  Warnings: 0
 
 --------------
@@ -286,14 +286,14 @@ INSERT INTO produto_alergeno (id_produto, id_alergeno) VALUES
 (1,1), (2,1), (3,3), (3,5), (4,1), (4,2), (4,4)
 --------------
 
-Query OK, 7 rows affected (0.00 sec)
+Query OK, 7 rows affected (0.01 sec)
 Records: 7  Duplicates: 0  Warnings: 0
 
 --------------
 INSERT INTO harmonizacao (id_prato, id_vinho) VALUES (2,5), (3,5)
 --------------
 
-Query OK, 2 rows affected (0.02 sec)
+Query OK, 2 rows affected (0.01 sec)
 Records: 2  Duplicates: 0  Warnings: 0
 
 --------------
@@ -314,7 +314,7 @@ Query OK, 0 rows affected (0.00 sec)
 START TRANSACTION
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.00 sec)
 
 --------------
 UPDATE disponibilidade d

@@ -14,7 +14,7 @@ Query OK, 0 rows affected (0.00 sec)
 -- Testes do modelo físico (executar DEPOIS de modelo_fisico_mysql.sql)
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 
 --------------
 --
@@ -68,7 +68,7 @@ SELECT COUNT(*) AS tabelas FROM information_schema.tables
 +---------+
 |      10 |
 +---------+
-1 row in set (0.01 sec)
+1 row in set (0.00 sec)
 
 --------------
 SELECT trigger_name, event_manipulation AS evento, event_object_table AS tabela
@@ -103,7 +103,7 @@ SELECT (SELECT COUNT(*) FROM filial)           AS filiais,
 +---------+----------+----------+----------------+------------------+
 |       3 |        3 |        5 |              7 |               15 |
 +---------+----------+----------+----------------+------------------+
-1 row in set (0.00 sec)
+1 row in set (0.01 sec)
 
 --------------
 -- ST03 - Transacao RF06/RF11: risoto inativo na filial 1
@@ -177,7 +177,7 @@ Rows matched: 0  Changed: 0  Warnings: 0
 SET @alterou = ROW_COUNT()
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.00 sec)
 
 --------------
 INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
@@ -241,7 +241,7 @@ SELECT ativo AS dentro_da_transacao FROM disponibilidade
 ROLLBACK
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 
 --------------
 SELECT ativo AS apos_rollback FROM disponibilidade
@@ -253,7 +253,7 @@ SELECT ativo AS apos_rollback FROM disponibilidade
 +---------------+
 |             1 |
 +---------------+
-1 row in set (0.01 sec)
+1 row in set (0.00 sec)
 
 --------------
 -- ST06 - CHECK: preco deve ser maior que zero (deve falhar)
