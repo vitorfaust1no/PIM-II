@@ -11,6 +11,8 @@
  * Estruturas usadas: vetor de structs (produtos e usuarios),
  * matriz (disponibilidade produto x filial) e arquivos texto
  * (cardapio.txt para os dados, historico.txt para o log de alteracoes).
+ * Cada alteracao e "tudo ou nada": se o cardapio ou o historico nao puder
+ * ser gravado, a alteracao e desfeita (como a transacao do banco).
  *
  * Obs.: os textos do programa estao sem acento para evitar problemas
  * de exibicao no console do Windows.
@@ -37,6 +39,7 @@
 #define TAM_CATEGORIA 30
 #define TAM_ALERGENOS 80
 #define ARQ_DADOS     "cardapio.txt"
+#define ARQ_DADOS_TMP "cardapio.tmp" /* gravacao segura (ver salvarDados) */
 #define ARQ_HISTORICO "historico.txt"
  
 #define PERFIL_ADMIN   1
@@ -127,31 +130,43 @@ int lerPreco(const char *mensagem) {
  
 /* ---------- Arquivos ---------- */
  
-/* RF11: acrescenta uma linha no historico: data/hora;acao;produto;filial;usuario */
-void registrarHistorico(const char *acao, int idProduto, int filial,
-                        const char *login) {
+/* RF11: acrescenta uma linha no historico: data/hora;acao;produto;filial;usuario.
+   Retorna 1 se a linha foi gravada e 0 em caso de falha. */
+int registrarHistorico(const char *acao, int idProduto, int filial,
+                       const char *login) {
     FILE *arq = fopen(ARQ_HISTORICO, "a");
     time_t agora = time(NULL);
     char dataHora[20];
- 
+    int ok;
+
     if (arq == NULL) {
-        printf("Aviso: nao foi possivel gravar o historico.\n");
-        return;
+        printf("Erro: nao foi possivel gravar o historico.\n");
+        return 0;
     }
     strftime(dataHora, sizeof(dataHora), "%d/%m/%Y %H:%M", localtime(&agora));
-    fprintf(arq, "%s;%s;%d;%s;%s\n", dataHora, acao, idProduto,
-            (filial >= 0) ? FILIAIS[filial] : "Todas", login);
-    fclose(arq);
+    ok = fprintf(arq, "%s;%s;%d;%s;%s\n", dataHora, acao, idProduto,
+                 (filial >= 0) ? FILIAIS[filial] : "Todas", login) >= 0;
+    if (fclose(arq) != 0) { /* o fclose descarrega o buffer: pode falhar aqui */
+        ok = 0;
+    }
+    if (!ok) {
+        printf("Erro: nao foi possivel gravar o historico.\n");
+    }
+    return ok;
 }
- 
+
 /* Grava produtos e matriz de disponibilidade no arquivo texto.
-   Formato de cada linha: id;categoria;nome;preco;alergenos;disp1;disp2;disp3 */
+   Formato de cada linha: id;categoria;nome;preco;alergenos;disp1;disp2;disp3
+   Gravacao segura: escreve primeiro em cardapio.tmp e so troca o
+   cardapio.txt quando a escrita terminou sem erro. Assim, uma falha no meio
+   nunca deixa o cardapio.txt cortado pela metade.
+   Retorna 1 se gravou e 0 em caso de falha (o cardapio.txt fica como estava). */
 int salvarDados(void) {
-    FILE *arq = fopen(ARQ_DADOS, "w");
-    int i, j;
- 
+    FILE *arq = fopen(ARQ_DADOS_TMP, "w");
+    int i, j, ok;
+
     if (arq == NULL) {
-        printf("Erro ao salvar os dados.\n");
+        printf("Erro: nao foi possivel gravar o arquivo %s.\n", ARQ_DADOS);
         return 0;
     }
     fprintf(arq, "%d\n", qtdProdutos);
@@ -163,35 +178,63 @@ int salvarDados(void) {
         }
         fprintf(arq, "\n");
     }
-    fclose(arq);
+    ok = !ferror(arq); /* algum fprintf falhou? */
+    if (fclose(arq) != 0) {
+        ok = 0;
+    }
+    if (!ok) {
+        remove(ARQ_DADOS_TMP); /* descarta o arquivo incompleto */
+        printf("Erro: nao foi possivel gravar o arquivo %s.\n", ARQ_DADOS);
+        return 0;
+    }
+    /* no Windows o rename nao substitui um arquivo existente: remove antes.
+       Se o programa parar entre as duas linhas, o cardapio.tmp (completo)
+       e lido na proxima execucao (ver carregarDados). */
+    remove(ARQ_DADOS);
+    if (rename(ARQ_DADOS_TMP, ARQ_DADOS) != 0) {
+        printf("Erro: nao foi possivel gravar o arquivo %s.\n", ARQ_DADOS);
+        return 0;
+    }
     return 1;
 }
- 
-/* Le os dados do arquivo. Retorna 1 se conseguiu, 0 se o arquivo nao existe */
+
+/* Le os dados do arquivo. Se o cardapio.txt nao existir, tenta o
+   cardapio.tmp (gravacao interrompida antes do rename).
+   Retorna 1 se conseguiu, 0 se nao ha arquivo e -1 se o arquivo e invalido.
+   Arquivo invalido NAO e substituido pelos dados de exemplo, para nao
+   apagar os dados existentes. */
 int carregarDados(void) {
     FILE *arq = fopen(ARQ_DADOS, "r");
     int i, j, total;
- 
+
+    if (arq == NULL) {
+        arq = fopen(ARQ_DADOS_TMP, "r");
+    }
     if (arq == NULL) {
         return 0;
     }
     if (fscanf(arq, "%d\n", &total) != 1 || total < 0 || total > MAX_PRODUTOS) {
         fclose(arq);
-        return 0;
+        return -1;
     }
     for (i = 0; i < total; i++) {
         if (fscanf(arq, "%d;%29[^;];%59[^;];%d;%79[^;]",
                    &produtos[i].id, produtos[i].categoria, produtos[i].nome,
                    &produtos[i].preco_cent, produtos[i].alergenos) != 5) {
-            break;
+            fclose(arq);
+            return -1; /* linha fora do formato */
         }
- 
+
         for (j = 0; j < NUM_FILIAIS; j++) {
-            fscanf(arq, ";%d", &disponibilidade[i][j]);
+            if (fscanf(arq, ";%d", &disponibilidade[i][j]) != 1 ||
+                (disponibilidade[i][j] != 0 && disponibilidade[i][j] != 1)) {
+                fclose(arq);
+                return -1; /* disponibilidade ausente ou diferente de 0/1 */
+            }
         }
         fscanf(arq, "\n");
     }
-    qtdProdutos = i;
+    qtdProdutos = total;
     fclose(arq);
     return 1;
 }
@@ -245,7 +288,10 @@ void carregarExemplo(void) {
         "Pratos principais", 11200, "Peixe,Castanha-de-caju");
     adicionarProduto("Petit gateau", "Sobremesas", 4200, "Leite,Ovos,Trigo");
     adicionarProduto("Chardonnay (taca)", "Vinhos", 4500, "");
-    salvarDados();
+    if (!salvarDados()) {
+        printf("Aviso: os dados de exemplo nao foram gravados; "
+               "as alteracoes nao serao salvas.\n");
+    }
 }
  
 /* RF05 (simplificado): cadastro de produto pelo administrador */
@@ -275,8 +321,19 @@ void cadastrarProduto(const char *login) {
         printf("Limite de %d produtos atingido.\n", MAX_PRODUTOS);
         return;
     }
-    salvarDados();
-    registrarHistorico("CADASTRAR", id, -1, login);
+    /* tudo ou nada: se o cardapio ou o historico nao puder ser gravado,
+       o produto sai do vetor e o arquivo volta ao estado anterior */
+    if (!salvarDados()) {
+        qtdProdutos--;
+        printf("O cadastro foi desfeito.\n");
+        return;
+    }
+    if (!registrarHistorico("CADASTRAR", id, -1, login)) {
+        qtdProdutos--;
+        salvarDados();
+        printf("O cadastro foi desfeito.\n");
+        return;
+    }
     printf("Produto %d cadastrado e ativo em todas as filiais.\n", id);
 }
  
@@ -385,9 +442,20 @@ void alterarDisponibilidade(int filial, const char *login) {
         return;
     }
  
+    /* tudo ou nada, como a transacao do banco (RF06 + RF11): se o cardapio
+       ou o historico nao puder ser gravado, volta ao estado anterior */
     disponibilidade[pos][filial] = novoEstado;
-    salvarDados();
-    registrarHistorico(novoEstado ? "ATIVAR" : "DESATIVAR", id, filial, login);
+    if (!salvarDados()) {
+        disponibilidade[pos][filial] = !novoEstado;
+        printf("A alteracao foi desfeita.\n");
+        return;
+    }
+    if (!registrarHistorico(novoEstado ? "ATIVAR" : "DESATIVAR", id, filial, login)) {
+        disponibilidade[pos][filial] = !novoEstado;
+        salvarDados();
+        printf("A alteracao foi desfeita.\n");
+        return;
+    }
     printf("'%s' agora esta %s na filial %s.\n", produtos[pos].nome,
            novoEstado ? "ATIVO" : "INATIVO", FILIAIS[filial]);
 }
@@ -555,11 +623,16 @@ void menuGerente(int filial, const char *login) {
 }
  
 int main(void) {
-    int opcao, indice, filialCliente;
+    int opcao, indice, filialCliente, carga;
     char filtro[TAM_ALERGENOS];
  
-    if (!carregarDados()) {
-        carregarExemplo();
+    carga = carregarDados();
+    if (carga == -1) {
+        printf("Erro: %s invalido. Corrija ou apague o arquivo.\n", ARQ_DADOS);
+        return 1;
+    }
+    if (carga == 0) {
+        carregarExemplo(); /* primeira execucao */
     }
  
     do {
