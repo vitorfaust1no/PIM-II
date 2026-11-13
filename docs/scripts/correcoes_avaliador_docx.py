@@ -33,6 +33,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ajustar_figuras import localizar_figura  # noqa: E402
 from evidencias_docx import achar, substituir_regex  # noqa: E402
+from escopo_gravacao_docx import TEXTO_91, TEXTO_91_ANTIGO  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -95,11 +96,17 @@ TROCAS = [
      "programação estruturada validou em C a lógica central de disponibilidade; as redes e os "
      "sistemas distribuídos entregam essa lógica de forma segura às unidades e aos clientes; e "
      "a análise de direitos humanos garante uma entrega acessível, inclusiva e conforme a LGPD.",
-     ),
      "Cada disciplina resolve uma camada do problema: a engenharia de software definiu os "
      "requisitos e a modelagem; o banco de dados, um esquema íntegro; a programação estruturada "
      "validou a lógica central em C; as redes levam essa lógica com segurança às unidades e aos "
      "clientes; e a análise de direitos humanos garante acessibilidade, inclusão e conformidade "
+     "com a LGPD.",
+     ),
+     # versao atual: escopo_gravacao_docx.py (rede no futuro; direitos humanos orientam)
+     "Cada disciplina resolve uma camada do problema: a engenharia de software definiu os "
+     "requisitos e a modelagem; o banco de dados, um esquema íntegro; a programação estruturada "
+     "validou a lógica central em C; as redes levarão essa lógica com segurança às unidades e aos "
+     "clientes; e a análise de direitos humanos orienta acessibilidade, inclusão e conformidade "
      "com a LGPD."),
     ("A simulação em C representa, de forma concentrada",
      ("A simulação em C representa, de forma concentrada, as regras que no sistema real "
@@ -138,12 +145,9 @@ TROCAS = [
       "Quando um prato se esgota, o gerente altera a disponibilidade da sua filial no painel; a "
       "API grava a mudança e o evento de histórico no MySQL e propaga o novo estado ao cardápio "
       "e às maquininhas dos garçons em até 30 segundos.",
+      TEXTO_91_ANTIGO,
       ),
-     "O cliente acessa, por QR code, o cardápio público da filial, que consulta a API REST e "
-     "exibe apenas os produtos ativos naquela unidade, com os alérgenos e no idioma escolhido. "
-     "Quando um prato se esgota, o gerente altera a disponibilidade da sua filial no painel; a "
-     "API grava a mudança e o evento de histórico no MySQL e propaga o novo estado ao cardápio "
-     "e às maquininhas dos garçons em até 30 segundos (meta do RNF01)."),
+     TEXTO_91),  # versao atual: escopo_gravacao_docx.py (solucao no futuro)
     ("Entre os benefícios esperados",
      ("Entre os benefícios esperados para a organização estão a redução de pedidos frustrados "
      "por itens esgotados, a melhor experiência e a maior autonomia do cliente, a padronização "

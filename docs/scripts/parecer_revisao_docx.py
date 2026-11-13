@@ -46,8 +46,7 @@ TROCAS = [
      "atualizada em até 30 segundos;", "atualizada em até 30 segundos (meta);"),
     ("Desse modo, o projeto trabalha com dois níveis",
      "em até 30 segundos (RNF01), enquanto", "em até 30 segundos (meta do RNF01), enquanto"),
-    ("O cliente acessa, por QR code",
-     "dos garçons em até 30 segundos.", "dos garçons em até 30 segundos (meta do RNF01)."),
+    # a 9.1 inteira (com a meta do RNF01) e reescrita por escopo_gravacao_docx.py
     ("A principal contribuição",
      "Os diferenciais — atualização em até 30 segundos,",
      "Os diferenciais — atualização em até 30 segundos (meta de projeto),"),
