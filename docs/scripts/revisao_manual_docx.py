@@ -27,13 +27,14 @@ import sys
 from pathlib import Path
 
 from docx import Document
+from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from evidencias_docx import (  # noqa: E402
-    TRAV, Ids, achar, ajustar_citacoes_quadros, aplicar_trocas_ancoradas, clonar,
-    definir_texto, entrada_lista, legenda, legendas_seq, renumerar_legendas,
-    renumerar_listas, tabela, texto_el)
+    TRAV, Ids, achar, ajustar_citacoes_quadros, alternativas, aplicar_trocas_ancoradas,
+    clonar, definir_texto, entrada_lista, estilo_id, legenda, legendas_seq, paragrafo,
+    renumerar_legendas, renumerar_listas, run_texto, tabela, texto_el)
 from reparar_docx import corrigir_sumario  # noqa: E402  (liga o updateFields)
 
 DOCS = Path(__file__).resolve().parent.parent
@@ -184,26 +185,55 @@ SIGLAS = [
 ]
 
 
+def revisado_pelo_manual(doc) -> bool:
+    """True se este script ja foi aplicado (a 9.4 Possibilidades de evolucao futura existe)."""
+    return any(p.text.endswith(TITULO_EVO) for p in doc.paragraphs)
+
+
+def sem_superadas(doc, trocas, superadas: set[str]) -> list:
+    """Para os scripts anteriores: tira da lista as trocas cujo paragrafo-alvo este script
+    reescreveu (identificadas pelo primeiro elemento da troca), mas so se ele ja foi
+    aplicado. Num documento anterior a esta revisao, as trocas seguem valendo."""
+    chaves = {alternativas(t[0])[0] for t in trocas}
+    if superadas - chaves:
+        raise SystemExit(f"trocas superadas inexistentes na lista: {sorted(superadas - chaves)}")
+    if not revisado_pelo_manual(doc):
+        return list(trocas)
+    return [t for t in trocas if alternativas(t[0])[0] not in superadas]
+
+
+def entradas_quadros(doc) -> list:
+    return [p for p in doc.paragraphs
+            if p.style.name == "table of figures" and re.match(r"Quadro \d+ ", p.text)]
+
+
 def inserir_quadro(doc, ids, ancora_el, prov: int, titulo: str, dados, troca) -> bool:
     """Aplica a troca de texto que cita o quadro e insere legenda + tabela + fonte depois de
-    `ancora_el` (None = paragrafo dos atores da 4.3.1, ja trocado), no modelo do Quadro
-    'Plano de VLANs', e a entrada na Lista de Quadros antes da entrada desse quadro."""
+    `ancora_el` (None = o paragrafo que a troca acabou de escrever), no modelo do Quadro
+    'Plano de VLANs'. A entrada na Lista de Quadros fica na mesma posicao que a legenda
+    ocupa entre as legendas do documento (renumerar_listas numera pela ordem da lista)."""
     if any(titulo in p.text for p in legendas_seq(doc, "Quadro")):
         return False
     aplicar_trocas_ancoradas(doc, [troca])
     if ancora_el is None:
-        ancora_el = achar(doc, "O diagrama de casos de uso (Figura 1)")._p
+        ancora_el = paragrafo(doc, troca[2][:60])._p
     cap_modelo = next(p._p for p in legendas_seq(doc, "Quadro") if "Plano de VLANs" in p.text)
     tbl_modelo, fonte_modelo = cap_modelo.getnext(), cap_modelo.getnext().getnext()
+    entrada_modelo = entradas_quadros(doc)[0]._p
     cap, nome_toc, _ = legenda(cap_modelo, prov, titulo, ids)
     cab, linhas, larguras = dados
     novos = [cap, tabela(tbl_modelo, cab, linhas, larguras), clonar(fonte_modelo)]
     for el in reversed(novos):
         ancora_el.addnext(el)
-    entrada_vlan = next(p for p in doc.paragraphs
-                        if p.style.name == "table of figures" and "Plano de VLANs" in p.text)
-    entrada_vlan._p.addprevious(
-        entrada_lista(entrada_vlan._p, f"Quadro {prov} {TRAV} {titulo}", nome_toc))
+    entrada = entrada_lista(entrada_modelo, f"Quadro {prov} {TRAV} {titulo}", nome_toc)
+    k = [p._p for p in legendas_seq(doc, "Quadro")].index(cap)
+    entradas = entradas_quadros(doc)
+    if len(entradas) != len(legendas_seq(doc, "Quadro")) - 1:
+        raise SystemExit("Lista de Quadros fora de sincronia com as legendas; atualize no Word")
+    if k < len(entradas):
+        entradas[k]._p.addprevious(entrada)
+    else:
+        entradas[-1]._p.addnext(entrada)
     return True
 
 
@@ -226,8 +256,16 @@ def reorganizar_9(doc) -> bool:
     definir_texto(h, f"9.4 {TITULO_EVO}")
     p_ben = achar(doc, "Entre os benefícios esperados")._p
     corpo = definir_texto(clonar(p_ben), P_EVO)
-    p_ben.addnext(corpo)
-    p_ben.addnext(h)
+    for e in list(corpo.iter(qn("w:bookmarkStart"))) + list(corpo.iter(qn("w:bookmarkEnd"))):
+        e.getparent().remove(e)
+    # a 9.4 entra depois do ULTIMO paragrafo da secao de Beneficios (ate o proximo titulo)
+    titulos = {doc.styles["Heading 1"].style_id, doc.styles["Heading 2"].style_id}
+    fim = h_ben._p
+    while (fim.getnext() is not None and fim.getnext().tag == qn("w:p")
+           and estilo_id(fim.getnext()) not in titulos):
+        fim = fim.getnext()
+    fim.addnext(corpo)
+    fim.addnext(h)
     return True
 
 
@@ -249,11 +287,18 @@ def completar_siglas(doc) -> int:
         entradas = entradas_siglas(doc)
         if any(p.text.split("\t")[0] == sigla for p in entradas):
             continue
-        novo = clonar(entradas[0]._p)
-        ts = list(novo.iter(qn("w:t")))
-        ts[0].text, ts[1].text = sigla, extenso
-        for t in ts[2:]:
-            t.text = ""
+        # monta a entrada do zero (pPr + dois runs com a formatacao do primeiro run do
+        # modelo): nao depende de como o Word dividiu o texto do modelo em runs
+        modelo = entradas[0]._p
+        rpr = next(r for r in modelo.iter(qn("w:r"))).find(qn("w:rPr"))
+        novo = clonar(modelo)
+        for e in list(novo):
+            if e.tag != qn("w:pPr"):
+                novo.remove(e)
+        novo.append(run_texto(rpr, sigla))
+        r_ext = run_texto(rpr, extenso)
+        r_ext.insert(len(r_ext) - 1, OxmlElement("w:tab"))
+        novo.append(r_ext)
         depois = next((p for p in entradas if p.text.split("\t")[0].lower() > sigla.lower()),
                       None)
         if depois is None:

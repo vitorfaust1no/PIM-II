@@ -34,6 +34,15 @@ from ajustar_figuras import localizar_figura  # noqa: E402
 from evidencias_docx import aplicar_trocas_ancoradas  # noqa: E402
 from escopo_gravacao_docx import TEXTO_91, TEXTO_91_ANTIGO  # noqa: E402
 from replicacao_docx import reescrever_54  # noqa: E402
+from revisao_manual_docx import sem_superadas  # noqa: E402
+
+# paragrafos (4.5, 9.2, antiga 9.3 e 9.1) reescritos depois por revisao_manual_docx.py
+SUPERADAS_PELO_MANUAL = {
+    "A arquitetura da solução organiza-se em três camadas",
+    "A engenharia de software definiu os requisitos",
+    "A simulação em C representa, de forma concentrada",
+    "O cliente acessa, por QR code",
+}
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -249,7 +258,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     doc = Document(ALVO)
-    trocas = aplicar_trocas_ancoradas(doc, TROCAS)
+    trocas = aplicar_trocas_ancoradas(doc, sem_superadas(doc, TROCAS, SUPERADAS_PELO_MANUAL))
     linhas_56 = enxugar_56(doc)
     itens_54 = condensar_54(doc)
     trocar_figuras(doc)

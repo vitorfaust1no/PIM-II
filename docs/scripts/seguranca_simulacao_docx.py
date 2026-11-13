@@ -3,7 +3,8 @@
 1. Secao 6.1: indica que a senha da struct Usuario fica em texto puro so por didatica.
 2. Nova secao 6.7 (fim do capitulo 6): simplificacoes de seguranca da simulacao e o
    equivalente previsto para producao.
-3. Secao 9.3: remete a nova 6.7.
+3. Secao 9.3: remete a nova 6.7 (hoje 9.4 Possibilidades de evolucao futura, que ja
+   remete a 6.7 desde revisao_manual_docx.py).
 4. Apendice A: sincroniza o codigo com src/simulacao_cardapio.c (diff linha a linha).
 
 Idempotente. Faz backup em docs/_backups/PIM_II_Sabor_e_Cia.pre-seguranca.docx na
@@ -80,8 +81,11 @@ def ajustar_61(doc) -> bool:
 
 
 def ajustar_93(doc) -> bool:
-    """Remete a secao 9.3 (Da simulacao ao sistema em producao) a nova 6.7."""
-    if any(EXTRA_93.strip() in p.text for p in doc.paragraphs):
+    """Remete a secao 9.3 (Da simulacao ao sistema em producao) a nova 6.7. Depois de
+    revisao_manual_docx.py essa secao virou a 9.4 Possibilidades de evolucao futura, cujo
+    texto ja remete a 6.7: nada a fazer."""
+    from revisao_manual_docx import revisado_pelo_manual
+    if revisado_pelo_manual(doc) or any(EXTRA_93.strip() in p.text for p in doc.paragraphs):
         return False
     alvos = [r for p in doc.paragraphs for r in p.runs if r.text.endswith(ANCORA_93)]
     if len(alvos) != 1:

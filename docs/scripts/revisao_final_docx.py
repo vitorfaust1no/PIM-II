@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from evidencias_docx import (ABSTRACT, INDICADORES, RESUMO,  # noqa: E402
                              aplicar_trocas_ancoradas, clonar, definir_texto, paragrafo,
                              resultados_testes)
+from revisao_manual_docx import sem_superadas  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -111,6 +112,12 @@ DIFERENCIAIS = [
 ]
 
 # RESUMO e ABSTRACT (trechos que localizam esses paragrafos) vem de evidencias_docx.py
+
+# paragrafos (4.3.1 e 6.2) reescritos depois por revisao_manual_docx.py
+SUPERADAS_PELO_MANUAL = {
+    "O diagrama de casos de uso representa as interações entre os atores e o sistema.",
+    "O código foi decomposto em funções de responsabilidade única",
+}
 
 # (paragrafo, trecho antigo, trecho novo). O paragrafo e identificado por um trecho
 # do seu texto; o trecho antigo e None (troca o paragrafo inteiro) ou o texto a
@@ -325,7 +332,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     doc = Document(ALVO)
-    trocas = aplicar_trocas_ancoradas(doc, TROCAS)
+    trocas = aplicar_trocas_ancoradas(doc, sem_superadas(doc, TROCAS, SUPERADAS_PELO_MANUAL))
     testes = resultados_testes(doc)
     removidos = remover_paragrafo_qr(doc)
     uc = inserir_uc05(doc)

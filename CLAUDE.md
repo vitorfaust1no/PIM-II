@@ -27,7 +27,7 @@ Idioma do projeto: português (pt-BR), em código, commits e conversa.
   Apêndice A/B dentro do `.docx` fica desatualizado. Atualize o relatório (ex.:
   `python docs/scripts/seguranca_simulacao_docx.py` faz o diff do C para o Apêndice A) e
   avise que o `.pdf` precisa ser reexportado pelo Word. Rode também os testes de `tests/`:
-  as evidências (Quadros 3 e 4, Apêndice D) refletem a versão testada.
+  as evidências (quadros de testes e figuras do Apêndice D) refletem a versão testada.
 - **C:** mantenha compatível com TCC 0.9.27 e MSVC (`.vscode/tasks.json`); C simples, estilo
   didático, comentários em português. Strings exibidas **sem acento** (console do Windows).
 - **Segurança da simulação:** as credenciais fixas em texto puro são intencionais e

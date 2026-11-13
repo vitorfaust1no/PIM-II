@@ -26,6 +26,7 @@ from docx import Document
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from evidencias_docx import OPCIONAL, aplicar_trocas  # noqa: E402
+from revisao_manual_docx import sem_superadas  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -88,6 +89,14 @@ TROCAS = [
     # a contagem de testes do Resumo/Abstract sai dos resumo.json (evidencias_docx.py)
 ]
 
+# paragrafos (4.4, 9.1 e 9.2) reescritos depois por revisao_manual_docx.py
+SUPERADAS_PELO_MANUAL = {
+    "evolução futura, conforme discutido no capítulo 9.",
+    TEXTO_91_ANTIGO,
+    "as redes levam essa lógica com segurança",
+    "direitos humanos garante acessibilidade",
+}
+
 
 def main() -> None:
     doc = Document(ALVO)
@@ -95,7 +104,8 @@ def main() -> None:
         BACKUP.parent.mkdir(exist_ok=True)
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
-    print(f"Trocas de texto: {aplicar_trocas(doc, TROCAS)}.")
+    print(f"Trocas de texto: "
+          f"{aplicar_trocas(doc, sem_superadas(doc, TROCAS, SUPERADAS_PELO_MANUAL))}.")
     doc.save(ALVO)
     print("Abra no Word, atualize os campos (sumario, listas e paginas) e reexporte o PDF.")
 

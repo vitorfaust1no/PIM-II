@@ -5,7 +5,7 @@ execucao nova do programa: o estado gravado em cardapio.txt e historico.txt
 por um caso e lido pelo seguinte, o que tambem testa a persistencia.
 
 Campos de cada caso:
-  id, titulo   -> identificacao (aparece no Quadro 4 e nas figuras)
+  id, titulo   -> identificacao (aparece no quadro dos casos de teste e nas figuras do Apendice D)
   requisito    -> requisito(s) coberto(s)
   descricao    -> o que o caso faz (texto curto para o quadro)
   esperado     -> resultado esperado (texto curto para o quadro)

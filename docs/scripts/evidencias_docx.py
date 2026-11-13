@@ -8,7 +8,8 @@ Le os resultados ja gerados em docs/evidencias/ (rode antes
 3. Apendice D: quadros com os testes (C e MySQL) e prints de terminal de cada
    execucao. Quadros e figuras ficam so no apendice, para nao alongar o
    desenvolvimento nem renumerar as figuras do corpo.
-4. Secao 9.4: remete as evidencias.
+4. Secao de Beneficios (9.3; era a 9.4 antes de revisao_manual_docx.py): remete as
+   evidencias.
 5. Legendas (campos SEQ), listas de figuras e de quadros e citacoes em texto dos
    quadros que vem depois sao renumeradas; o documento pede ao Word para atualizar
    os campos ao abrir (paginas, sumario, listas).
@@ -18,7 +19,7 @@ ligados as legendas, entao continuam certos se o Word renumerar as legendas.
 
 Reaplicavel: se as evidencias ja estiverem no relatorio, elas sao removidas (so o
 que este script insere: as secoes 5.7 e 6.8 ate o proximo titulo, o Apendice D ate
-o proximo apendice/anexo, as entradas das listas e a frase da 9.4) e inseridas de
+o proximo apendice/anexo, as entradas das listas e a frase de Beneficios) e inseridas de
 novo com os resultados atuais. Faz backup em
 docs/_backups/PIM_II_Sabor_e_Cia.pre-evidencias.docx (so na primeira vez).
 Uso:  python docs/scripts/evidencias_docx.py
@@ -48,7 +49,7 @@ BACKUP = DOCS / "_backups" / "PIM_II_Sabor_e_Cia.pre-evidencias.docx"
 EVID = DOCS / "evidencias"
 LARGURA_FIG = Cm(16)
 TRAV = "–"
-FRASE_94 = (" Dentro desse escopo, a lógica central e o modelo físico foram verificados por "
+FRASE_BENEFICIOS = (" Dentro desse escopo, a lógica central e o modelo físico foram verificados por "
             "testes executados, cujos resultados constam nas seções 5.7 e 6.8 e no Apêndice D.")
 REPOSITORIO = "https://github.com/vitorfaust1no/PIM-II"
 # trechos que localizam o Resumo e o Abstract (tambem usados por revisao_final_docx.py)
@@ -202,14 +203,21 @@ class Ids:
     """Gera ids e nomes novos de indicadores (bookmarks)."""
 
     def __init__(self, doc):
-        ids = [int(b.get(qn("w:id"))) for b in doc.element.body.iter(qn("w:bookmarkStart"))]
-        self.prox = max(ids + [0])
+        marcas = list(doc.element.body.iter(qn("w:bookmarkStart")))
+        self.prox = max([int(b.get(qn("w:id"))) for b in marcas] + [0])
+        # nomes ja usados (por exemplo pelos quadros de revisao_manual_docx.py): o Word
+        # exige nomes unicos, senao REF/PAGEREF apontam para a legenda errada
+        self.usados = {b.get(qn("w:name")) for b in marcas}
         self.cont: dict[str, int] = {}
 
     def novo(self, prefixo: str):
         self.prox += 1
-        self.cont[prefixo] = self.cont.get(prefixo, 0) + 1
-        return self.prox, f"{prefixo}{self.cont[prefixo]:03d}"
+        while True:
+            self.cont[prefixo] = self.cont.get(prefixo, 0) + 1
+            nome = f"{prefixo}{self.cont[prefixo]:03d}"
+            if nome not in self.usados:
+                self.usados.add(nome)
+                return self.prox, nome
 
 
 def legenda(modelo_el, numero: int, titulo: str, ids: Ids):
@@ -466,8 +474,8 @@ def remover_evidencias(doc):
             p._p.getparent().remove(p._p)
             removeu = True
 
-    p94 = achar(doc, "Entre os benefícios esperados")
-    if substituir_regex(p94._p, re.escape(FRASE_94), ""):
+    p_beneficios = achar(doc, "Entre os benefícios esperados")
+    if substituir_regex(p_beneficios._p, re.escape(FRASE_BENEFICIOS), ""):
         removeu = True
     return removeu, ancoras
 
@@ -666,7 +674,8 @@ def main() -> None:
             "e 1451 das chaves estrangeiras, e, ao final, a contagem de registros permaneceu "
             "inalterada, o que mostra que nenhum dado inválido foi gravado. As telas de execução "
             "estão no mesmo apêndice (Figuras {fig_sql_ini} a {fig_sql_fim})." if sql_ok else
-            "O Quadro {q_sql}, no Apêndice D, resume os testes e o resultado obtido; as telas de "
+            f"O Quadro {{q_sql}} (Apêndice D {TRAV} Evidências de execução dos testes) resume os "
+            "testes e o resultado obtido; as telas de "
             "execução estão no mesmo apêndice (Figuras {fig_sql_ini} a {fig_sql_fim}).", refs),
     ]
     quadro_sql = [cap_sql,
@@ -707,10 +716,10 @@ def main() -> None:
     for el in sec68:  # mesmo lugar de antes; na primeira vez, no fim do capitulo 6
         (ancoras["6.8"] if ancoras["6.8"] is not None else cap7).addprevious(el)
 
-    # ---- 9.4: remete as evidencias ----
-    p94 = achar(doc, "Entre os benefícios esperados")
-    ultimo = p94.runs[-1]
-    ultimo.text = ultimo.text.rstrip() + FRASE_94
+    # ---- Beneficios (9.3): remete as evidencias ----
+    p_beneficios = achar(doc, "Entre os benefícios esperados")
+    ultimo = p_beneficios.runs[-1]
+    ultimo.text = ultimo.text.rstrip() + FRASE_BENEFICIOS
 
     # ---- Apendice D ----
     def subtitulo(texto):

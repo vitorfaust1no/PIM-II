@@ -30,6 +30,7 @@ from docx.oxml.ns import qn
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from evidencias_docx import aplicar_trocas_ancoradas, clonar, definir_texto  # noqa: E402
+from revisao_manual_docx import sem_superadas  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -58,6 +59,10 @@ TROCAS = [
      "não devem ser tomadas como prática recomendada",
      "não devem ser reutilizadas nem tomadas como prática recomendada"),
 ]
+
+# a Conclusao (limitacoes) foi reescrita depois por revisao_manual_docx.py: reaplicar a
+# troca acima duplicaria a frase da meta do RNF01
+SUPERADAS_PELO_MANUAL = {"Como limitações, registra-se"}
 
 
 def _espaco_antes(p_el, twips: int | None) -> None:
@@ -144,7 +149,8 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     print("Capa inserida." if inserir_capa(doc) else "Capa ja existia.")
-    print(f"Trocas de texto: {aplicar_trocas_ancoradas(doc, TROCAS)}.")
+    trocas = sem_superadas(doc, TROCAS, SUPERADAS_PELO_MANUAL)
+    print(f"Trocas de texto: {aplicar_trocas_ancoradas(doc, trocas)}.")
     print(f"Quadros com cabecalho repetido: {repetir_cabecalhos(doc)}.")
     doc.save(ALVO)
     print("Abra no Word, atualize os campos (sumario, listas e paginas) e reexporte o PDF.")
