@@ -17,6 +17,7 @@ Campos de cada caso:
                   para simular falha de gravacao
   arquivos_inalterados -> (opcional) arquivos que devem terminar iguais
   arquivos_ausentes    -> (opcional) arquivos que NAO podem existir apos a execucao
+  somente_leitura      -> (opcional) arquivos marcados como somente leitura durante o caso
 """
 
 CASOS = [
@@ -205,6 +206,25 @@ CASOS = [
         "arquivos_ausentes": ["cardapio.tmp"],
         "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
         "contem": [r"Erro: nao foi possivel gravar o historico\.",
+                   r"A alteracao foi desfeita\.",
+                   r"\[  1\] .*Burrata com tomates confitados.* ATIVO \|"],
+        "nao_contem": [r"agora esta INATIVO"],
+        "arquivos": [],
+    },
+    {
+        "id": "CT16",
+        "titulo": "Troca do cardápio recusada",
+        "requisito": "RF06, RF11",
+        "descricao": "Com o cardapio.txt somente leitura, o gerente jardins desativa o "
+                     "produto 1 e consulta o cardápio.",
+        "esperado": "Erro informado e alteração desfeita: produto 1 segue ATIVO, arquivos "
+                    "iguais e nenhum cardapio.tmp deixado para trás.",
+        # o cardapio.tmp e gravado normalmente; o que falha e a troca pelo cardapio.txt
+        "somente_leitura": ["cardapio.txt"],
+        "arquivos_inalterados": ["cardapio.txt", "historico.txt"],
+        "arquivos_ausentes": ["cardapio.tmp"],
+        "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
+        "contem": [r"Erro: nao foi possivel gravar o arquivo cardapio\.txt\.",
                    r"A alteracao foi desfeita\.",
                    r"\[  1\] .*Burrata com tomates confitados.* ATIVO \|"],
         "nao_contem": [r"agora esta INATIVO"],

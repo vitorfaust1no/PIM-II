@@ -13,5 +13,6 @@ CT12  [PASSOU]  Relatório de frequência de esgotamento
 CT13  [PASSOU]  Reativação do produto
 CT14  [PASSOU]  Falha ao gravar o cardápio
 CT15  [PASSOU]  Falha ao gravar o histórico
+CT16  [PASSOU]  Troca do cardápio recusada
 
-15 de 15 casos passaram (tcc version 0.9.27 (x86_64 Windows)).
+16 de 16 casos passaram (tcc version 0.9.27 (x86_64 Windows)).

@@ -1,7 +1,7 @@
 {
   "compilador": "tcc version 0.9.27 (x86_64 Windows)",
-  "total": 15,
-  "passou": 15,
+  "total": 16,
+  "passou": 16,
   "casos": [
     {
       "id": "CT01",
@@ -183,6 +183,18 @@
       "falhas": [],
       "imagens": [
         "CT15.png"
+      ]
+    },
+    {
+      "id": "CT16",
+      "titulo": "Troca do cardápio recusada",
+      "requisito": "RF06, RF11",
+      "descricao": "Com o cardapio.txt somente leitura, o gerente jardins desativa o produto 1 e consulta o cardápio.",
+      "esperado": "Erro informado e alteração desfeita: produto 1 segue ATIVO, arquivos iguais e nenhum cardapio.tmp deixado para trás.",
+      "status": "PASSOU",
+      "falhas": [],
+      "imagens": [
+        "CT16.png"
       ]
     }
   ]
