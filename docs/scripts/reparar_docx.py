@@ -92,6 +92,37 @@ def _tem_fonte_mono(paragraph) -> bool:
     return False
 
 
+def _alinhamento(paragraph):
+    """Alinhamento efetivo: o direto ou, sem ele, o do estilo (e dos estilos base)."""
+    if paragraph.alignment is not None:
+        return paragraph.alignment
+    estilo = paragraph.style
+    while estilo is not None:
+        if estilo.paragraph_format.alignment is not None:
+            return estilo.paragraph_format.alignment
+        estilo = estilo.base_style
+    return None
+
+
+def eh_corpo_narrativo(paragraph) -> bool:
+    """True para paragrafo de texto corrido, que leva justificado e recuo de 1a linha.
+
+    Exclui titulos, sumario e listas (estilos Heading, toc e table of figures),
+    paragrafos centralizados (direto ou pelo estilo: figuras, legendas e fontes),
+    vazios, legendas/fontes pelo prefixo e blocos de codigo (fonte monoespacada).
+    Fonte unica da regra: padronizar_corpo e revisar_docx.ajustar_recuo_e_resumos.
+    """
+    nome = paragraph.style.name
+    if nome.startswith(("Heading", "toc")) or nome == "table of figures":
+        return False
+    if _alinhamento(paragraph) == WD_ALIGN_PARAGRAPH.CENTER:
+        return False
+    txt = paragraph.text.strip()
+    if not txt or txt.lower().startswith(PREFIXOS_LEGENDA):
+        return False
+    return not _tem_fonte_mono(paragraph)
+
+
 def _limites_corpo(doc):
     """Indices [inicio, fim) do corpo: 1a Heading 1 ate a heading REFERENCIAS."""
     inicio = fim = None
@@ -118,17 +149,8 @@ def padronizar_corpo(doc):
         return 0, 0
     justificados = recuados = 0
     for p in doc.paragraphs[inicio:fim]:
-        if p.style.name.startswith(("Heading", "toc")) or p.style.name == "table of figures":
+        if not eh_corpo_narrativo(p):
             continue
-        if p.alignment == WD_ALIGN_PARAGRAPH.CENTER:
-            continue  # legendas, figuras e fontes ja centralizadas
-        txt = p.text.strip()
-        if not txt:
-            continue
-        if txt.lower().startswith(PREFIXOS_LEGENDA):
-            continue
-        if _tem_fonte_mono(p):
-            continue  # bloco de codigo (SQL/C) — nao justificar nem recuar
         pf = p.paragraph_format
         if p.alignment != WD_ALIGN_PARAGRAPH.JUSTIFY:
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY

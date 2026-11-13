@@ -13,9 +13,8 @@ from pathlib import Path
 
 from docx import Document
 from docx.shared import Cm, Emu
-from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-from reparar_docx import RECUO_ABNT, _tem_fonte_mono  # fonte unica do recuo (Manual do PIM)
+from reparar_docx import RECUO_ABNT, eh_corpo_narrativo  # fonte unica do recuo (Manual do PIM)
 
 ALVO = Path(__file__).resolve().parent.parent / "PIM_II_Sabor_e_Cia.docx"
 
@@ -347,18 +346,17 @@ def ajustar_recuo_e_resumos(doc) -> None:
 
     O recuo vale para qualquer paragrafo com recuo direto de 1,0 a 1,5 cm (ex.:
     1,25 da ABNT ou 1,27 do Word), inclusive fora do corpo que
-    reparar_docx.padronizar_corpo cobre (pre-textuais e apendices). Nao mexe em
-    titulos, sumario, paragrafos centralizados, blocos de codigo nem em recuos
-    zerados, pendentes ou maiores (citacoes longas).
+    reparar_docx.padronizar_corpo cobre (pre-textuais e apendices). So em texto
+    corrido (reparar_docx.eh_corpo_narrativo: nada de titulos, legendas, fontes,
+    centralizados ou codigo) e nunca em recuos zerados, pendentes ou maiores
+    (citacoes longas).
     """
     for p in doc.paragraphs:
         f = p.paragraph_format
         recuo = f.first_line_indent
         if (recuo is not None and 1.0 <= recuo.cm <= 1.5
                 and abs(int(recuo) - int(RECUO_ABNT)) > 1000
-                and not p.style.name.startswith(("Heading", "toc"))
-                and p.alignment != WD_ALIGN_PARAGRAPH.CENTER
-                and not _tem_fonte_mono(p)):
+                and eh_corpo_narrativo(p)):
             f.first_line_indent = RECUO_ABNT
         if p.text.startswith(("Este trabalho apresenta o projeto de um cardápio digital acessível, com controle de disponibilidade de pratos",
                               "This paper presents the design")):

@@ -135,6 +135,9 @@ def indicador(id_: int, nome: str | None = None):
 
 
 INDICADORES = (qn("w:bookmarkStart"), qn("w:bookmarkEnd"))
+# conteudo que definir_texto descarta e que merece aviso (o resto e so texto em runs)
+DESCARTE_AVISADO = {qn(t) for t in ("w:fldSimple", "w:fldChar", "w:hyperlink", "w:ins",
+                                    "w:del", "w:commentRangeStart", "w:commentReference")}
 
 
 def definir_texto(p_el, texto: str, manter_indicadores: bool = False):
@@ -142,15 +145,25 @@ def definir_texto(p_el, texto: str, manter_indicadores: bool = False):
 
     Remove todo o resto (outros runs, w:hyperlink, w:ins, w:del, w:fldSimple...).
     Com manter_indicadores=True, preserva os indicadores (bookmarks) de referencia
-    cruzada do proprio paragrafo."""
-    manter = {qn("w:pPr")} | (set(INDICADORES) if manter_indicadores else set())
+    cruzada do proprio paragrafo, envolvendo o texto novo: os inicios ficam antes
+    dele e os fins depois (um REF/PAGEREF para o indicador continua mostrando o
+    texto, e um intervalo que atravessa paragrafos nao encolhe). Nesse modo avisa
+    quando descarta campos, hyperlinks, comentarios ou alteracoes controladas."""
     primeiro = next((r for r in p_el.iter(qn("w:r")) if r.find(qn("w:t")) is not None), None)
     rpr = None if primeiro is None else primeiro.find(qn("w:rPr"))
     rpr = None if rpr is None else copy.deepcopy(rpr)
+    if manter_indicadores:
+        perdidos = sorted({e.tag.split("}")[1] for e in p_el.iter() if e.tag in DESCARTE_AVISADO})
+        if perdidos:
+            print(f"  AVISO: {', '.join(perdidos)} descartado(s) ao reescrever "
+                  f"{texto_el(p_el)[:50]!r}")
+    inicios = [e for e in p_el if manter_indicadores and e.tag == INDICADORES[0]]
+    fins = [e for e in p_el if manter_indicadores and e.tag == INDICADORES[1]]
     for e in list(p_el):
-        if e.tag not in manter:
+        if e.tag != qn("w:pPr"):
             p_el.remove(e)
-    p_el.append(run_texto(rpr, texto))
+    for e in inicios + [run_texto(rpr, texto)] + fins:
+        p_el.append(e)
     return p_el
 
 
