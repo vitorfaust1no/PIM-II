@@ -14,7 +14,6 @@ Uso:  python docs/scripts/seguranca_simulacao_docx.py
 from __future__ import annotations
 
 import copy
-import difflib
 import shutil
 from pathlib import Path
 
@@ -108,33 +107,10 @@ def inserir_67(doc) -> bool:
 
 
 def sincronizar_apendice_a(doc) -> int:
-    P = doc.paragraphs
-    a = next(i for i, p in enumerate(P) if p.text.startswith("APÊNDICE A"))
-    b = next(i for i, p in enumerate(P) if p.text.startswith("APÊNDICE B"))
-    pars = P[a + 1:b]
-    atual = [p.text for p in pars]
-    novo = FONTE_C.read_text(encoding="utf-8").replace("\r\n", "\n").rstrip("\n").split("\n")
-    mudancas = 0
-    # aplica de tras para frente para os indices continuarem validos
-    ops = difflib.SequenceMatcher(a=atual, b=novo, autojunk=False).get_opcodes()
-    for tag, i1, i2, j1, j2 in reversed(ops):
-        if tag == "equal":
-            continue
-        mudancas += 1
-        comum = min(i2 - i1, j2 - j1)
-        for k in range(comum):  # substituicoes 1:1
-            par = pars[i1 + k]
-            for r in par.runs[1:]:
-                r._r.getparent().remove(r._r)
-            par.runs[0].text = novo[j1 + k]
-        for k in range(i1 + comum, i2):  # sobras do lado antigo
-            pars[k]._p.getparent().remove(pars[k]._p)
-        if j2 - j1 > comum:  # linhas novas: clona o paragrafo de codigo vizinho
-            ref = pars[i1 + comum - 1] if i1 + comum > 0 else pars[0]
-            ancora = ref._p if i1 + comum > 0 else P[a]._p
-            for k in range(j1 + comum, j2):
-                ancora = _clonar_depois(ref, ancora, novo[k])._p
-    return mudancas
+    """Delega a sincronizar_apendices_docx, que ignora os paragrafos vazios do fim do
+    apendice e trata linhas em branco (a copia antiga daqui quebrava nesses casos)."""
+    from sincronizar_apendices_docx import sincronizar
+    return sincronizar(doc, "APÊNDICE A", "APÊNDICE B", FONTE_C, aplicar=True)
 
 
 def main() -> None:

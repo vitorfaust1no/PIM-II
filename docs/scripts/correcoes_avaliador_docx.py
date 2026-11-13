@@ -34,6 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ajustar_figuras import localizar_figura  # noqa: E402
 from evidencias_docx import achar, substituir_regex  # noqa: E402
 from escopo_gravacao_docx import TEXTO_91, TEXTO_91_ANTIGO  # noqa: E402
+from replicacao_docx import TEXTO_54  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -64,8 +65,9 @@ TROCAS = [
      "Cada tabela recebeu chave primária e as chaves estrangeiras correspondentes.",
      "O histórico tornou-se a tabela historico_disponibilidade, com chave primária própria "
      "(id_historico) e três chaves estrangeiras, para produto, filial e usuário; por ser um "
-     "registro de eventos, nela apenas se inserem linhas, e ela também serve de caixa de saída "
-     "para a replicação descrita na seção 5.4. O dispositivo tornou-se a tabela dispositivo, "
+     "registro de eventos, nela apenas se inserem linhas, e cada evento gera uma pendência na "
+     "tabela replicacao_pendente, a caixa de saída da replicação (seção 5.4). O dispositivo "
+     "tornou-se a tabela dispositivo, "
      "ligada à filial por chave estrangeira. Cada tabela recebeu chave primária e as chaves "
      "estrangeiras correspondentes."),
     # 5.3: por que a tabela dispositivo existe
@@ -188,16 +190,7 @@ NOVO_56 = (
     "ordem de exibição da categoria. Esses comandos foram executados nos testes da seção 5.7.")
 
 INICIO_54 = "Os principais cenários de falha"
-NOVO_54 = (
-    "Nos cenários de falha, o MySQL é a referência para a recuperação. Se o MongoDB estiver "
-    "indisponível, o ponto de controle não avança e o serviço tenta de novo com espera "
-    "exponencial, sem perda de eventos; se o próprio serviço falhar entre gravar no MongoDB e "
-    "avançar o ponto de controle, o lote é reprocessado e os eventos repetidos são rejeitados "
-    "pela chave _id; e uma transação revertida não gera registro de histórico, logo não há o "
-    "que replicar. Uma conciliação diária compara as contagens de eventos por filial e por dia "
-    "nos dois bancos e reenvia os que faltarem, e a defasagem da réplica é monitorada com "
-    "alerta; esse atraso afeta apenas os relatórios analíticos, pois o cardápio e as "
-    "maquininhas leem o MySQL (RNF01).")
+NOVO_54 = TEXTO_54[2]  # cenarios de falha: texto atual em replicacao_docx.py
 
 # (inicio da legenda, arquivo, largura em cm)
 FIGURAS = [
