@@ -202,7 +202,9 @@ int registrarHistorico(const char *acao, int idProduto, int filial,
    em pendencia.txt ANTES de mexer no cardapio e no historico. O arquivo so e
    apagado (fecharPendencia) quando os dois estao de acordo; se o programa
    parar no meio, a proxima execucao o encontra (carregarDados).
-   Retorna 1 se gravou e 0 em caso de falha (nada fica no disco). */
+   Retorna 1 se gravou e 0 em caso de falha (o cardapio e o historico nao
+   foram tocados; se o pendencia.txt incompleto nao puder ser apagado, o
+   usuario e avisado para apaga-lo). */
 int abrirPendencia(const char *acao, int idProduto, int filial, const char *login) {
     FILE *arq = fopen(ARQ_PENDENCIA, "w");
     int ok;
@@ -218,8 +220,11 @@ int abrirPendencia(const char *acao, int idProduto, int filial, const char *logi
         ok = 0;
     }
     if (!ok) {
-        remove(ARQ_PENDENCIA);
         printf("Erro: nao foi possivel gravar o arquivo %s.\n", ARQ_PENDENCIA);
+        if (remove(ARQ_PENDENCIA) != 0 && arquivoComum(ARQ_PENDENCIA)) {
+            printf("Apague o arquivo %s: o cardapio e o historico nao foram "
+                   "alterados.\n", ARQ_PENDENCIA);
+        }
     }
     return ok;
 }
@@ -227,8 +232,10 @@ int abrirPendencia(const char *acao, int idProduto, int filial, const char *logi
 /* A alteracao terminou (gravada ou desfeita) e os arquivos estao de acordo. */
 void fecharPendencia(void) {
     if (remove(ARQ_PENDENCIA) != 0) {
-        /* lado seguro: a proxima execucao pede uma conferencia desnecessaria */
-        printf("Aviso: nao foi possivel apagar o arquivo %s.\n", ARQ_PENDENCIA);
+        /* lado seguro: a proxima execucao recusa iniciar ate o arquivo sair */
+        printf("Aviso: a alteracao terminou e os arquivos estao de acordo, mas "
+               "o arquivo %s nao pode ser apagado.\nApague-o antes de iniciar "
+               "o programa de novo.\n", ARQ_PENDENCIA);
     }
 }
 
@@ -425,6 +432,45 @@ void carregarExemplo(void) {
     }
 }
  
+/* Grava uma alteracao que ja foi feita na memoria, "tudo ou nada" como a
+   transacao do banco (RF06 + RF11): abre a pendencia, grava o cardapio e
+   depois o historico. Retorna:
+    1 = cardapio e historico gravados;
+    0 = nada mudou no disco: o chamador desfaz so na memoria;
+   -1 = cardapio gravado, historico sem a linha: o chamador desfaz na memoria
+        e chama desfazerNoDisco().
+   Se o historico pode ter recebido a linha (incompleta), nao ha como
+   desfazer com seguranca: o programa encerra com a pendencia no disco. */
+int gravarAlteracao(const char *acao, int idProduto, int filial, const char *login) {
+    int resultado;
+
+    if (!abrirPendencia(acao, idProduto, filial, login)) {
+        return 0;
+    }
+    if (!salvarDados()) {
+        fecharPendencia(); /* o cardapio.txt ficou como estava */
+        return 0;
+    }
+    resultado = registrarHistorico(acao, idProduto, filial, login);
+    if (resultado == -1) {
+        encerrarComPendencia();
+    }
+    if (resultado == 0) {
+        return -1; /* a pendencia continua aberta ate desfazerNoDisco */
+    }
+    fecharPendencia();
+    return 1;
+}
+
+/* Regrava o cardapio ja desfeito na memoria. Se falhar, o cardapio fica com a
+   alteracao e o historico sem ela: o programa encerra com a pendencia. */
+void desfazerNoDisco(void) {
+    if (!salvarDados()) {
+        encerrarComPendencia();
+    }
+    fecharPendencia();
+}
+
 /* RF05 (simplificado): cadastro de produto pelo administrador */
 void cadastrarProduto(const char *login) {
     char nome[TAM_NOME], categoria[TAM_CATEGORIA], alergenos[TAM_ALERGENOS];
@@ -454,30 +500,15 @@ void cadastrarProduto(const char *login) {
     }
     /* tudo ou nada: se o cardapio ou o historico nao puder ser gravado,
        o produto sai do vetor e o arquivo volta ao estado anterior */
-    if (!abrirPendencia("CADASTRAR", id, -1, login)) {
-        qtdProdutos--;
-        printf("O cadastro foi desfeito.\n");
-        return;
-    }
-    if (!salvarDados()) {
-        qtdProdutos--;
-        fecharPendencia(); /* o cardapio.txt ficou como estava */
-        printf("O cadastro foi desfeito.\n");
-        return;
-    }
-    resultado = registrarHistorico("CADASTRAR", id, -1, login);
+    resultado = gravarAlteracao("CADASTRAR", id, -1, login);
     if (resultado != 1) {
         qtdProdutos--;
-        /* so fica tudo de acordo se o historico nao recebeu nada (0) e o
-           cardapio voltou ao estado anterior */
-        if (resultado == 0 && salvarDados()) {
-            fecharPendencia();
-            printf("O cadastro foi desfeito.\n");
-            return;
+        if (resultado == -1) {
+            desfazerNoDisco();
         }
-        encerrarComPendencia();
+        printf("O cadastro foi desfeito.\n");
+        return;
     }
-    fecharPendencia();
     printf("Produto %d cadastrado e ativo em todas as filiais.\n", id);
 }
  
@@ -591,30 +622,15 @@ void alterarDisponibilidade(int filial, const char *login) {
        ou o historico nao puder ser gravado, volta ao estado anterior */
     acao = novoEstado ? "ATIVAR" : "DESATIVAR";
     disponibilidade[pos][filial] = novoEstado;
-    if (!abrirPendencia(acao, id, filial, login)) {
-        disponibilidade[pos][filial] = !novoEstado;
-        printf("A alteracao foi desfeita.\n");
-        return;
-    }
-    if (!salvarDados()) {
-        disponibilidade[pos][filial] = !novoEstado;
-        fecharPendencia(); /* o cardapio.txt ficou como estava */
-        printf("A alteracao foi desfeita.\n");
-        return;
-    }
-    resultado = registrarHistorico(acao, id, filial, login);
+    resultado = gravarAlteracao(acao, id, filial, login);
     if (resultado != 1) {
         disponibilidade[pos][filial] = !novoEstado;
-        /* so fica tudo de acordo se o historico nao recebeu nada (0) e o
-           cardapio voltou ao estado anterior */
-        if (resultado == 0 && salvarDados()) {
-            fecharPendencia();
-            printf("A alteracao foi desfeita.\n");
-            return;
+        if (resultado == -1) {
+            desfazerNoDisco();
         }
-        encerrarComPendencia();
+        printf("A alteracao foi desfeita.\n");
+        return;
     }
-    fecharPendencia();
     printf("'%s' agora esta %s na filial %s.\n", produtos[pos].nome,
            novoEstado ? "ATIVO" : "INATIVO", FILIAIS[filial]);
 }
