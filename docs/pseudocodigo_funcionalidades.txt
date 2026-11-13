@@ -56,7 +56,7 @@ funcao AlterarDisponibilidade(filial: inteiro, login: caractere)
 // O novo estado e escolhido de forma explicita: repetir a operacao
 // nao desfaz a alteracao.
 var
-    id, pos, opcao, novoEstado: inteiro
+    id, pos, opcao, novoEstado, resultado: inteiro
     acao: caractere
 inicio
     ExibirCardapio(filial, falso, "")   // visao do gerente: sem filtro de alergeno
@@ -86,16 +86,14 @@ inicio
         retorne
     fimse
     // tudo ou nada: se o cardapio ou o historico nao puder ser gravado,
-    // volta ao estado anterior (como a transacao do banco)
+    // volta ao estado anterior (como a transacao do banco; Algoritmo 7)
     disponibilidade[pos][filial] <- novoEstado
-    se nao SalvarDados() entao                     // grava cardapio.txt
+    resultado <- GravarAlteracao(acao, id, filial, login)
+    se resultado <> 1 entao
         disponibilidade[pos][filial] <- 1 - novoEstado
-        escreva("A alteracao foi desfeita.")
-        retorne
-    fimse
-    se nao RegistrarHistorico(acao, id, filial, login) entao  // historico.txt
-        disponibilidade[pos][filial] <- 1 - novoEstado
-        SalvarDados()
+        se resultado = -1 entao     // o cardapio.txt ja tinha sido gravado
+            DesfazerNoDisco()
+        fimse
         escreva("A alteracao foi desfeita.")
         retorne
     fimse
@@ -198,4 +196,43 @@ inicio
     senao
         retorne falso
     fimse
+fimfuncao
+
+------------------------------------------------------------------
+Algoritmo 7: GravarAlteracao e DesfazerNoDisco (RF06 e RF11)
+------------------------------------------------------------------
+// Grava uma alteracao ja feita na memoria. Antes de tocar no cardapio e no
+// historico, registra a operacao em pendencia.txt; o arquivo so e apagado
+// quando os dois estao de acordo. Ao iniciar, se o pendencia.txt existir,
+// o programa mostra a operacao, pede a conferencia e encerra (CT18).
+// Retorna 1 = gravada; 0 = nada mudou no disco; -1 = cardapio gravado e
+// historico sem a linha (o chamador desfaz na memoria e chama DesfazerNoDisco).
+funcao GravarAlteracao(acao: caractere, id, filial: inteiro, login: caractere): inteiro
+var
+    resultado: inteiro
+inicio
+    se nao AbrirPendencia(acao, id, filial, login) entao   // pendencia.txt
+        retorne 0
+    fimse
+    se nao SalvarDados() entao                            // cardapio.txt
+        FecharPendencia()        // o cardapio.txt ficou como estava
+        retorne 0
+    fimse
+    resultado <- RegistrarHistorico(acao, id, filial, login)  // historico.txt
+    se resultado = -1 entao      // a linha pode ter ficado, inteira ou nao
+        EncerrarComPendencia()   // pede a conferencia e encerra o programa
+    fimse
+    se resultado = 0 entao       // o historico nao recebeu nada
+        retorne -1               // a pendencia continua aberta
+    fimse
+    FecharPendencia()
+    retorne 1
+fimfuncao
+
+funcao DesfazerNoDisco()
+inicio
+    se nao SalvarDados() entao   // regrava o cardapio ja desfeito na memoria
+        EncerrarComPendencia()
+    fimse
+    FecharPendencia()
 fimfuncao
