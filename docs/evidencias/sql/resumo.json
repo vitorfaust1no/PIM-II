@@ -107,7 +107,8 @@
       "SQL_03_testes_p6.png",
       "SQL_03_testes_p7.png",
       "SQL_03_testes_p8.png",
-      "SQL_03_testes_p9.png"
+      "SQL_03_testes_p9.png",
+      "SQL_03_testes_p10.png"
     ]
   },
   "testes_por_imagem": [
@@ -135,6 +136,9 @@
     [
       "ST11",
       "ST12"
+    ],
+    [
+      "ST13"
     ],
     [
       "ST13"

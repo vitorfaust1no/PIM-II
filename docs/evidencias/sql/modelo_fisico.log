@@ -8,7 +8,7 @@ Query OK, 0 rows affected, 1 warning (0.00 sec)
 CREATE DATABASE sabor_cia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 --------------
 
-Query OK, 1 row affected (0.02 sec)
+Query OK, 1 row affected (0.01 sec)
 
 --------------
 CREATE TABLE filial (
@@ -20,7 +20,7 @@ CREATE TABLE filial (
 )
 --------------
 
-Query OK, 0 rows affected (0.06 sec)
+Query OK, 0 rows affected (0.07 sec)
 
 --------------
 CREATE TABLE usuario (
@@ -39,7 +39,7 @@ CREATE TABLE usuario (
 )
 --------------
 
-Query OK, 0 rows affected (0.07 sec)
+Query OK, 0 rows affected (0.09 sec)
 
 --------------
 CREATE TABLE dispositivo (
@@ -64,7 +64,7 @@ CREATE TABLE categoria (
 )
 --------------
 
-Query OK, 0 rows affected (0.07 sec)
+Query OK, 0 rows affected (0.05 sec)
 
 --------------
 CREATE TABLE produto (
@@ -84,7 +84,7 @@ CREATE TABLE produto (
 )
 --------------
 
-Query OK, 0 rows affected (0.07 sec)
+Query OK, 0 rows affected (0.05 sec)
 
 --------------
 CREATE TABLE alergeno (
@@ -94,7 +94,7 @@ CREATE TABLE alergeno (
 )
 --------------
 
-Query OK, 0 rows affected (0.07 sec)
+Query OK, 0 rows affected (0.04 sec)
 
 --------------
 CREATE TABLE produto_alergeno (
@@ -123,7 +123,7 @@ CREATE TABLE harmonizacao (
 )
 --------------
 
-Query OK, 0 rows affected (0.06 sec)
+Query OK, 0 rows affected (0.05 sec)
 
 --------------
 CREATE TABLE disponibilidade (
@@ -140,7 +140,7 @@ CREATE TABLE disponibilidade (
 )
 --------------
 
-Query OK, 0 rows affected (0.16 sec)
+Query OK, 0 rows affected (0.06 sec)
 
 --------------
 CREATE TABLE historico_disponibilidade (
@@ -156,7 +156,7 @@ CREATE TABLE historico_disponibilidade (
 )
 --------------
 
-Query OK, 0 rows affected (0.13 sec)
+Query OK, 0 rows affected (0.06 sec)
 
 --------------
 CREATE TABLE replicacao_pendente (
@@ -167,13 +167,13 @@ CREATE TABLE replicacao_pendente (
 )
 --------------
 
-Query OK, 0 rows affected (0.07 sec)
+Query OK, 0 rows affected (0.04 sec)
 
 --------------
 CREATE INDEX idx_disp_filial_ativo ON disponibilidade (id_filial, ativo)
 --------------
 
-Query OK, 0 rows affected (0.07 sec)
+Query OK, 0 rows affected (0.05 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 
 --------------
@@ -226,7 +226,7 @@ BEGIN
 END
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.02 sec)
 
 --------------
 INSERT INTO filial (nome, endereco, bairro, url_qrcode) VALUES
@@ -251,7 +251,7 @@ INSERT INTO usuario (nome, email, perfil, id_filial, senha_hash) VALUES
     '$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01236')
 --------------
 
-Query OK, 3 rows affected (0.00 sec)
+Query OK, 3 rows affected (0.01 sec)
 Records: 3  Duplicates: 0  Warnings: 0
 
 --------------
@@ -260,7 +260,7 @@ INSERT INTO dispositivo (id_filial, descricao, token_hash) VALUES
 (2, 'Maquininha salão 01', SHA2('token-exemplo-itaim-01', 256))
 --------------
 
-Query OK, 2 rows affected (0.01 sec)
+Query OK, 2 rows affected (0.02 sec)
 Records: 2  Duplicates: 0  Warnings: 0
 
 --------------
@@ -271,7 +271,7 @@ INSERT INTO categoria (nome_pt, nome_en, ordem_exibicao) VALUES
 ('Vinhos', 'Wines', 4)
 --------------
 
-Query OK, 4 rows affected (0.02 sec)
+Query OK, 4 rows affected (0.00 sec)
 Records: 4  Duplicates: 0  Warnings: 0
 
 --------------
@@ -291,7 +291,7 @@ INSERT INTO produto (id_categoria, nome_pt, nome_en,
 (4, 'Chardonnay (taça)', 'Chardonnay (glass)', NULL, NULL, 45.00)
 --------------
 
-Query OK, 5 rows affected (0.08 sec)
+Query OK, 5 rows affected (0.01 sec)
 Records: 5  Duplicates: 0  Warnings: 0
 
 --------------
@@ -336,7 +336,7 @@ Query OK, 0 rows affected (0.00 sec)
 START TRANSACTION
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.00 sec)
 
 --------------
 UPDATE disponibilidade d
@@ -363,14 +363,14 @@ FROM usuario u
 WHERE u.id_usuario = @usuario AND @alterou > 0
 --------------
 
-Query OK, 1 row affected (0.00 sec)
+Query OK, 1 row affected (0.01 sec)
 Records: 1  Duplicates: 0  Warnings: 0
 
 --------------
 COMMIT
 --------------
 
-Query OK, 0 rows affected (0.02 sec)
+Query OK, 0 rows affected (0.00 sec)
 
 --------------
 INSERT INTO historico_disponibilidade
@@ -441,7 +441,7 @@ WHERE d.id_filial = 1 AND d.ativo = TRUE
 | Salmão em crosta de castanhas  | 112.00 |
 | Chardonnay (taça)              |  45.00 |
 +--------------------------------+--------+
-2 rows in set (0.01 sec)
+2 rows in set (0.00 sec)
 
 --------------
 SELECT prato.nome_pt AS prato, vinho.nome_pt AS vinho_sugerido
@@ -473,7 +473,7 @@ ORDER BY f.id_filial
 | Sabor & Cia Bistrô Itaim      |                   0 |
 | Sabor & Cia Bistrô Pinheiros  |                   0 |
 +-------------------------------+---------------------+
-3 rows in set (0.00 sec)
+3 rows in set (0.01 sec)
 
 --------------
 SELECT f.nome AS filial, p.nome_pt AS produto, COUNT(*) AS vezes_esgotado

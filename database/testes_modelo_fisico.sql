@@ -121,7 +121,9 @@ SET @alterou = ROW_COUNT();
 INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
 SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
 FROM usuario u WHERE u.id_usuario = @usuario AND @alterou > 0;
-SET @novo = LAST_INSERT_ID();
+-- o INSERT so ocorre se @alterou > 0; sem ele, LAST_INSERT_ID() guardaria o id de
+-- um INSERT anterior e a conferencia abaixo daria falso positivo: usa NULL
+SET @novo = IF(@alterou > 0, LAST_INSERT_ID(), NULL);
 COMMIT;
 SELECT @alterou AS linhas_alteradas,
        (SELECT COUNT(*) FROM replicacao_pendente WHERE id_historico = @novo) AS pendencia_do_novo_evento;

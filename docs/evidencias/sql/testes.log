@@ -156,7 +156,7 @@ Query OK, 0 rows affected (0.00 sec)
 SELECT COUNT(*) INTO @antes FROM historico_disponibilidade
 --------------
 
-Query OK, 1 row affected (0.00 sec)
+Query OK, 1 row affected (0.01 sec)
 
 --------------
 START TRANSACTION
@@ -186,7 +186,7 @@ SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
 FROM usuario u WHERE u.id_usuario = @usuario AND @alterou > 0
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.00 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 
 --------------
@@ -354,7 +354,7 @@ SELECT (SELECT COUNT(*) FROM produto)      AS produtos,
 +----------+----------+---------------+------------------+
 |        5 |        3 |             2 |               15 |
 +----------+----------+---------------+------------------+
-1 row in set (0.00 sec)
+1 row in set (0.01 sec)
 
 --------------
 -- ST13 - Caixa de saida da replicacao (trigger trg_historico_pendente)
@@ -378,7 +378,7 @@ SELECT (SELECT COUNT(*) FROM historico_disponibilidade) AS eventos,
 +---------+-----------+
 |       7 |         7 |
 +---------+-----------+
-1 row in set (0.01 sec)
+1 row in set (0.00 sec)
 
 --------------
 -- (b) e (c) usam a transacao RF06/RF11 completa (como no ST04): o gerente 2
@@ -457,13 +457,13 @@ SELECT @alterou AS dentro_linhas_alteradas,
 +-------------------------+-------------------+
 |                       1 |                 1 |
 +-------------------------+-------------------+
-1 row in set (0.01 sec)
+1 row in set (0.00 sec)
 
 --------------
 ROLLBACK
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 
 --------------
 SELECT (SELECT COUNT(*) FROM replicacao_pendente) - @pend_antes AS pendencias_apos_rollback,
@@ -496,7 +496,7 @@ SET d.ativo = FALSE
 WHERE d.id_produto = @produto AND d.id_filial = u.id_filial AND d.ativo = TRUE
 --------------
 
-Query OK, 1 row affected (0.00 sec)
+Query OK, 1 row affected (0.01 sec)
 Rows matched: 1  Changed: 1  Warnings: 0
 
 --------------
@@ -515,7 +515,19 @@ Query OK, 1 row affected (0.00 sec)
 Records: 1  Duplicates: 0  Warnings: 0
 
 --------------
-SET @novo = LAST_INSERT_ID()
+-- o INSERT so ocorre se @alterou > 0; sem ele, LAST_INSERT_ID() guardaria o id de
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+-- um INSERT anterior e a conferencia abaixo daria falso positivo: usa NULL
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+SET @novo = IF(@alterou > 0, LAST_INSERT_ID(), NULL)
 --------------
 
 Query OK, 0 rows affected (0.00 sec)
@@ -524,7 +536,7 @@ Query OK, 0 rows affected (0.00 sec)
 COMMIT
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.00 sec)
 
 --------------
 SELECT @alterou AS linhas_alteradas,
