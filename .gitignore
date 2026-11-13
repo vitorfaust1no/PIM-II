@@ -1,6 +1,8 @@
 # Saídas da simulação em C
 cardapio.txt
 historico.txt
+cardapio.tmp
+pendencia.txt
 *.exe
 *.obj
 

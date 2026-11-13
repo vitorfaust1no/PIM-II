@@ -12,7 +12,10 @@
  * matriz (disponibilidade produto x filial) e arquivos texto
  * (cardapio.txt para os dados, historico.txt para o log de alteracoes).
  * Cada alteracao e "tudo ou nada": se o cardapio ou o historico nao puder
- * ser gravado, a alteracao e desfeita (como a transacao do banco).
+ * ser gravado, a alteracao e desfeita (como a transacao do banco). Antes de
+ * gravar, o programa cria o arquivo pendencia.txt com a operacao e so o
+ * apaga quando os dois arquivos estao de acordo; se nem desfazer for
+ * possivel, ele fica no disco e a proxima execucao pede a conferencia.
  *
  * Obs.: os textos do programa estao sem acento para evitar problemas
  * de exibicao no console do Windows.
@@ -25,13 +28,17 @@
  * hash bcrypt no banco (coluna usuario.senha_hash, RNF04), conforme a
  * secao 6.7 do relatorio e o script database/modelo_fisico_mysql.sql.
  */
- 
+
+#ifndef _WIN32
+#define _POSIX_C_SOURCE 200809L /* fsync, fileno e stat tambem com -std=c99 */
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>
+#include <sys/stat.h> /* stat: o arquivo existe e e um arquivo comum? */
 #ifdef _WIN32
 #include <windows.h> /* MoveFileExA: troca do arquivo (salvarDados) */
 #include <io.h>      /* _commit: forca a gravacao no disco */
@@ -48,7 +55,8 @@
 #define ARQ_DADOS     "cardapio.txt"
 #define ARQ_DADOS_TMP "cardapio.tmp" /* gravacao segura (ver salvarDados) */
 #define ARQ_HISTORICO "historico.txt"
- 
+#define ARQ_PENDENCIA "pendencia.txt" /* alteracao em andamento (ver abrirPendencia) */
+
 #define PERFIL_ADMIN   1
 #define PERFIL_GERENTE 2
  
@@ -150,15 +158,27 @@ int gravarNoDisco(FILE *arq) {
 #endif
 }
 
+/* Retorna 1 se o nome existe e e um arquivo comum (uma pasta com o mesmo
+   nome nao conta). Usa stat, que nao abre o arquivo: um arquivo bloqueado
+   por outro programa tambem conta como existente. */
+int arquivoComum(const char *nome) {
+    struct stat info;
+    return stat(nome, &info) == 0 && (info.st_mode & S_IFMT) == S_IFREG;
+}
+
 /* RF11: acrescenta uma linha no historico: data/hora;acao;produto;filial;usuario.
-   Retorna 1 se a linha foi gravada e 0 em caso de falha. */
+   Retorna:
+    1 se a linha foi gravada;
+    0 se nada foi gravado (o arquivo nem abriu);
+   -1 se o arquivo abriu mas a gravacao falhou: a linha pode ter ficado no
+      disco, inteira ou pela metade, e nao da para saber qual. */
 int registrarHistorico(const char *acao, int idProduto, int filial,
                        const char *login) {
     FILE *arq = fopen(ARQ_HISTORICO, "a");
     time_t agora = time(NULL);
     char dataHora[20];
     int ok;
- 
+
     if (arq == NULL) {
         printf("Erro: nao foi possivel gravar o historico.\n");
         return 0;
@@ -171,11 +191,70 @@ int registrarHistorico(const char *acao, int idProduto, int filial,
         ok = 0;
     }
     if (!ok) {
-        /* o arquivo abriu, entao parte da linha pode ter chegado ao disco */
         printf("Erro: nao foi possivel gravar o historico "
-               "(a ultima linha pode ter ficado incompleta).\n");
+               "(a linha pode ter ficado no arquivo, inteira ou incompleta).\n");
+        return -1;
+    }
+    return 1;
+}
+
+/* Marca no disco que uma alteracao comecou: grava acao;produto;filial;usuario
+   em pendencia.txt ANTES de mexer no cardapio e no historico. O arquivo so e
+   apagado (fecharPendencia) quando os dois estao de acordo; se o programa
+   parar no meio, a proxima execucao o encontra (carregarDados).
+   Retorna 1 se gravou e 0 em caso de falha (nada fica no disco). */
+int abrirPendencia(const char *acao, int idProduto, int filial, const char *login) {
+    FILE *arq = fopen(ARQ_PENDENCIA, "w");
+    int ok;
+
+    if (arq == NULL) {
+        printf("Erro: nao foi possivel gravar o arquivo %s.\n", ARQ_PENDENCIA);
+        return 0;
+    }
+    ok = fprintf(arq, "%s;%d;%s;%s\n", acao, idProduto,
+                 (filial >= 0) ? FILIAIS[filial] : "Todas", login) >= 0
+         && gravarNoDisco(arq);
+    if (fclose(arq) != 0) {
+        ok = 0;
+    }
+    if (!ok) {
+        remove(ARQ_PENDENCIA);
+        printf("Erro: nao foi possivel gravar o arquivo %s.\n", ARQ_PENDENCIA);
     }
     return ok;
+}
+
+/* A alteracao terminou (gravada ou desfeita) e os arquivos estao de acordo. */
+void fecharPendencia(void) {
+    if (remove(ARQ_PENDENCIA) != 0) {
+        /* lado seguro: a proxima execucao pede uma conferencia desnecessaria */
+        printf("Aviso: nao foi possivel apagar o arquivo %s.\n", ARQ_PENDENCIA);
+    }
+}
+
+/* Nem gravar nem desfazer deu certo: o cardapio e o historico podem nao estar
+   de acordo. O pendencia.txt fica no disco e o programa encerra, para que
+   nenhuma alteracao seguinte o apague antes da conferencia. */
+void encerrarComPendencia(void) {
+    printf("Erro: nao foi possivel desfazer a alteracao. Os arquivos %s e %s "
+           "podem nao estar de acordo; confira-os e depois apague o arquivo %s.\n"
+           "O programa sera encerrado.\n", ARQ_DADOS, ARQ_HISTORICO, ARQ_PENDENCIA);
+    exit(1);
+}
+
+/* Mostra a operacao gravada no pendencia.txt (acao;produto;filial;usuario). */
+void mostrarPendencia(void) {
+    char linha[200];
+    FILE *arq = fopen(ARQ_PENDENCIA, "r");
+
+    if (arq == NULL) {
+        return;
+    }
+    if (fgets(linha, sizeof(linha), arq) != NULL) {
+        linha[strcspn(linha, "\n")] = '\0';
+        printf("Alteracao interrompida: %s\n", linha);
+    }
+    fclose(arq);
 }
  
 /* Troca o arquivo destino pelo origem numa so chamada do sistema, sem
@@ -242,25 +321,25 @@ int salvarDados(void) {
     1 se conseguiu;
     0 se o arquivo nao existe (primeira execucao);
    -1 se o arquivo existe mas e invalido ou nao pode ser lido (bloqueado);
-   -2 se so existe o cardapio.tmp de uma gravacao interrompida.
+   -2 se so existe o cardapio.tmp de uma gravacao interrompida;
+   -3 se existe o pendencia.txt de uma alteracao que nao terminou.
    Nos casos negativos o programa encerra sem gravar nada, para nao apagar
    os dados existentes com os dados de exemplo. O cardapio.tmp nunca e lido
    automaticamente, porque pode conter uma alteracao nao confirmada. */
 int carregarDados(void) {
-    FILE *arq = fopen(ARQ_DADOS, "r");
-    FILE *tmp;
+    FILE *arq;
     int i, j, total;
 
+    if (arquivoComum(ARQ_PENDENCIA)) {
+        return -3;
+    }
+    arq = fopen(ARQ_DADOS, "r");
     if (arq == NULL) {
         if (errno != ENOENT) {
             return -1; /* existe, mas nao abriu (permissao, bloqueio...) */
         }
         /* existe um .tmp (legivel ou bloqueado)? entao nao e primeira execucao */
-        tmp = fopen(ARQ_DADOS_TMP, "r");
-        if (tmp != NULL || errno != ENOENT) {
-            if (tmp != NULL) {
-                fclose(tmp);
-            }
+        if (arquivoComum(ARQ_DADOS_TMP)) {
             return -2;
         }
         return 0;
@@ -350,7 +429,7 @@ void carregarExemplo(void) {
 void cadastrarProduto(const char *login) {
     char nome[TAM_NOME], categoria[TAM_CATEGORIA], alergenos[TAM_ALERGENOS];
     int preco; /* em centavos (retorno de lerPreco) */
-    int id;
+    int id, resultado;
  
     printf("\n--- Cadastrar produto ---\n");
     lerTexto("Nome: ", nome, sizeof(nome));
@@ -375,24 +454,30 @@ void cadastrarProduto(const char *login) {
     }
     /* tudo ou nada: se o cardapio ou o historico nao puder ser gravado,
        o produto sai do vetor e o arquivo volta ao estado anterior */
+    if (!abrirPendencia("CADASTRAR", id, -1, login)) {
+        qtdProdutos--;
+        printf("O cadastro foi desfeito.\n");
+        return;
+    }
     if (!salvarDados()) {
         qtdProdutos--;
+        fecharPendencia(); /* o cardapio.txt ficou como estava */
         printf("O cadastro foi desfeito.\n");
         return;
     }
-    if (!registrarHistorico("CADASTRAR", id, -1, login)) {
+    resultado = registrarHistorico("CADASTRAR", id, -1, login);
+    if (resultado != 1) {
         qtdProdutos--;
-        if (!salvarDados()) {
-            /* nao deu para desfazer: o arquivo ja tem o produto novo, entao a
-               memoria volta a te-lo, para ficar igual ao disco */
-            qtdProdutos++;
-            printf("Erro: o produto %d ficou gravado no cardapio, mas sem registro "
-                   "no historico.\n", id);
+        /* so fica tudo de acordo se o historico nao recebeu nada (0) e o
+           cardapio voltou ao estado anterior */
+        if (resultado == 0 && salvarDados()) {
+            fecharPendencia();
+            printf("O cadastro foi desfeito.\n");
             return;
         }
-        printf("O cadastro foi desfeito.\n");
-        return;
+        encerrarComPendencia();
     }
+    fecharPendencia();
     printf("Produto %d cadastrado e ativo em todas as filiais.\n", id);
 }
  
@@ -477,7 +562,8 @@ void listarTodos(void) {
    de forma explicita (1 = ativar, 2 = desativar), em vez de inverter o
    estado atual: repetir a mesma operacao nao desfaz a alteracao. */
 void alterarDisponibilidade(int filial, const char *login) {
-    int id, pos, opcao, novoEstado;
+    int id, pos, opcao, novoEstado, resultado;
+    const char *acao;
  
     exibirCardapio(filial, 0, "");
     id = lerInteiro("\nID do produto (0 para voltar): ");
@@ -503,25 +589,32 @@ void alterarDisponibilidade(int filial, const char *login) {
  
     /* tudo ou nada, como a transacao do banco (RF06 + RF11): se o cardapio
        ou o historico nao puder ser gravado, volta ao estado anterior */
+    acao = novoEstado ? "ATIVAR" : "DESATIVAR";
     disponibilidade[pos][filial] = novoEstado;
+    if (!abrirPendencia(acao, id, filial, login)) {
+        disponibilidade[pos][filial] = !novoEstado;
+        printf("A alteracao foi desfeita.\n");
+        return;
+    }
     if (!salvarDados()) {
         disponibilidade[pos][filial] = !novoEstado;
+        fecharPendencia(); /* o cardapio.txt ficou como estava */
         printf("A alteracao foi desfeita.\n");
         return;
     }
-    if (!registrarHistorico(novoEstado ? "ATIVAR" : "DESATIVAR", id, filial, login)) {
+    resultado = registrarHistorico(acao, id, filial, login);
+    if (resultado != 1) {
         disponibilidade[pos][filial] = !novoEstado;
-        if (!salvarDados()) {
-            /* nao deu para desfazer: o arquivo ja tem o estado novo, entao a
-               memoria volta a te-lo, para ficar igual ao disco */
-            disponibilidade[pos][filial] = novoEstado;
-            printf("Erro: a alteracao ficou gravada no cardapio, mas sem registro "
-                   "no historico.\n");
+        /* so fica tudo de acordo se o historico nao recebeu nada (0) e o
+           cardapio voltou ao estado anterior */
+        if (resultado == 0 && salvarDados()) {
+            fecharPendencia();
+            printf("A alteracao foi desfeita.\n");
             return;
         }
-        printf("A alteracao foi desfeita.\n");
-        return;
+        encerrarComPendencia();
     }
+    fecharPendencia();
     printf("'%s' agora esta %s na filial %s.\n", produtos[pos].nome,
            novoEstado ? "ATIVO" : "INATIVO", FILIAIS[filial]);
 }
@@ -703,6 +796,15 @@ int main(void) {
                "pode estar incompleto). Confira o arquivo antes de renomea-lo "
                "para %s, ou apague-o para comecar do zero.\n",
                ARQ_DADOS, ARQ_DADOS_TMP, ARQ_DADOS);
+        return 1;
+    }
+    if (carga == -3) {
+        printf("Aviso: arquivo %s encontrado: a ultima alteracao nao terminou.\n"
+               "Os arquivos %s e %s podem nao estar de acordo.\n",
+               ARQ_PENDENCIA, ARQ_DADOS, ARQ_HISTORICO);
+        mostrarPendencia();
+        printf("Confira os dois arquivos (a ultima linha do historico) e depois "
+               "apague o arquivo %s.\n", ARQ_PENDENCIA);
         return 1;
     }
     if (carga == 0) {

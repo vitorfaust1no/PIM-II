@@ -94,7 +94,8 @@ tcc -run src/simulacao_cardapio.c
 O programa cria os arquivos `cardapio.txt` (produtos e disponibilidade) e
 `historico.txt` (log de alterações) na pasta em que foi executado. Na primeira
 execução são carregados 5 produtos de exemplo. Para voltar ao estado inicial,
-apague o `cardapio.txt` e o `historico.txt` (e o `cardapio.tmp`, se existir).
+apague o `cardapio.txt` e o `historico.txt` (e o `cardapio.tmp` e o `pendencia.txt`,
+se existirem).
 
 A gravação é "tudo ou nada": o programa escreve primeiro em `cardapio.tmp` e só
 troca o `cardapio.txt` quando a escrita termina sem erro, numa só chamada do sistema
@@ -109,6 +110,14 @@ avisa e encerra sem sobrescrevê-lo: corrija ou apague o arquivo. Se só existir
 `cardapio.tmp` (gravação interrompida), o programa também encerra: ele pode estar
 incompleto, então confira o conteúdo antes de renomeá-lo para `cardapio.txt`, ou
 apague-o para começar do zero.
+
+Como o cardápio e o histórico são dois arquivos, cada alteração começa gravando o
+`pendencia.txt` com a operação (ação, produto, filial e usuário), que só é apagado
+quando os dois estão de acordo: alteração gravada por inteiro ou desfeita por inteiro.
+Se nem desfazer for possível (por exemplo, o disco falhou de novo), o programa avisa e
+encerra deixando o `pendencia.txt` no disco. Na execução seguinte ele mostra a
+alteração interrompida e não inicia: confira o `cardapio.txt` e a última linha do
+`historico.txt` e depois apague o `pendencia.txt`.
 
 Usuários disponíveis no acesso interno:
 
@@ -138,7 +147,7 @@ Os scripts de `tests/` executam o programa e o banco de verdade e gravam as
 evidências em `docs/evidencias/` (requerem Python com `Pillow`):
 
 ```bash
-python tests/executar_testes_c.py     # 16 casos da simulação (requer tcc)
+python tests/executar_testes_c.py     # 18 casos da simulação (requer tcc)
 python tests/executar_testes_sql.py   # MySQL 8.0 em contêiner Docker descartável
 python docs/scripts/evidencias_docx.py  # leva os resultados para o relatório
 ```
