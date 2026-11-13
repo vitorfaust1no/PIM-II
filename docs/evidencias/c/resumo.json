@@ -1,7 +1,7 @@
 {
   "compilador": "tcc version 0.9.27 (x86_64 Windows)",
-  "total": 13,
-  "passou": 13,
+  "total": 15,
+  "passou": 15,
   "casos": [
     {
       "id": "CT01",
@@ -159,6 +159,30 @@
       "imagens": [
         "CT13_p1.png",
         "CT13_p2.png"
+      ]
+    },
+    {
+      "id": "CT14",
+      "titulo": "Falha ao gravar o cardápio",
+      "requisito": "RF06, RF11",
+      "descricao": "Com o cardápio impedido de ser gravado, o gerente jardins desativa o produto 1 e consulta o cardápio.",
+      "esperado": "Erro informado e alteração desfeita: produto 1 segue ATIVO e os arquivos ficam iguais.",
+      "status": "PASSOU",
+      "falhas": [],
+      "imagens": [
+        "CT14.png"
+      ]
+    },
+    {
+      "id": "CT15",
+      "titulo": "Falha ao gravar o histórico",
+      "requisito": "RF06, RF11",
+      "descricao": "Com o histórico impedido de ser gravado, o gerente jardins desativa o produto 1 e consulta o cardápio.",
+      "esperado": "Erro informado e alteração desfeita: produto 1 segue ATIVO e o cardápio fica igual.",
+      "status": "PASSOU",
+      "falhas": [],
+      "imagens": [
+        "CT15.png"
       ]
     }
   ]

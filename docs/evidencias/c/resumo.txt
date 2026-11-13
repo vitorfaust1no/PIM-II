@@ -11,5 +11,7 @@ CT10  [PASSOU]  Cadastro com validação de preço
 CT11  [PASSOU]  Relatório de indisponibilidade
 CT12  [PASSOU]  Relatório de frequência de esgotamento
 CT13  [PASSOU]  Reativação do produto
+CT14  [PASSOU]  Falha ao gravar o cardápio
+CT15  [PASSOU]  Falha ao gravar o histórico
 
-13 de 13 casos passaram (tcc version 0.9.27 (x86_64 Windows)).
+15 de 15 casos passaram (tcc version 0.9.27 (x86_64 Windows)).

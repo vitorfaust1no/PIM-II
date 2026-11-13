@@ -46,7 +46,7 @@ def rodar(exe: Path, entrada: str, cwd: Path) -> tuple[str, int | None]:
 
 
 def verificar(caso: dict, saida: str, codigo: int | None, usadas: int,
-              trabalho: Path) -> list[str]:
+              trabalho: Path, antes: dict[str, bytes]) -> list[str]:
     falhas = []
     if codigo is None:
         falhas.append(f"tempo esgotado ({TEMPO_LIMITE} s)")
@@ -68,7 +68,30 @@ def verificar(caso: dict, saida: str, codigo: int | None, usadas: int,
     for arq in caso["arquivos"]:
         if not (trabalho / arq).exists():
             falhas.append(f"arquivo nao criado: {arq}")
+    for arq, conteudo in antes.items():
+        if (trabalho / arq).read_bytes() != conteudo:
+            falhas.append(f"arquivo alterado (deveria ficar igual): {arq}")
     return falhas
+
+
+def bloquear(trabalho: Path, nomes: list[str]) -> None:
+    """Simula falha de gravacao: troca cada arquivo por um diretorio de mesmo nome,
+    o que faz o fopen do programa falhar (portavel entre TCC, MSVC e Windows).
+    Um arquivo que ja existia e guardado como <nome>.guardado."""
+    for nome in nomes:
+        alvo = trabalho / nome
+        if alvo.exists():
+            alvo.rename(trabalho / (nome + ".guardado"))
+        alvo.mkdir()
+
+
+def desbloquear(trabalho: Path, nomes: list[str]) -> None:
+    for nome in nomes:
+        alvo, guardado = trabalho / nome, trabalho / (nome + ".guardado")
+        if alvo.is_dir():
+            alvo.rmdir()
+        if guardado.exists():
+            guardado.rename(alvo)
 
 
 def executar() -> int:
@@ -96,10 +119,17 @@ def executar() -> int:
         trabalho.mkdir()
 
         for caso in CASOS:
-            saida, codigo = rodar(exe, "\n".join(caso["entradas"]) + "\n", trabalho)
+            bloqueados = caso.get("bloquear", [])
+            antes = {a: (trabalho / a).read_bytes()
+                     for a in caso.get("arquivos_inalterados", [])}
+            bloquear(trabalho, bloqueados)
+            try:
+                saida, codigo = rodar(exe, "\n".join(caso["entradas"]) + "\n", trabalho)
+            finally:
+                desbloquear(trabalho, bloqueados)
             trechos, usadas = intercalar(saida, caso["entradas"])
             linhas = como_linhas(trechos)
-            falhas = verificar(caso, saida, codigo, usadas, trabalho)
+            falhas = verificar(caso, saida, codigo, usadas, trabalho, antes)
             status = "PASSOU" if not falhas else "FALHOU"
 
             linhas = [[("C:\\PIM-II> simulacao_cardapio.exe", "saida")]] + linhas

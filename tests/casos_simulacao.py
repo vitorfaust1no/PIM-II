@@ -13,6 +13,9 @@ Campos de cada caso:
   contem       -> expressoes regulares que DEVEM aparecer na saida
   nao_contem   -> expressoes regulares que NAO podem aparecer na saida
   arquivos     -> arquivos que devem existir no diretorio apos a execucao
+  bloquear     -> (opcional) arquivos trocados por um diretorio durante o caso,
+                  para simular falha de gravacao
+  arquivos_inalterados -> (opcional) arquivos que devem terminar iguais
 """
 
 CASOS = [
@@ -168,6 +171,40 @@ CASOS = [
         "contem": [r"'Risoto de cogumelos' agora esta ATIVO na filial Jardins\.",
                    r"\[  2\] Pratos principais\s+Risoto de cogumelos"],
         "nao_contem": [],
+        "arquivos": [],
+    },
+    {
+        "id": "CT14",
+        "titulo": "Falha ao gravar o cardápio",
+        "requisito": "RF06, RF11",
+        "descricao": "Com o cardápio impedido de ser gravado, o gerente jardins desativa o "
+                     "produto 1 e consulta o cardápio.",
+        "esperado": "Erro informado e alteração desfeita: produto 1 segue ATIVO e os "
+                    "arquivos ficam iguais.",
+        "bloquear": ["cardapio.tmp"],  # o programa grava primeiro no cardapio.tmp
+        "arquivos_inalterados": ["cardapio.txt", "historico.txt"],
+        "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
+        "contem": [r"Erro: nao foi possivel gravar o arquivo cardapio\.txt\.",
+                   r"A alteracao foi desfeita\.",
+                   r"\[  1\] .*Burrata com tomates confitados.* ATIVO \|"],
+        "nao_contem": [r"agora esta INATIVO"],
+        "arquivos": [],
+    },
+    {
+        "id": "CT15",
+        "titulo": "Falha ao gravar o histórico",
+        "requisito": "RF06, RF11",
+        "descricao": "Com o histórico impedido de ser gravado, o gerente jardins desativa o "
+                     "produto 1 e consulta o cardápio.",
+        "esperado": "Erro informado e alteração desfeita: produto 1 segue ATIVO e o "
+                    "cardápio fica igual.",
+        "bloquear": ["historico.txt"],
+        "arquivos_inalterados": ["cardapio.txt"],
+        "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
+        "contem": [r"Erro: nao foi possivel gravar o historico\.",
+                   r"A alteracao foi desfeita\.",
+                   r"\[  1\] .*Burrata com tomates confitados.* ATIVO \|"],
+        "nao_contem": [r"agora esta INATIVO"],
         "arquivos": [],
     },
 ]
