@@ -8,7 +8,7 @@ gravacao segura da simulacao (revisao externa, 13/11/2026).
    - Resumo, Abstract, cap. 8 e Conclusao: a solucao foi "analisada" (analise
      documental), e nao "avaliada" como se tivesse sido testada.
 2. Gravacao (src/simulacao_cardapio.c): 6.4 cita o desfazer da alteracao quando a
-   gravacao falha (CT14 a CT18).
+   gravacao falha (CT14 a CT17) e a pendencia que bloqueia o inicio seguinte (CT18).
 
 O desenvolvimento (caps. 2 a 9) esta no limite de 30 paginas: as trocas dos caps. 8 e 9
 nao aumentam o texto, e os acrescimos ficam no fim dos caps. 4 e 6, onde ha folga.
@@ -46,6 +46,13 @@ TEXTO_91_ANTIGO = (
     "e às maquininhas dos garçons em até 30 segundos (meta do RNF01)."
 )
 
+# 6.4: o CT18 nao e um desfazer (recusa iniciar com a pendencia de uma execucao anterior)
+TEXTO_64_FALHA = (
+    "alteração é desfeita (CT14 a CT17); um arquivo de pendência marca a alteração em "
+    "andamento e, se nem desfazer for possível, o programa encerra e só volta a iniciar "
+    "após a conferência dos arquivos (CT18)."
+)
+
 # (trecho atual, trecho novo[, OPCIONAL]): cada trecho atual aparece uma unica vez
 TROCAS = [
     # 4.4: rastreabilidade
@@ -62,9 +69,10 @@ TROCAS = [
     # trouxe o CT17 e o CT18); depois, a troca sobre o texto original
     ("alteração é desfeita (CT14 e CT15).", "alteração é desfeita (CT14 a CT18).", OPCIONAL),
     ("alteração é desfeita (CT14 a CT16).", "alteração é desfeita (CT14 a CT18).", OPCIONAL),
+    ("alteração é desfeita (CT14 a CT18).", TEXTO_64_FALHA, OPCIONAL),
     ("descritos no capítulo 5.",
      "descritos no capítulo 5. Se o cardápio ou o histórico não puder ser gravado, a "
-     "alteração é desfeita (CT14 a CT18)."),
+     + TEXTO_64_FALHA),
     # 9.1 e 9.2: o sistema completo ainda nao existe
     (TEXTO_91_ANTIGO, TEXTO_91),
     ("as redes levam essa lógica com segurança", "as redes levarão essa lógica com segurança"),
