@@ -100,10 +100,27 @@ def desbloquear(trabalho: Path, nomes: list[str]) -> None:
 
 
 def somente_leitura(trabalho: Path, nomes: list[str], ligar: bool) -> None:
-    """Marca (ou desmarca) arquivos como somente leitura: a troca do arquivo pelo
-    programa (MoveFileEx com REPLACE_EXISTING) e recusada, sem afetar a leitura."""
+    """Marca (ou desmarca) arquivos como somente leitura. No Windows, a troca do arquivo
+    pelo programa (MoveFileEx com REPLACE_EXISTING) e recusada, sem afetar a leitura.
+    No POSIX o rename substitui arquivos somente leitura: por isso o caso que usa este
+    recurso e marcado com apenas_windows."""
     for nome in nomes:
         os.chmod(trabalho / nome, stat.S_IREAD if ligar else stat.S_IREAD | stat.S_IWRITE)
+
+
+def desfazer_preparo(trabalho: Path, bloqueados: list[str], leitura: list[str]) -> None:
+    """Desfaz bloquear() e somente_leitura() mesmo que o preparo tenha parado no meio;
+    cada etapa e tentada, para os casos seguintes nao rodarem num diretorio estragado."""
+    erros = []
+    for etapa in (lambda: somente_leitura(trabalho, [n for n in leitura
+                                                     if (trabalho / n).exists()], False),
+                  lambda: desbloquear(trabalho, bloqueados)):
+        try:
+            etapa()
+        except OSError as e:
+            erros.append(e)
+    if erros:
+        raise erros[0]
 
 
 def executar() -> int:
@@ -131,17 +148,21 @@ def executar() -> int:
         trabalho.mkdir()
 
         for caso in CASOS:
+            if caso.get("apenas_windows") and os.name != "nt":
+                # o caso depende de um comportamento do Windows; fora dele nao conta
+                # nem como aprovado nem como falha (e nao entra nas evidencias)
+                print(f"[IGNORADO] {caso['id']} {caso['titulo']} (apenas no Windows)")
+                continue
             bloqueados = caso.get("bloquear", [])
             antes = {a: (trabalho / a).read_bytes()
                      for a in caso.get("arquivos_inalterados", [])}
             leitura = caso.get("somente_leitura", [])
-            bloquear(trabalho, bloqueados)
-            somente_leitura(trabalho, leitura, True)
             try:
+                bloquear(trabalho, bloqueados)
+                somente_leitura(trabalho, leitura, True)
                 saida, codigo = rodar(exe, "\n".join(caso["entradas"]) + "\n", trabalho)
             finally:
-                somente_leitura(trabalho, leitura, False)
-                desbloquear(trabalho, bloqueados)
+                desfazer_preparo(trabalho, bloqueados, leitura)
             trechos, usadas = intercalar(saida, caso["entradas"])
             linhas = como_linhas(trechos)
             falhas = verificar(caso, saida, codigo, usadas, trabalho, antes)

@@ -18,6 +18,7 @@ Campos de cada caso:
   arquivos_inalterados -> (opcional) arquivos que devem terminar iguais
   arquivos_ausentes    -> (opcional) arquivos que NAO podem existir apos a execucao
   somente_leitura      -> (opcional) arquivos marcados como somente leitura durante o caso
+  apenas_windows       -> (opcional) True: o caso so roda no Windows (ignorado nos demais)
 """
 
 CASOS = [
@@ -185,7 +186,8 @@ CASOS = [
                     "arquivos ficam iguais.",
         "bloquear": ["cardapio.tmp"],  # o programa grava primeiro no cardapio.tmp
         "arquivos_inalterados": ["cardapio.txt", "historico.txt"],
-        "arquivos_ausentes": ["cardapio.tmp"],  # gravacao recusada nao deixa sobra
+        # sem arquivos_ausentes aqui: o cardapio.tmp bloqueado e removido pelo proprio
+        # executor; quem prova que a falha nao deixa .tmp sao o CT15 e o CT16
         "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
         "contem": [r"Erro: nao foi possivel gravar o arquivo cardapio\.txt\.",
                    r"A alteracao foi desfeita\.",
@@ -221,6 +223,7 @@ CASOS = [
                     "iguais e nenhum cardapio.tmp deixado para trás.",
         # o cardapio.tmp e gravado normalmente; o que falha e a troca pelo cardapio.txt
         "somente_leitura": ["cardapio.txt"],
+        "apenas_windows": True,  # no POSIX o rename substitui arquivo somente leitura
         "arquivos_inalterados": ["cardapio.txt", "historico.txt"],
         "arquivos_ausentes": ["cardapio.tmp"],
         "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],

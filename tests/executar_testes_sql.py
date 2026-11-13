@@ -80,9 +80,13 @@ CHECAGENS = {
              [r"\|\s+5 \|\s+3 \|\s+2 \|\s+15 \|"]),
     "ST13": ("Caixa de saída da replicação (trigger de pendência)",
              "Todo evento pendente; ROLLBACK sem evento nem pendência; COMMIT com pendência",
-             [r"eventos[\s\S]*?\|\s+(\d+) \|\s+\1 \|",
-              r"pendencias_apos_rollback[\s\S]*?\|\s+0 \|\s+1 \|",
-              r"pendencia_do_novo_evento[\s\S]*?\|\s+1 \|\s+1 \|"]),
+             # cada regex fica presa a linha de dados logo abaixo do proprio cabecalho
+             # (senao uma linha de outro passo com numeros iguais poderia casar)
+             [r"\| eventos \| pendentes \|\n\+[-+]+\+\n\|\s+(\d+) \|\s+\1 \|",
+              r"\| pendencias_apos_rollback \| ativo_apos_rollback \|\n\+[-+]+\+\n"
+              r"\|\s+0 \|\s+1 \|",
+              r"\| linhas_alteradas \| pendencia_do_novo_evento \|\n\+[-+]+\+\n"
+              r"\|\s+1 \|\s+1 \|"]),
 }
 
 
