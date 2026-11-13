@@ -86,3 +86,23 @@ SELECT (SELECT COUNT(*) FROM produto)      AS produtos,
        (SELECT COUNT(*) FROM usuario)      AS usuarios,
        (SELECT COUNT(*) FROM harmonizacao) AS harmonizacoes,
        (SELECT COUNT(*) FROM disponibilidade) AS disponibilidades;
+
+-- ST13 - Caixa de saida da replicacao (trigger trg_historico_pendente)
+-- (a) todo evento do historico tem pendencia de replicacao
+SELECT (SELECT COUNT(*) FROM historico_disponibilidade) AS eventos,
+       (SELECT COUNT(*) FROM replicacao_pendente)       AS pendentes;
+-- (b) evento desfeito por ROLLBACK nao deixa pendencia
+SELECT COUNT(*) INTO @pend_antes FROM replicacao_pendente;
+START TRANSACTION;
+INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
+VALUES (1, 1, 2, 'DESATIVAR');
+ROLLBACK;
+SELECT (SELECT COUNT(*) FROM replicacao_pendente) - @pend_antes AS pendencias_apos_rollback;
+-- (c) evento confirmado gera pendencia com o mesmo id
+START TRANSACTION;
+INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
+VALUES (1, 1, 2, 'DESATIVAR');
+SET @novo = LAST_INSERT_ID();
+COMMIT;
+SELECT COUNT(*) AS pendencia_do_novo_evento FROM replicacao_pendente
+ WHERE id_historico = @novo;

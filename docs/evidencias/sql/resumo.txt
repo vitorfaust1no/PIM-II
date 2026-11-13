@@ -11,5 +11,6 @@ ST09  [PASSOU]  Chave estrangeira (produto inexistente)
 ST10  [PASSOU]  UNIQUE de e-mail
 ST11  [PASSOU]  Exclusão de produto com histórico
 ST12  [PASSOU]  Dados intactos após os testes negativos
+ST13  [PASSOU]  Caixa de saída da replicação (trigger de pendência)
 
-13 de 13 testes passaram (MySQL 8.0.46).
+14 de 14 testes passaram (MySQL 8.0.46).

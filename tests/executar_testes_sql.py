@@ -41,8 +41,9 @@ from renderizar_terminal import (paginar_blocos, renderizar_paginado,  # noqa: E
 # id -> (descricao, resultado esperado, regex que comprova no trecho do teste)
 CHECAGENS = {
     "ST01": ("Estrutura: tabelas e triggers criados",
-             "10 tabelas e 2 triggers",
-             [r"\|\s+10 \|", r"trg_harmonizacao_valida_ins", r"trg_harmonizacao_valida_upd"]),
+             "11 tabelas e 3 triggers",
+             [r"\|\s+11 \|", r"trg_harmonizacao_valida_ins", r"trg_harmonizacao_valida_upd",
+              r"trg_historico_pendente"]),
     "ST02": ("Carga de exemplo",
              "3 filiais, 3 usuários, 5 produtos, 15 disponibilidades",
              [r"\|\s+3 \|\s+3 \|\s+5 \|\s+7 \|\s+15 \|"]),
@@ -77,6 +78,11 @@ CHECAGENS = {
     "ST12": ("Dados intactos após os testes negativos",
              "5 produtos, 3 usuários, 2 harmonizações, 15 disponibilidades",
              [r"\|\s+5 \|\s+3 \|\s+2 \|\s+15 \|"]),
+    "ST13": ("Caixa de saída da replicação (trigger de pendência)",
+             "Todo evento pendente; ROLLBACK sem pendência; COMMIT com pendência",
+             [r"eventos[\s\S]*?\|\s+(\d+) \|\s+\1 \|",
+              r"pendencias_apos_rollback[\s\S]*?\|\s+0 \|",
+              r"pendencia_do_novo_evento[\s\S]*?\|\s+1 \|"]),
 }
 
 

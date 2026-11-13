@@ -1,19 +1,19 @@
 {
   "mysql": "8.0.46",
-  "total": 13,
-  "passou": 13,
+  "total": 14,
+  "passou": 14,
   "testes": [
     {
       "id": "ST00",
       "descricao": "Execução completa de modelo_fisico_mysql.sql",
       "esperado": "Todos os comandos executados sem erro",
-      "obtido": "38 comandos executados, 0 erros",
+      "obtido": "40 comandos executados, 0 erros",
       "status": "PASSOU"
     },
     {
       "id": "ST01",
       "descricao": "Estrutura: tabelas e triggers criados",
-      "esperado": "10 tabelas e 2 triggers",
+      "esperado": "11 tabelas e 3 triggers",
       "status": "PASSOU"
     },
     {
@@ -81,6 +81,12 @@
       "descricao": "Dados intactos após os testes negativos",
       "esperado": "5 produtos, 3 usuários, 2 harmonizações, 15 disponibilidades",
       "status": "PASSOU"
+    },
+    {
+      "id": "ST13",
+      "descricao": "Caixa de saída da replicação (trigger de pendência)",
+      "esperado": "Todo evento pendente; ROLLBACK sem pendência; COMMIT com pendência",
+      "status": "PASSOU"
     }
   ],
   "imagens": {
@@ -98,7 +104,9 @@
       "SQL_03_testes_p3.png",
       "SQL_03_testes_p4.png",
       "SQL_03_testes_p5.png",
-      "SQL_03_testes_p6.png"
+      "SQL_03_testes_p6.png",
+      "SQL_03_testes_p7.png",
+      "SQL_03_testes_p8.png"
     ]
   },
   "testes_por_imagem": [
@@ -126,6 +134,12 @@
     [
       "ST11",
       "ST12"
+    ],
+    [
+      "ST13"
+    ],
+    [
+      "ST13"
     ]
   ]
 }
