@@ -658,7 +658,8 @@ def main() -> None:
             "carga de exemplo, o efeito da transação de alteração de disponibilidade (RF06 e "
             "RF11), a repetição dessa operação e o desfazimento por ROLLBACK e, em testes "
             "negativos, se as restrições de integridade de fato recusam dados inválidos."),
-        par("O Quadro {q_sql}, no Apêndice D, resume os testes e o resultado obtido: "
+        par(f"O Quadro {{q_sql}} (Apêndice D {TRAV} Evidências de execução dos testes) resume "
+            "os testes e o resultado obtido: "
             f"{res_sql['passou']} de {res_sql['total']} apresentaram o comportamento esperado. "
             "Os testes negativos falharam exatamente com o erro previsto, como o erro 3819 nas "
             "restrições CHECK, o erro 1644 lançado pela trigger de harmonização e os erros 1452 "
@@ -685,19 +686,17 @@ def main() -> None:
     versao_tcc = res_c["compilador"].replace("tcc version ", "").split(" ")[0]
     sec68 = [
         h2("6.8 Testes da simulação"),
-        par("A simulação foi verificada por testes funcionais, que avaliam o comportamento do "
-            "programa a partir das entradas e das saídas, sem depender da estrutura interna do "
-            f"código (Sommerville, 2018). O programa foi compilado com o TCC {versao_tcc} e "
-            f"executado {res_c['total']} vezes em sequência; cada execução recebeu um roteiro de "
-            "entradas definido previamente, e a saída foi comparada de forma automática ao "
+        par("A simulação foi verificada por testes funcionais, baseados apenas nas entradas e "
+            f"saídas do programa (Sommerville, 2018). Compilado com o TCC {versao_tcc}, o "
+            f"programa foi executado {res_c['total']} vezes em sequência, cada uma com um "
+            "roteiro de entradas predefinido, e a saída foi comparada automaticamente ao "
             "resultado esperado pelo script tests/executar_testes_c.py. Como as execuções "
             "compartilham os arquivos cardapio.txt e historico.txt, os casos também verificam a "
-            "persistência entre execuções: a desativação feita pelo gerente no CT04 é observada "
-            "pelo cliente no CT05 e contabilizada pelo relatório de frequência no CT12."),
-        par("Os casos cobrem os fluxos principais e o tratamento de entradas inválidas, conforme "
-            f"o Quadro {{q_c}}, no Apêndice D, e {res_c['passou']} de {res_c['total']} obtiveram "
-            "o resultado esperado. As telas de cada execução, com os valores digitados "
-            "destacados, estão no mesmo apêndice (Figuras {fig_c_ini} a {fig_c_fim})." if c_ok else
+            "persistência: a desativação feita no CT04 é vista pelo cliente no CT05 e contada "
+            "no relatório do CT12."),
+        par("Os casos cobrem os fluxos principais e as entradas inválidas (Quadro {q_c}), e "
+            f"{res_c['passou']} de {res_c['total']} obtiveram o resultado esperado; as telas de "
+            "cada execução estão no Apêndice D (Figuras {fig_c_ini} a {fig_c_fim})." if c_ok else
             "Os casos e os resultados obtidos estão no Quadro {q_c}, no Apêndice D, junto com as "
             "telas de cada execução (Figuras {fig_c_ini} a {fig_c_fim}).", refs),
     ]
