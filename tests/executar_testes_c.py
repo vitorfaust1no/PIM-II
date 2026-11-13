@@ -10,6 +10,8 @@
    Tudo e gerado primeiro em docs/evidencias/c.novo/ e so substitui a pasta
    anterior no final, para que uma falha no meio nao apague as evidencias.
 Uso:  python tests/executar_testes_c.py      (codigo de saida 1 se algum falhar)
+Fora do Windows os casos apenas_windows sao ignorados: o codigo de saida considera so os
+casos executados, mas as evidencias do relatorio nao sao substituidas (vao para c.parcial).
 """
 
 from __future__ import annotations
@@ -50,10 +52,11 @@ def rodar(exe: Path, entrada: str, cwd: Path) -> tuple[str, int | None]:
 def verificar(caso: dict, saida: str, codigo: int | None, usadas: int,
               trabalho: Path, antes: dict[str, bytes]) -> list[str]:
     falhas = []
+    esperado = caso.get("codigo_saida", 0)
     if codigo is None:
         falhas.append(f"tempo esgotado ({TEMPO_LIMITE} s)")
-    elif codigo != 0:
-        falhas.append(f"codigo de saida {codigo}")
+    elif codigo != esperado:
+        falhas.append(f"codigo de saida {codigo} (esperado {esperado})")
     # o roteiro precisa casar com o programa: lerTexto encerra com exit(0) quando a
     # entrada acaba antes da hora, entao o codigo 0 sozinho nao prova nada
     if "Entrada encerrada." in saida:
@@ -108,13 +111,28 @@ def somente_leitura(trabalho: Path, nomes: list[str], ligar: bool) -> None:
         os.chmod(trabalho / nome, stat.S_IREAD if ligar else stat.S_IREAD | stat.S_IWRITE)
 
 
-def desfazer_preparo(trabalho: Path, bloqueados: list[str], leitura: list[str]) -> None:
-    """Desfaz bloquear() e somente_leitura() mesmo que o preparo tenha parado no meio;
-    cada etapa e tentada, para os casos seguintes nao rodarem num diretorio estragado."""
+def criar_arquivos(trabalho: Path, arquivos: dict[str, str]) -> None:
+    """Cria arquivos com o conteudo dado (por exemplo, um pendencia.txt deixado por uma
+    execucao anterior), na codificacao do console do programa."""
+    for nome, conteudo in arquivos.items():
+        (trabalho / nome).write_bytes(conteudo.encode("cp1252"))
+
+
+def apagar_criados(trabalho: Path, nomes: list[str]) -> None:
+    for nome in nomes:
+        (trabalho / nome).unlink(missing_ok=True)
+
+
+def desfazer_preparo(trabalho: Path, bloqueados: list[str], leitura: list[str],
+                     criados: list[str]) -> None:
+    """Desfaz bloquear(), somente_leitura() e criar_arquivos() mesmo que o preparo tenha
+    parado no meio; cada etapa e tentada, para os casos seguintes nao rodarem num
+    diretorio estragado."""
     erros = []
     for etapa in (lambda: somente_leitura(trabalho, [n for n in leitura
                                                      if (trabalho / n).exists()], False),
-                  lambda: desbloquear(trabalho, bloqueados)):
+                  lambda: desbloquear(trabalho, bloqueados),
+                  lambda: apagar_criados(trabalho, criados)):
         try:
             etapa()
         except OSError as e:
@@ -159,12 +177,14 @@ def executar() -> int:
             antes = {a: (trabalho / a).read_bytes()
                      for a in caso.get("arquivos_inalterados", [])}
             leitura = caso.get("somente_leitura", [])
+            criar = caso.get("criar", {})
             try:
+                criar_arquivos(trabalho, criar)
                 bloquear(trabalho, bloqueados)
                 somente_leitura(trabalho, leitura, True)
                 saida, codigo = rodar(exe, "\n".join(caso["entradas"]) + "\n", trabalho)
             finally:
-                desfazer_preparo(trabalho, bloqueados, leitura)
+                desfazer_preparo(trabalho, bloqueados, leitura, list(criar))
             trechos, usadas = intercalar(saida, caso["entradas"])
             linhas = como_linhas(trechos)
             falhas = verificar(caso, saida, codigo, usadas, trabalho, antes)
@@ -210,7 +230,9 @@ def executar() -> int:
         print(f"\n{passou} de {len(resultados)} casos executados passaram; ignorados: "
               f"{', '.join(ignorados)}. Execucao INCOMPLETA: evidencias em {parcial}; "
               f"as de {SAIDA} nao foram alteradas.")
-        return 1
+        # o codigo de saida reflete so os casos executados: fora do Windows a suite
+        # pode passar (por exemplo, num CI Linux) sem tocar nas evidencias
+        return 0 if passou == len(resultados) else 1
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
     novo.rename(SAIDA)

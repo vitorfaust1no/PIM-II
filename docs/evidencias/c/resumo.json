@@ -1,7 +1,7 @@
 {
   "compilador": "tcc version 0.9.27 (x86_64 Windows)",
-  "total": 16,
-  "passou": 16,
+  "total": 18,
+  "passou": 18,
   "casos": [
     {
       "id": "CT01",
@@ -195,6 +195,30 @@
       "falhas": [],
       "imagens": [
         "CT16.png"
+      ]
+    },
+    {
+      "id": "CT17",
+      "titulo": "Falha ao gravar a pendência",
+      "requisito": "RF06, RF11",
+      "descricao": "Com o pendencia.txt impedido de ser gravado, o gerente jardins desativa o produto 1 e consulta o cardápio.",
+      "esperado": "Erro informado e alteração desfeita antes de mexer no cardápio e no histórico: produto 1 segue ATIVO e os arquivos ficam iguais.",
+      "status": "PASSOU",
+      "falhas": [],
+      "imagens": [
+        "CT17.png"
+      ]
+    },
+    {
+      "id": "CT18",
+      "titulo": "Alteração interrompida na execução anterior",
+      "requisito": "RF06, RF11",
+      "descricao": "Inicia o programa com o pendencia.txt deixado por uma alteração que não terminou.",
+      "esperado": "Aviso com a alteração interrompida e pedido de conferência; o programa encerra sem alterar os arquivos.",
+      "status": "PASSOU",
+      "falhas": [],
+      "imagens": [
+        "CT18.png"
       ]
     }
   ]

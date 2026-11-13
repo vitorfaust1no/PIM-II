@@ -1,0 +1,56 @@
+C:\PIM-II> simulacao_cardapio.exe
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 2
+[SIMULACAO ACADEMICA] Usuarios de teste fixos no codigo; nao representa a seguranca do sistema real.
+Login: jardins
+Senha: 1234
+
+--- Painel do Gerente - Jardins ---
+1 - Ver cardapio da filial
+2 - Ativar/desativar produto
+0 - Sair
+Opcao: 2
+
+=== Sabor & Cia Bistro - Jardins ===
+[  1] Entradas             Burrata com tomates confitados      R$    68,00 ATIVO | Alergenos: Leite
+[  2] Pratos principais    Risoto de cogumelos                 R$    98,00 ATIVO | Alergenos: Leite
+[  3] Pratos principais    Salmao em crosta de castanhas       R$   112,00 ATIVO | Alergenos: Peixe,Castanha-de-caju
+[  4] Sobremesas           Petit gateau                        R$    42,00 ATIVO | Alergenos: Leite,Ovos,Trigo
+[  5] Vinhos               Chardonnay (taca)                   R$    45,00 ATIVO | Alergenos: nenhum
+[  6] Bebidas              Suco de laranja                     R$    12,50 ATIVO | Alergenos: nenhum
+
+ID do produto (0 para voltar): 1
+1 - Ativar 2 - Desativar: 2
+Erro: nao foi possivel gravar o arquivo pendencia.txt.
+A alteracao foi desfeita.
+
+--- Painel do Gerente - Jardins ---
+1 - Ver cardapio da filial
+2 - Ativar/desativar produto
+0 - Sair
+Opcao: 1
+
+=== Sabor & Cia Bistro - Jardins ===
+[  1] Entradas             Burrata com tomates confitados      R$    68,00 ATIVO | Alergenos: Leite
+[  2] Pratos principais    Risoto de cogumelos                 R$    98,00 ATIVO | Alergenos: Leite
+[  3] Pratos principais    Salmao em crosta de castanhas       R$   112,00 ATIVO | Alergenos: Peixe,Castanha-de-caju
+[  4] Sobremesas           Petit gateau                        R$    42,00 ATIVO | Alergenos: Leite,Ovos,Trigo
+[  5] Vinhos               Chardonnay (taca)                   R$    45,00 ATIVO | Alergenos: nenhum
+[  6] Bebidas              Suco de laranja                     R$    12,50 ATIVO | Alergenos: nenhum
+
+--- Painel do Gerente - Jardins ---
+1 - Ver cardapio da filial
+2 - Ativar/desativar produto
+0 - Sair
+Opcao: 0
+
+===== SABOR & CIA - CARDAPIO DIGITAL =====
+1 - Sou cliente (ver cardapio)
+2 - Acesso interno (login)
+0 - Encerrar
+Opcao: 0
+Sistema encerrado.

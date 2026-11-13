@@ -19,6 +19,8 @@ Campos de cada caso:
   arquivos_ausentes    -> (opcional) arquivos que NAO podem existir apos a execucao
   somente_leitura      -> (opcional) arquivos marcados como somente leitura durante o caso
   apenas_windows       -> (opcional) True: o caso so roda no Windows (ignorado nos demais)
+  criar                -> (opcional) {arquivo: conteudo} criados antes do caso e apagados depois
+  codigo_saida         -> (opcional) codigo de saida esperado do programa (padrao 0)
 """
 
 CASOS = [
@@ -70,6 +72,7 @@ CASOS = [
                    r"'Risoto de cogumelos' agora esta INATIVO na filial Jardins\."],
         "nao_contem": [],
         "arquivos": ["historico.txt"],
+        "arquivos_ausentes": ["pendencia.txt"],
     },
     {
         "id": "CT05",
@@ -139,6 +142,7 @@ CASOS = [
                    r"6\s+Suco de laranja\s+ativo\s+ativo\s+ativo"],
         "nao_contem": [],
         "arquivos": [],
+        "arquivos_ausentes": ["pendencia.txt"],
     },
     {
         "id": "CT11",
@@ -175,6 +179,7 @@ CASOS = [
                    r"\[  2\] Pratos principais\s+Risoto de cogumelos"],
         "nao_contem": [],
         "arquivos": [],
+        "arquivos_ausentes": ["pendencia.txt"],
     },
     {
         "id": "CT14",
@@ -186,8 +191,9 @@ CASOS = [
                     "arquivos ficam iguais.",
         "bloquear": ["cardapio.tmp"],  # o programa grava primeiro no cardapio.tmp
         "arquivos_inalterados": ["cardapio.txt", "historico.txt"],
-        # sem arquivos_ausentes aqui: o cardapio.tmp bloqueado e removido pelo proprio
-        # executor; quem prova que a falha nao deixa .tmp sao o CT15 e o CT16
+        # o cardapio.tmp bloqueado e removido pelo proprio executor, entao nao entra em
+        # arquivos_ausentes; quem prova que a falha nao deixa .tmp sao o CT15 e o CT16
+        "arquivos_ausentes": ["pendencia.txt"],
         "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
         "contem": [r"Erro: nao foi possivel gravar o arquivo cardapio\.txt\.",
                    r"A alteracao foi desfeita\.",
@@ -205,7 +211,7 @@ CASOS = [
                     "cardápio fica igual.",
         "bloquear": ["historico.txt"],
         "arquivos_inalterados": ["cardapio.txt"],
-        "arquivos_ausentes": ["cardapio.tmp"],
+        "arquivos_ausentes": ["cardapio.tmp", "pendencia.txt"],
         "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
         "contem": [r"Erro: nao foi possivel gravar o historico\.",
                    r"A alteracao foi desfeita\.",
@@ -225,12 +231,48 @@ CASOS = [
         "somente_leitura": ["cardapio.txt"],
         "apenas_windows": True,  # no POSIX o rename substitui arquivo somente leitura
         "arquivos_inalterados": ["cardapio.txt", "historico.txt"],
-        "arquivos_ausentes": ["cardapio.tmp"],
+        "arquivos_ausentes": ["cardapio.tmp", "pendencia.txt"],
         "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
         "contem": [r"Erro: nao foi possivel gravar o arquivo cardapio\.txt\.",
                    r"A alteracao foi desfeita\.",
                    r"\[  1\] .*Burrata com tomates confitados.* ATIVO \|"],
         "nao_contem": [r"agora esta INATIVO"],
+        "arquivos": [],
+    },
+    {
+        "id": "CT17",
+        "titulo": "Falha ao gravar a pendência",
+        "requisito": "RF06, RF11",
+        "descricao": "Com o pendencia.txt impedido de ser gravado, o gerente jardins desativa "
+                     "o produto 1 e consulta o cardápio.",
+        "esperado": "Erro informado e alteração desfeita antes de mexer no cardápio e no "
+                    "histórico: produto 1 segue ATIVO e os arquivos ficam iguais.",
+        "bloquear": ["pendencia.txt"],  # removido pelo proprio executor no fim do caso
+        "arquivos_inalterados": ["cardapio.txt", "historico.txt"],
+        "arquivos_ausentes": ["cardapio.tmp"],
+        "entradas": ["2", "jardins", "1234", "2", "1", "2", "1", "0", "0"],
+        "contem": [r"Erro: nao foi possivel gravar o arquivo pendencia\.txt\.",
+                   r"A alteracao foi desfeita\.",
+                   r"\[  1\] .*Burrata com tomates confitados.* ATIVO \|"],
+        "nao_contem": [r"agora esta INATIVO"],
+        "arquivos": [],
+    },
+    {
+        "id": "CT18",
+        "titulo": "Alteração interrompida na execução anterior",
+        "requisito": "RF06, RF11",
+        "descricao": "Inicia o programa com o pendencia.txt deixado por uma alteração que "
+                     "não terminou.",
+        "esperado": "Aviso com a alteração interrompida e pedido de conferência; o programa "
+                    "encerra sem alterar os arquivos.",
+        "criar": {"pendencia.txt": "DESATIVAR;1;Jardins;jardins\n"},
+        "codigo_saida": 1,
+        "arquivos_inalterados": ["cardapio.txt", "historico.txt"],
+        "entradas": [],
+        "contem": [r"Aviso: arquivo pendencia\.txt encontrado",
+                   r"Alteracao interrompida: DESATIVAR;1;Jardins;jardins",
+                   r"apague o arquivo pendencia\.txt\."],
+        "nao_contem": [r"CARDAPIO DIGITAL"],
         "arquivos": [],
     },
 ]

@@ -14,5 +14,7 @@ CT13  [PASSOU]  Reativação do produto
 CT14  [PASSOU]  Falha ao gravar o cardápio
 CT15  [PASSOU]  Falha ao gravar o histórico
 CT16  [PASSOU]  Troca do cardápio recusada
+CT17  [PASSOU]  Falha ao gravar a pendência
+CT18  [PASSOU]  Alteração interrompida na execução anterior
 
-16 de 16 casos passaram (tcc version 0.9.27 (x86_64 Windows)).
+18 de 18 casos passaram (tcc version 0.9.27 (x86_64 Windows)).

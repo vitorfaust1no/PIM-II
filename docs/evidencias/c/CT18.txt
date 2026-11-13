@@ -1,0 +1,5 @@
+C:\PIM-II> simulacao_cardapio.exe
+Aviso: arquivo pendencia.txt encontrado: a ultima alteracao nao terminou.
+Os arquivos cardapio.txt e historico.txt podem nao estar de acordo.
+Alteracao interrompida: DESATIVAR;1;Jardins;jardins
+Confira os dois arquivos (a ultima linha do historico) e depois apague o arquivo pendencia.txt.
