@@ -32,7 +32,7 @@ ALVO = RAIZ / "docs" / "PIM_II_Sabor_e_Cia.docx"
 FIGURAS = [
     ("Diagrama de casos de uso", "02_casos_de_uso.png", 16.0),
     ("Diagrama de classes", "03_classes.png", 16.0),
-    ("Diagrama de atividades", "04_atividades.png", None),
+    ("Diagrama de atividades", "04_atividades.png", 16.0),  # era 12 cm (ajustes_parecer_docx.py)
     ("Arquitetura do sistema", "01_arquitetura.png", 16.0),
     ("Modelo conceitual", "05_conceitual.png", 16.0),
     ("Modelo lógico", "06_logico.png", None),
