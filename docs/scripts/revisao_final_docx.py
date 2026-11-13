@@ -102,7 +102,7 @@ DIFERENCIAIS_INTRO_ANTIGA = "Em relação às soluções encontradas na literatu
 DIFERENCIAIS_INTRO = "Em relação ao mercado, a proposta apresenta os seguintes diferenciais:"
 # um item por linha: o texto curto evita a quebra dentro do item
 DIFERENCIAIS = [
-    "a) disponibilidade por filial atualizada em até 30 segundos;",
+    "a) disponibilidade por filial atualizada em até 30 segundos (meta);",
     "b) cardápio em HTML (HyperText Markup Language), e não em PDF;",
     "c) conformidade com a WCAG 2.2 AA e a ABNT NBR 17225;",
     "d) alérgenos estruturados, com filtro e aviso de referência;",

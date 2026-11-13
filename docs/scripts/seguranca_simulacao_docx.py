@@ -37,8 +37,8 @@ EXTRA_93 = (" As simplificações de segurança adotadas na simulação e o seu 
 TITULO_67 ="6.7 Segurança: simulação acadêmica e implementação prevista"
 PARAGRAFOS_67 = [
     "Para que a simulação pudesse ser executada sem servidor de banco de dados, algumas "
-    "simplificações de segurança foram adotadas de forma deliberada e não devem ser tomadas "
-    "como prática recomendada: os usuários de teste estão fixos no código-fonte, as senhas são "
+    "simplificações de segurança foram adotadas de forma deliberada e não devem ser "
+    "reutilizadas nem tomadas como prática recomendada: os usuários de teste estão fixos no código-fonte, as senhas são "
     "guardadas e comparadas em texto puro (função strcmp), o limite de três tentativas vale "
     "apenas por execução do programa e os arquivos cardapio.txt e historico.txt não têm controle "
     "de acesso. O próprio programa registra essa condição no cabeçalho do código e exibe um "

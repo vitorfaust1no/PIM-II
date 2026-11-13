@@ -71,7 +71,7 @@ ALINEAS_54 = [
 FECHO_54 = (
     "Desse modo, o projeto trabalha com dois níveis de consistência: a disponibilidade corrente e "
     "o seu registro de histórico são gravados de forma atômica no MySQL, e a disponibilidade é "
-    "propagada aos canais em até 30 segundos (RNF01), enquanto a cópia analítica no MongoDB é eventualmente consistente, podendo ficar "
+    "propagada aos canais em até 30 segundos (meta do RNF01), enquanto a cópia analítica no MongoDB é eventualmente consistente, podendo ficar "
     "temporariamente atrasada, mas sempre convergindo para o conteúdo do banco relacional "
     "(Coulouris et al., 2013)."
 )

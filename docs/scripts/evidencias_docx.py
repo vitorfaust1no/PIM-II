@@ -50,6 +50,7 @@ LARGURA_FIG = Cm(16)
 TRAV = "–"
 FRASE_94 = (" Dentro desse escopo, a lógica central e o modelo físico foram verificados por "
             "testes executados, cujos resultados constam nas seções 5.7 e 6.8 e no Apêndice D.")
+REPOSITORIO = "https://github.com/vitorfaust1no/PIM-II"
 TITULO_QUADRO_SQL = "Testes do modelo físico em MySQL"
 TITULO_QUADRO_C = "Casos de teste da simulação em C"
 # inicio dos titulos das figuras inseridas (para reconhece-las nas listas)
@@ -636,7 +637,18 @@ def main() -> None:
                  "descritas na seção 6.8, com os valores digitados em destaque; as do modelo "
                  "físico, da execução descrita na seção 5.7, em que o cliente mysql exibe cada "
                  "comando seguido do seu resultado. Os registros completos estão no repositório "
-                 "do projeto, na pasta docs/evidencias.", refs)]
+                 "do projeto, na pasta docs/evidencias.", refs),
+             par(f"Os testes podem ser reproduzidos a partir do repositório {REPOSITORIO}, "
+                 "executando, na pasta raiz, os comandos python tests/executar_testes_c.py e "
+                 "python tests/executar_testes_sql.py. O primeiro compila o programa com o TCC "
+                 f"{versao_tcc} e executa os casos definidos em tests/casos_simulacao.py; o "
+                 "segundo cria um contêiner Docker descartável com o MySQL "
+                 f"{res_sql['mysql']}, executa os scripts database/modelo_fisico_mysql.sql e "
+                 "database/testes_modelo_fisico.sql e remove o contêiner ao final. Os dois "
+                 "scripts requerem Python 3 com a biblioteca Pillow, comparam a saída obtida com "
+                 "o resultado esperado de forma automática e terminam com código de erro se algum "
+                 "teste falhar. A instalação das ferramentas está descrita no arquivo README.md "
+                 "do repositório.")]
     imagens = []
     grupo_atual = None
     for cap, anc, ref, img, titulo, grupo in caps_fig:

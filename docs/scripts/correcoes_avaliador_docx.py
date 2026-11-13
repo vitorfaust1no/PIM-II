@@ -133,12 +133,17 @@ TROCAS = [
       "API grava a mudança e o evento de histórico no MySQL e propaga o novo estado ao cardápio "
       "e às maquininhas em até 30 segundos." " Assim, o que o cliente vê, o que o garçom oferece e o que a matriz acompanha "
      "permanecem sincronizados.",
+      "O cliente acessa, por QR code, o cardápio público da filial, que consulta a API REST e "
+      "exibe apenas os produtos ativos naquela unidade, com os alérgenos e no idioma escolhido. "
+      "Quando um prato se esgota, o gerente altera a disponibilidade da sua filial no painel; a "
+      "API grava a mudança e o evento de histórico no MySQL e propaga o novo estado ao cardápio "
+      "e às maquininhas dos garçons em até 30 segundos.",
       ),
      "O cliente acessa, por QR code, o cardápio público da filial, que consulta a API REST e "
      "exibe apenas os produtos ativos naquela unidade, com os alérgenos e no idioma escolhido. "
      "Quando um prato se esgota, o gerente altera a disponibilidade da sua filial no painel; a "
      "API grava a mudança e o evento de histórico no MySQL e propaga o novo estado ao cardápio "
-     "e às maquininhas dos garçons em até 30 segundos."),
+     "e às maquininhas dos garçons em até 30 segundos (meta do RNF01)."),
     ("Entre os benefícios esperados",
      ("Entre os benefícios esperados para a organização estão a redução de pedidos frustrados "
      "por itens esgotados, a melhor experiência e a maior autonomia do cliente, a padronização "
