@@ -141,7 +141,7 @@ int registrarHistorico(const char *acao, int idProduto, int filial,
     time_t agora = time(NULL);
     char dataHora[20];
     int ok;
-
+ 
     if (arq == NULL) {
         printf("Erro: nao foi possivel gravar o historico.\n");
         return 0;
@@ -157,7 +157,7 @@ int registrarHistorico(const char *acao, int idProduto, int filial,
     }
     return ok;
 }
-
+ 
 /* Troca o arquivo destino pelo origem numa unica operacao (atomica): quem
    abrir o destino ve o conteudo antigo inteiro ou o novo inteiro, e o
    destino nunca fica ausente. No Windows usa MoveFileEx, porque o rename
@@ -171,7 +171,7 @@ int substituirArquivo(const char *origem, const char *destino) {
     return rename(origem, destino) == 0;
 #endif
 }
-
+ 
 /* Grava produtos e matriz de disponibilidade no arquivo texto.
    Formato de cada linha: id;categoria;nome;preco;alergenos;disp1;disp2;disp3
    Gravacao segura: escreve primeiro em cardapio.tmp e so troca o
@@ -182,7 +182,7 @@ int substituirArquivo(const char *origem, const char *destino) {
 int salvarDados(void) {
     FILE *arq = fopen(ARQ_DADOS_TMP, "w");
     int i, j, ok;
-
+ 
     if (arq == NULL) {
         printf("Erro: nao foi possivel gravar o arquivo %s.\n", ARQ_DADOS);
         return 0;
@@ -212,7 +212,7 @@ int salvarDados(void) {
     }
     return 1;
 }
-
+ 
 /* Le os dados do arquivo. Retorna 1 se conseguiu, 0 se o arquivo nao existe
    e -1 se o arquivo e invalido. Arquivo invalido NAO e substituido pelos
    dados de exemplo, para nao apagar os dados existentes. Um cardapio.tmp
@@ -220,7 +220,7 @@ int salvarDados(void) {
 int carregarDados(void) {
     FILE *arq = fopen(ARQ_DADOS, "r");
     int i, j, total;
-
+ 
     if (arq == NULL) {
         return 0;
     }
@@ -235,7 +235,7 @@ int carregarDados(void) {
             fclose(arq);
             return -1; /* linha fora do formato */
         }
-
+ 
         for (j = 0; j < NUM_FILIAIS; j++) {
             if (fscanf(arq, ";%d", &disponibilidade[i][j]) != 1 ||
                 (disponibilidade[i][j] != 0 && disponibilidade[i][j] != 1)) {
@@ -367,7 +367,7 @@ int contemAlergeno(const char *lista, const char *termo) {
     t[i] = '\0';
     return strstr(l, t) != NULL;
 }
-
+ 
 /* RF07/RF13: mostra o cardapio de uma filial com os alergenos de cada item.
    somenteAtivos = 1 -> visao do cliente; 0 -> visao do gerente (com status).
    filtroAlergeno (se nao vazio) oculta, na visao do cliente, os pratos que
