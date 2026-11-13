@@ -136,7 +136,20 @@ int lerPreco(const char *mensagem) {
 }
  
 /* ---------- Arquivos ---------- */
- 
+
+/* Esvazia o buffer da biblioteca C e pede ao sistema que grave o arquivo no
+   disco (e nao so na memoria cache). Retorna 1 se conseguiu. */
+int gravarNoDisco(FILE *arq) {
+    if (fflush(arq) != 0) {
+        return 0;
+    }
+#ifdef _WIN32
+    return _commit(_fileno(arq)) == 0;
+#else
+    return fsync(fileno(arq)) == 0;
+#endif
+}
+
 /* RF11: acrescenta uma linha no historico: data/hora;acao;produto;filial;usuario.
    Retorna 1 se a linha foi gravada e 0 em caso de falha. */
 int registrarHistorico(const char *acao, int idProduto, int filial,
@@ -152,7 +165,8 @@ int registrarHistorico(const char *acao, int idProduto, int filial,
     }
     strftime(dataHora, sizeof(dataHora), "%d/%m/%Y %H:%M", localtime(&agora));
     ok = fprintf(arq, "%s;%s;%d;%s;%s\n", dataHora, acao, idProduto,
-                 (filial >= 0) ? FILIAIS[filial] : "Todas", login) >= 0;
+                 (filial >= 0) ? FILIAIS[filial] : "Todas", login) >= 0
+         && gravarNoDisco(arq); /* como o cardapio: a linha vai para o disco */
     if (fclose(arq) != 0) { /* o fclose descarrega o buffer: pode falhar aqui */
         ok = 0;
     }
@@ -164,25 +178,14 @@ int registrarHistorico(const char *acao, int idProduto, int filial,
     return ok;
 }
  
-/* Esvazia o buffer da biblioteca C e pede ao sistema que grave o arquivo no
-   disco (e nao so na memoria cache). Retorna 1 se conseguiu. */
-int gravarNoDisco(FILE *arq) {
-    if (fflush(arq) != 0) {
-        return 0;
-    }
-#ifdef _WIN32
-    return _commit(_fileno(arq)) == 0;
-#else
-    return fsync(fileno(arq)) == 0;
-#endif
-}
-
 /* Troca o arquivo destino pelo origem numa so chamada do sistema, sem
    apagar o destino antes. Num disco local NTFS (MoveFileEx) ou com o rename
    do POSIX, quem abre o destino ve o conteudo antigo inteiro ou o novo
    inteiro; se a troca falhar, o destino fica intacto. No Windows usa
    MoveFileEx porque o rename da biblioteca C nao substitui um arquivo
-   existente. Retorna 1 se trocou. */
+   existente; com MOVEFILE_WRITE_THROUGH, a troca ja esta no disco quando a
+   funcao retorna. No POSIX isso exigiria tambem um fsync da pasta, que a
+   simulacao (feita para o Windows) nao faz. Retorna 1 se trocou. */
 int substituirArquivo(const char *origem, const char *destino) {
 #ifdef _WIN32
     return MoveFileExA(origem, destino,
@@ -195,8 +198,9 @@ int substituirArquivo(const char *origem, const char *destino) {
 /* Grava produtos e matriz de disponibilidade no arquivo texto.
    Formato de cada linha: id;categoria;nome;preco;alergenos;disp1;disp2;disp3
    Gravacao segura: escreve primeiro em cardapio.tmp, forca o conteudo para
-   o disco e so entao troca o cardapio.txt. Assim, nem uma falha no meio nem
-   uma queda de energia logo apos a troca deixam o cardapio.txt pela metade.
+   o disco e so entao troca o cardapio.txt. Assim, uma falha no meio nunca
+   deixa o cardapio.txt pela metade e, no Windows, nem uma queda de energia
+   logo apos a troca (ver substituirArquivo).
    Retorna 1 se gravou e 0 em caso de falha (o cardapio.txt fica como estava,
    com o estado anterior, e o cardapio.tmp e apagado). */
 int salvarDados(void) {
@@ -251,13 +255,13 @@ int carregarDados(void) {
         if (errno != ENOENT) {
             return -1; /* existe, mas nao abriu (permissao, bloqueio...) */
         }
+        /* existe um .tmp (legivel ou bloqueado)? entao nao e primeira execucao */
         tmp = fopen(ARQ_DADOS_TMP, "r");
-        if (tmp != NULL) {
-            fclose(tmp);
+        if (tmp != NULL || errno != ENOENT) {
+            if (tmp != NULL) {
+                fclose(tmp);
+            }
             return -2;
-        }
-        if (errno != ENOENT) {
-            return -2; /* o .tmp existe, mas esta bloqueado: tambem nao apaga */
         }
         return 0;
     }
@@ -695,8 +699,9 @@ int main(void) {
         return 1;
     }
     if (carga == -2) {
-        printf("Aviso: %s ausente e %s encontrado (gravacao interrompida). "
-               "Renomeie-o para %s para recupera-lo ou apague-o.\n",
+        printf("Aviso: %s ausente e %s encontrado (gravacao interrompida, "
+               "pode estar incompleto). Confira o arquivo antes de renomea-lo "
+               "para %s, ou apague-o para comecar do zero.\n",
                ARQ_DADOS, ARQ_DADOS_TMP, ARQ_DADOS);
         return 1;
     }

@@ -99,12 +99,16 @@ apague o `cardapio.txt` e o `historico.txt` (e o `cardapio.tmp`, se existir).
 A gravação é "tudo ou nada": o programa escreve primeiro em `cardapio.tmp` e só
 troca o `cardapio.txt` quando a escrita termina sem erro, numa só chamada do sistema
 (`MoveFileEx` no Windows, `rename` nos demais), sem apagar o arquivo antes; se a troca
-falhar, o `cardapio.txt` fica intacto. Se o cardápio ou o
+falhar, o `cardapio.txt` fica intacto. O conteúdo é forçado para o disco antes da troca;
+no Windows a troca também é gravada na hora, o que protege contra queda de energia logo
+depois dela (no Linux/macOS isso exigiria ainda um `fsync` da pasta, que a simulação,
+feita para o Windows, não faz). Se o cardápio ou o
 histórico não puder ser gravado, a alteração é desfeita e uma mensagem de erro
 aparece. Se o `cardapio.txt` estiver corrompido ou não puder ser lido, o programa
 avisa e encerra sem sobrescrevê-lo: corrija ou apague o arquivo. Se só existir um
-`cardapio.tmp` (gravação interrompida), o programa também encerra: renomeie-o para
-`cardapio.txt` para recuperá-lo ou apague-o.
+`cardapio.tmp` (gravação interrompida), o programa também encerra: ele pode estar
+incompleto, então confira o conteúdo antes de renomeá-lo para `cardapio.txt`, ou
+apague-o para começar do zero.
 
 Usuários disponíveis no acesso interno:
 
