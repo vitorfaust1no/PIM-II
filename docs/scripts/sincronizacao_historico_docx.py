@@ -14,33 +14,23 @@ from __future__ import annotations
 
 import copy
 import shutil
-from pathlib import Path
-
 import sys
+from pathlib import Path
 
 from docx import Document
 from docx.text.paragraph import Paragraph
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from replicacao_docx import TEXTO_54 as _TEXTO_54  # noqa: E402
+# Texto da 5.4 (abertura, mecanismo, cenarios de falha e fecho): fonte unica em
+# replicacao_docx.py, que trocou o ponto de controle pela caixa de saida
+# replicacao_pendente. A versao antiga deste script (com as alineas a-e) brigava com
+# correcoes_avaliador_docx.py, que as condensava.
+from replicacao_docx import ANCORA_54, FECHO_54, TEXTO_54  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
 BACKUP = DOCS / "_backups" / "PIM_II_Sabor_e_Cia.pre-sincronizacao.docx"
 
-ANCORA_54 = "de forma simplificada no arquivo historico.txt."
-# Texto da 5.4 (mecanismo e cenarios de falha): fonte unica em replicacao_docx.py, que
-# substituiu o ponto de controle pela caixa de saida replicacao_pendente. A versao antiga
-# deste script (com as alineas a-e) brigava com correcoes_avaliador_docx.py, que as condensa.
-TEXTO_54 = _TEXTO_54
-
-FECHO_54 = (
-    "Desse modo, o projeto trabalha com dois níveis de consistência: a disponibilidade corrente e "
-    "o seu registro de histórico são gravados de forma atômica no MySQL, e a disponibilidade é "
-    "propagada aos canais em até 30 segundos (meta do RNF01), enquanto a cópia analítica no MongoDB é eventualmente consistente, podendo ficar "
-    "temporariamente atrasada, mas sempre convergindo para o conteúdo do banco relacional "
-    "(Coulouris et al., 2013)."
-)
 
 ANCORA_74 = "(RNF01), atendendo ao diferencial de disponibilidade em tempo quase real."
 EXTRA_74 = (" Já o histórico analítico é replicado de forma assíncrona e idempotente do MySQL "
@@ -60,7 +50,7 @@ def _clonar_depois(ref: Paragraph, depois_de, texto: str) -> Paragraph:
 
 def inserir_54(doc) -> bool:
     P = doc.paragraphs
-    alvos = [i for i, p in enumerate(P) if p.text.endswith(ANCORA_54)]
+    alvos = [i for i, p in enumerate(P) if p.text.rstrip().endswith(ANCORA_54)]
     if len(alvos) != 1:
         raise SystemExit(f"ancora 5.4 casou {len(alvos)} vezes")
     i_corpo = alvos[0]

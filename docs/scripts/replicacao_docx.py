@@ -11,7 +11,6 @@ MongoDB confirma a gravacao.
 1. 5.2 e 5.3: a caixa de saida passa a ser a tabela replicacao_pendente.
 2. 5.4: os tres paragrafos do mecanismo e das falhas sao reescritos (fonte unica: TEXTO_54;
    sincronizacao_historico_docx.py e correcoes_avaliador_docx.py importam daqui).
-3. Resumo e Abstract: 14 de 14 testes no modelo fisico (ST13).
 
 Idempotente. Faz backup em docs/_backups/PIM_II_Sabor_e_Cia.pre-replicacao.docx.
 Uso (da raiz, com o .docx fechado no Word):  python docs/scripts/replicacao_docx.py
@@ -35,7 +34,14 @@ BACKUP = DOCS / "_backups" / "PIM_II_Sabor_e_Cia.pre-replicacao.docx"
 
 # paragrafo que abre a 5.4 (fica igual) e o que a fecha (fica igual)
 ANCORA_54 = "A simulação em C representa esse histórico de forma simplificada no arquivo historico.txt."
-INICIO_FECHO_54 = "Desse modo, o projeto trabalha com dois níveis de consistência"
+FECHO_54 = (
+    "Desse modo, o projeto trabalha com dois níveis de consistência: a disponibilidade corrente e "
+    "o seu registro de histórico são gravados de forma atômica no MySQL, e a disponibilidade é "
+    "propagada aos canais em até 30 segundos (meta do RNF01), enquanto a cópia analítica no MongoDB é eventualmente consistente, podendo ficar "
+    "temporariamente atrasada, mas sempre convergindo para o conteúdo do banco relacional "
+    "(Coulouris et al., 2013)."
+)
+INICIO_FECHO_54 = FECHO_54.split(":")[0]  # "Desse modo, o projeto trabalha com ..."
 
 TEXTO_54 = [
     "A sincronização entre os dois bancos segue o padrão de caixa de saída transacional "
@@ -60,9 +66,10 @@ TEXTO_54 = [
     "perda de eventos; se o próprio serviço falhar entre gravar no MongoDB e apagar as "
     "pendências, o lote é reprocessado e os eventos repetidos são rejeitados pela chave _id; e uma "
     "transação revertida não deixa evento nem pendência. Uma conciliação diária compara as "
-    "contagens de eventos por filial e por dia nos dois bancos, e a idade da pendência mais "
-    "antiga é monitorada com alerta; esse atraso afeta apenas os relatórios analíticos, pois o "
-    "cardápio e as maquininhas leem o MySQL (RNF01).",
+    "contagens de eventos por filial e por dia nos dois bancos e regrava, a partir do MySQL, os "
+    "que faltarem (por exemplo, após a restauração de um backup do MongoDB), e a idade da "
+    "pendência mais antiga é monitorada com alerta; esse atraso afeta apenas os relatórios "
+    "analíticos, pois o cardápio e as maquininhas leem o MySQL (RNF01).",
 ]
 
 TEXTO_52_ANTIGO = ("nela apenas se inserem linhas, e ela também serve de caixa de saída para a "
@@ -75,8 +82,7 @@ TROCAS = [
     # 5.3: a lista de tabelas do modelo fisico inclui a caixa de saida
     ("harmonizacao, disponibilidade e historico_disponibilidade. Os textos",
      "harmonizacao, disponibilidade, historico_disponibilidade e replicacao_pendente. Os textos"),
-    ("e 13 de 13 no modelo físico.", "e 14 de 14 no modelo físico."),
-    ("and 13 out of 13 in the physical model.", "and 14 out of 14 in the physical model."),
+    # a contagem de testes do Resumo/Abstract sai dos resumo.json (evidencias_docx.py)
 ]
 
 

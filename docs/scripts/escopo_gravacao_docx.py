@@ -8,7 +8,7 @@ gravacao segura da simulacao (revisao externa, 13/11/2026).
    - Resumo, Abstract, cap. 8 e Conclusao: a solucao foi "analisada" (analise
      documental), e nao "avaliada" como se tivesse sido testada.
 2. Gravacao (src/simulacao_cardapio.c): 6.4 cita o desfazer da alteracao quando a
-   gravacao falha (CT14 e CT15); Resumo e Abstract passam a 15 de 15 casos na simulacao.
+   gravacao falha (CT14 a CT16).
 
 O desenvolvimento (caps. 2 a 9) esta no limite de 30 paginas: as trocas dos caps. 8 e 9
 nao aumentam o texto, e os acrescimos ficam no fim dos caps. 4 e 6, onde ha folga.
@@ -47,7 +47,9 @@ TEXTO_91_ANTIGO = (
     "e às maquininhas dos garçons em até 30 segundos (meta do RNF01)."
 )
 
-# (trecho atual, trecho novo): cada trecho atual aparece uma unica vez no documento
+OPCIONAL = "opcional"  # troca que so se aplica se o trecho antigo existir
+
+# (trecho atual, trecho novo[, OPCIONAL]): cada trecho atual aparece uma unica vez
 TROCAS = [
     # 4.4: rastreabilidade
     ("evolução futura, conforme discutido no capítulo 9.",
@@ -59,9 +61,11 @@ TROCAS = [
     ("é exibida junto ao cardápio (RF13).",
      "é exibida junto ao cardápio (RF13, em parte)."),
     # 6.4: falha de gravacao (o arquivo temporario esta no Apendice A e no README)
+    # migracao opcional da versao anterior ao CT16; depois, a troca sobre o texto original
+    ("alteração é desfeita (CT14 e CT15).", "alteração é desfeita (CT14 a CT16).", OPCIONAL),
     ("descritos no capítulo 5.",
      "descritos no capítulo 5. Se o cardápio ou o histórico não puder ser gravado, a "
-     "alteração é desfeita (CT14 e CT15)."),
+     "alteração é desfeita (CT14 a CT16)."),
     # 9.1 e 9.2: o sistema completo ainda nao existe
     (TEXTO_91_ANTIGO, TEXTO_91),
     ("as redes levam essa lógica com segurança", "as redes levarão essa lógica com segurança"),
@@ -74,19 +78,18 @@ TROCAS = [
      "A solução foi analisada quanto à acessibilidade, à inclusão digital, à informação"),
     ("e a solução foi avaliada quanto à acessibilidade, à inclusão digital, à proteção",
      "e a proposta foi analisada quanto à acessibilidade, à inclusão digital, à proteção"),
-    # contagem de testes da simulacao (CT14 e CT15)
-    ("com 13 de 13 casos aprovados na simulação", "com 15 de 15 casos aprovados na simulação"),
-    ("with 13 out of 13 cases passing in the simulation",
-     "with 15 out of 15 cases passing in the simulation"),
+    # a contagem de testes do Resumo/Abstract sai dos resumo.json (evidencias_docx.py)
 ]
 
 
 def aplicar_trocas(doc) -> int:
     feitas = 0
-    for antigo, novo in TROCAS:
+    for antigo, novo, *opcao in TROCAS:
         if any(novo in p.text for p in doc.paragraphs):
             continue  # ja aplicada
         alvos = [p for p in doc.paragraphs if antigo in p.text]
+        if not alvos and opcao == [OPCIONAL]:
+            continue  # migracao de uma versao que este documento nunca teve
         if len(alvos) != 1:
             raise SystemExit(f"trecho {antigo[:60]!r} casou {len(alvos)} vezes")
         substituir_regex(alvos[0]._p, re.escape(antigo), lambda m, t=novo: t)

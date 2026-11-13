@@ -698,6 +698,10 @@ def main() -> None:
             ref_el.addnext(nova)
         ref_el = nova
 
+    # ---- Resumo e Abstract: contagem de testes lida dos resumo.json ----
+    from revisao_final_docx import resultados_testes  # import local: ele importa este modulo
+    resultados_testes(doc)
+
     renumerar_legendas(doc)
     renumerar_listas(doc)
     corrigir_sumario(doc)  # updateFields: o Word atualiza sumario, listas, REF e paginas

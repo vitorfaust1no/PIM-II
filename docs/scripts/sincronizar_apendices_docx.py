@@ -37,14 +37,34 @@ APENDICES = [
 ]
 
 
-def _clonar_depois(ref: Paragraph, depois_de, texto: str) -> Paragraph:
+def _definir_linha(par: Paragraph, texto: str, modelo_rpr=None) -> None:
+    """Deixa o paragrafo com um unico run contendo `texto`. Paragrafo sem runs (linha vazia
+    gravada pelo Word) ganha um run com a formatacao `modelo_rpr` (Consolas de um vizinho)."""
+    for r in par.runs[1:]:
+        r._r.getparent().remove(r._r)
+    if par.runs:
+        par.runs[0].text = texto
+        return
+    run = par.add_run(texto)
+    if modelo_rpr is not None:
+        run._r.insert(0, copy.deepcopy(modelo_rpr))
+
+
+def _rpr_codigo(pars: list[Paragraph]):
+    """Formatacao de caractere do primeiro run de codigo do apendice (ou None)."""
+    for p in pars:
+        for r in p.runs:
+            if r._r.rPr is not None:
+                return r._r.rPr
+    return None
+
+
+def _clonar_depois(ref: Paragraph, depois_de, texto: str, modelo_rpr=None) -> Paragraph:
     """Copia o paragrafo ref (formatacao), insere apos o elemento depois_de e troca o texto."""
     novo = copy.deepcopy(ref._p)
     depois_de.addnext(novo)
     par = Paragraph(novo, ref._parent)
-    for r in par.runs[1:]:
-        r._r.getparent().remove(r._r)
-    par.runs[0].text = texto
+    _definir_linha(par, texto, modelo_rpr)
     return par
 
 
@@ -69,6 +89,7 @@ def sincronizar(doc, inicio: str, fim: str, fonte: Path, aplicar: bool) -> int:
     atual = [_normalizar(p.text) for p in pars]
     novo = _linhas_fonte(fonte)
     ops = difflib.SequenceMatcher(a=atual, b=novo, autojunk=False).get_opcodes()
+    rpr = _rpr_codigo(pars)
     mudancas = 0
     for tag, i1, i2, j1, j2 in reversed(ops):  # de tras para frente
         if tag == "equal":
@@ -79,17 +100,14 @@ def sincronizar(doc, inicio: str, fim: str, fonte: Path, aplicar: bool) -> int:
             continue
         comum = min(i2 - i1, j2 - j1)
         for k in range(comum):  # substituicoes 1:1
-            par = pars[i1 + k]
-            for r in par.runs[1:]:
-                r._r.getparent().remove(r._r)
-            par.runs[0].text = novo[j1 + k]
+            _definir_linha(pars[i1 + k], novo[j1 + k], rpr)
         for k in range(i1 + comum, i2):  # sobras do lado antigo
             pars[k]._p.getparent().remove(pars[k]._p)
         if j2 - j1 > comum:  # linhas novas: clona o paragrafo de codigo vizinho
             ref = pars[i1 + comum - 1] if i1 + comum > 0 else pars[0]
             ancora = ref._p if i1 + comum > 0 else P[a]._p
             for k in range(j1 + comum, j2):
-                ancora = _clonar_depois(ref, ancora, novo[k])._p
+                ancora = _clonar_depois(ref, ancora, novo[k], rpr)._p
     return mudancas
 
 
