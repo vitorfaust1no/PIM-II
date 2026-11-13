@@ -2,13 +2,13 @@
 DROP DATABASE IF EXISTS sabor_cia
 --------------
 
-Query OK, 0 rows affected, 1 warning (0.01 sec)
+Query OK, 0 rows affected, 1 warning (0.00 sec)
 
 --------------
 CREATE DATABASE sabor_cia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 --------------
 
-Query OK, 1 row affected (0.00 sec)
+Query OK, 1 row affected (0.02 sec)
 
 --------------
 CREATE TABLE filial (
@@ -20,7 +20,7 @@ CREATE TABLE filial (
 )
 --------------
 
-Query OK, 0 rows affected (0.05 sec)
+Query OK, 0 rows affected (0.06 sec)
 
 --------------
 CREATE TABLE usuario (
@@ -39,7 +39,7 @@ CREATE TABLE usuario (
 )
 --------------
 
-Query OK, 0 rows affected (0.06 sec)
+Query OK, 0 rows affected (0.07 sec)
 
 --------------
 CREATE TABLE dispositivo (
@@ -64,7 +64,7 @@ CREATE TABLE categoria (
 )
 --------------
 
-Query OK, 0 rows affected (0.05 sec)
+Query OK, 0 rows affected (0.07 sec)
 
 --------------
 CREATE TABLE produto (
@@ -84,7 +84,7 @@ CREATE TABLE produto (
 )
 --------------
 
-Query OK, 0 rows affected (0.06 sec)
+Query OK, 0 rows affected (0.07 sec)
 
 --------------
 CREATE TABLE alergeno (
@@ -94,7 +94,7 @@ CREATE TABLE alergeno (
 )
 --------------
 
-Query OK, 0 rows affected (0.06 sec)
+Query OK, 0 rows affected (0.07 sec)
 
 --------------
 CREATE TABLE produto_alergeno (
@@ -140,7 +140,7 @@ CREATE TABLE disponibilidade (
 )
 --------------
 
-Query OK, 0 rows affected (0.06 sec)
+Query OK, 0 rows affected (0.16 sec)
 
 --------------
 CREATE TABLE historico_disponibilidade (
@@ -156,7 +156,7 @@ CREATE TABLE historico_disponibilidade (
 )
 --------------
 
-Query OK, 0 rows affected (0.09 sec)
+Query OK, 0 rows affected (0.13 sec)
 
 --------------
 CREATE TABLE replicacao_pendente (
@@ -167,20 +167,20 @@ CREATE TABLE replicacao_pendente (
 )
 --------------
 
-Query OK, 0 rows affected (0.05 sec)
+Query OK, 0 rows affected (0.07 sec)
 
 --------------
 CREATE INDEX idx_disp_filial_ativo ON disponibilidade (id_filial, ativo)
 --------------
 
-Query OK, 0 rows affected (0.05 sec)
+Query OK, 0 rows affected (0.07 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 
 --------------
 CREATE INDEX idx_hist_filial_data  ON historico_disponibilidade (id_filial, data_hora)
 --------------
 
-Query OK, 0 rows affected (0.04 sec)
+Query OK, 0 rows affected (0.05 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 
 --------------
@@ -198,7 +198,7 @@ BEGIN
 END
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.02 sec)
 
 --------------
 CREATE TRIGGER trg_harmonizacao_valida_upd
@@ -215,7 +215,7 @@ BEGIN
 END
 --------------
 
-Query OK, 0 rows affected (0.02 sec)
+Query OK, 0 rows affected (0.01 sec)
 
 --------------
 CREATE TRIGGER trg_historico_pendente
@@ -238,7 +238,7 @@ INSERT INTO filial (nome, endereco, bairro, url_qrcode) VALUES
     'https://cardapio.saborecia.com.br/f/3')
 --------------
 
-Query OK, 3 rows affected (0.00 sec)
+Query OK, 3 rows affected (0.01 sec)
 Records: 3  Duplicates: 0  Warnings: 0
 
 --------------
@@ -251,7 +251,7 @@ INSERT INTO usuario (nome, email, perfil, id_filial, senha_hash) VALUES
     '$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01236')
 --------------
 
-Query OK, 3 rows affected (0.01 sec)
+Query OK, 3 rows affected (0.00 sec)
 Records: 3  Duplicates: 0  Warnings: 0
 
 --------------
@@ -271,7 +271,7 @@ INSERT INTO categoria (nome_pt, nome_en, ordem_exibicao) VALUES
 ('Vinhos', 'Wines', 4)
 --------------
 
-Query OK, 4 rows affected (0.01 sec)
+Query OK, 4 rows affected (0.02 sec)
 Records: 4  Duplicates: 0  Warnings: 0
 
 --------------
@@ -291,7 +291,7 @@ INSERT INTO produto (id_categoria, nome_pt, nome_en,
 (4, 'Chardonnay (taça)', 'Chardonnay (glass)', NULL, NULL, 45.00)
 --------------
 
-Query OK, 5 rows affected (0.00 sec)
+Query OK, 5 rows affected (0.08 sec)
 Records: 5  Duplicates: 0  Warnings: 0
 
 --------------
@@ -336,7 +336,7 @@ Query OK, 0 rows affected (0.00 sec)
 START TRANSACTION
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 
 --------------
 UPDATE disponibilidade d
@@ -370,7 +370,7 @@ Records: 1  Duplicates: 0  Warnings: 0
 COMMIT
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.02 sec)
 
 --------------
 INSERT INTO historico_disponibilidade
@@ -383,7 +383,7 @@ INSERT INTO historico_disponibilidade
 (2, 1, 2, 'ATIVAR',    '2026-09-23 11:00:00')
 --------------
 
-Query OK, 6 rows affected (0.00 sec)
+Query OK, 6 rows affected (0.01 sec)
 Records: 6  Duplicates: 0  Warnings: 0
 
 --------------
@@ -421,7 +421,7 @@ WHERE disp.token_hash = SHA2('token-exemplo-jardins-01', 256) AND disp.ativo = T
 |          4 | Petit gâteau                   |  42.00 |
 |          5 | Chardonnay (taça)              |  45.00 |
 +------------+--------------------------------+--------+
-4 rows in set (0.01 sec)
+4 rows in set (0.00 sec)
 
 --------------
 SELECT p.nome_pt, p.preco
@@ -441,7 +441,7 @@ WHERE d.id_filial = 1 AND d.ativo = TRUE
 | Salmão em crosta de castanhas  | 112.00 |
 | Chardonnay (taça)              |  45.00 |
 +--------------------------------+--------+
-2 rows in set (0.00 sec)
+2 rows in set (0.01 sec)
 
 --------------
 SELECT prato.nome_pt AS prato, vinho.nome_pt AS vinho_sugerido

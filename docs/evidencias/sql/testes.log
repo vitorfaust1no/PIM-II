@@ -68,7 +68,7 @@ SELECT COUNT(*) AS tabelas FROM information_schema.tables
 +---------+
 |      11 |
 +---------+
-1 row in set (0.00 sec)
+1 row in set (0.01 sec)
 
 --------------
 SELECT trigger_name, event_manipulation AS evento, event_object_table AS tabela
@@ -186,7 +186,7 @@ SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
 FROM usuario u WHERE u.id_usuario = @usuario AND @alterou > 0
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 
 --------------
@@ -223,7 +223,7 @@ Query OK, 0 rows affected (0.00 sec)
 UPDATE disponibilidade SET ativo = FALSE WHERE id_produto = 1 AND id_filial = 2
 --------------
 
-Query OK, 1 row affected (0.01 sec)
+Query OK, 1 row affected (0.00 sec)
 Rows matched: 1  Changed: 1  Warnings: 0
 
 --------------
@@ -378,7 +378,7 @@ SELECT (SELECT COUNT(*) FROM historico_disponibilidade) AS eventos,
 +---------+-----------+
 |       7 |         7 |
 +---------+-----------+
-1 row in set (0.00 sec)
+1 row in set (0.01 sec)
 
 --------------
 -- (b) e (c) usam a transacao RF06/RF11 completa (como no ST04): o gerente 2
@@ -442,6 +442,24 @@ Query OK, 1 row affected (0.00 sec)
 Records: 1  Duplicates: 0  Warnings: 0
 
 --------------
+-- dentro da transacao o evento e a pendencia existem (senao o teste seria vazio)
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+SELECT @alterou AS dentro_linhas_alteradas,
+       (SELECT COUNT(*) FROM replicacao_pendente) - @pend_antes AS dentro_pendencias
+--------------
+
++-------------------------+-------------------+
+| dentro_linhas_alteradas | dentro_pendencias |
++-------------------------+-------------------+
+|                       1 |                 1 |
++-------------------------+-------------------+
+1 row in set (0.01 sec)
+
+--------------
 ROLLBACK
 --------------
 
@@ -485,7 +503,7 @@ Rows matched: 1  Changed: 1  Warnings: 0
 SET @alterou = ROW_COUNT()
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.00 sec)
 
 --------------
 INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)

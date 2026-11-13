@@ -21,3 +21,4 @@ docs/_backups/
 __pycache__/
 # Pastas temporarias dos geradores de evidencias (tests/)
 docs/evidencias/*.novo/
+docs/evidencias/*.parcial/

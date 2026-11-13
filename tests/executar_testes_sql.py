@@ -83,6 +83,9 @@ CHECAGENS = {
              # cada regex fica presa a linha de dados logo abaixo do proprio cabecalho
              # (senao uma linha de outro passo com numeros iguais poderia casar)
              [r"\| eventos \| pendentes \|\n\+[-+]+\+\n\|\s+(\d+) \|\s+\1 \|",
+              # (b) nao e vazio: antes do ROLLBACK havia 1 linha alterada e 1 pendencia
+              r"\| dentro_linhas_alteradas \| dentro_pendencias \|\n\+[-+]+\+\n"
+              r"\|\s+1 \|\s+1 \|",
               r"\| pendencias_apos_rollback \| ativo_apos_rollback \|\n\+[-+]+\+\n"
               r"\|\s+0 \|\s+1 \|",
               r"\| linhas_alteradas \| pendencia_do_novo_evento \|\n\+[-+]+\+\n"

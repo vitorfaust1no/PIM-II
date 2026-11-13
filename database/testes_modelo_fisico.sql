@@ -105,6 +105,9 @@ SET @alterou = ROW_COUNT();
 INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
 SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
 FROM usuario u WHERE u.id_usuario = @usuario AND @alterou > 0;
+-- dentro da transacao o evento e a pendencia existem (senao o teste seria vazio)
+SELECT @alterou AS dentro_linhas_alteradas,
+       (SELECT COUNT(*) FROM replicacao_pendente) - @pend_antes AS dentro_pendencias;
 ROLLBACK;
 SELECT (SELECT COUNT(*) FROM replicacao_pendente) - @pend_antes AS pendencias_apos_rollback,
        (SELECT ativo FROM disponibilidade WHERE id_produto = 1 AND id_filial = 1) AS ativo_apos_rollback;

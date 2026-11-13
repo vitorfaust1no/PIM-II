@@ -135,6 +135,7 @@ def executar() -> int:
     novo.mkdir(parents=True)
 
     resultados = []
+    ignorados = []
     with tempfile.TemporaryDirectory(prefix="pim2_testes_c_") as tmp:
         tmp = Path(tmp)
         exe = tmp / "simulacao_cardapio.exe"
@@ -152,6 +153,7 @@ def executar() -> int:
                 # o caso depende de um comportamento do Windows; fora dele nao conta
                 # nem como aprovado nem como falha (e nao entra nas evidencias)
                 print(f"[IGNORADO] {caso['id']} {caso['titulo']} (apenas no Windows)")
+                ignorados.append(caso["id"])
                 continue
             bloqueados = caso.get("bloquear", [])
             antes = {a: (trabalho / a).read_bytes()
@@ -198,6 +200,17 @@ def executar() -> int:
     linhas_resumo.append(f"\n{passou} de {len(resultados)} casos passaram ({versao}).")
     (novo / "resumo.txt").write_text("\n".join(linhas_resumo) + "\n", encoding="utf-8")
 
+    if ignorados:
+        # execucao incompleta: nao substitui as evidencias do relatorio, senao o Resumo
+        # (lido de resumo.json) passaria a contar menos casos do que o Apendice D mostra
+        parcial = SAIDA.with_name(SAIDA.name + ".parcial")
+        if parcial.exists():
+            shutil.rmtree(parcial)
+        novo.rename(parcial)
+        print(f"\n{passou} de {len(resultados)} casos executados passaram; ignorados: "
+              f"{', '.join(ignorados)}. Execucao INCOMPLETA: evidencias em {parcial}; "
+              f"as de {SAIDA} nao foram alteradas.")
+        return 1
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
     novo.rename(SAIDA)
