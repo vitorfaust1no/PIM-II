@@ -1,107 +1,131 @@
 // ============================================================
-// Rede Sabor & Cia — Sistema de Gestão de Vendas (SGV)
-// Modelo lógico para dbdiagram.io  (linguagem DBML)
-// Cole este conteúdo em https://dbdiagram.io  (Import > paste)
-// Exporte o diagrama (PNG/PDF) e o SQL (Export > MySQL/PostgreSQL)
+// Sabor & Cia Bistro — Cardapio digital com disponibilidade por filial
+// Modelo logico em DBML (dbdiagram.io), espelho de modelo_fisico_mysql.sql.
+// A fonte de verdade e o script SQL; a Figura 6 do relatorio vem de
+// diagramas/06_logico.puml. Para visualizar: https://dbdiagram.io (Import).
 // ============================================================
 
-Table papel {
-  id_papel   int [pk, increment]
-  nome       varchar(30) [not null]  // garcom, cozinheiro, gerente, admin
-}
-
 Table filial {
-  id_filial  int [pk, increment]
-  nome       varchar(80) [not null]
-  endereco   varchar(150)
-  is_matriz  boolean [not null, default: false]
+  id_filial int [pk, increment]
+  nome varchar(80) [not null]
+  endereco varchar(150) [not null]
+  bairro varchar(60) [not null]
+  url_qrcode varchar(255) [not null, unique]
 }
 
+// Administrador e gerente na mesma tabela; gerente sempre tem filial (CHECK)
 Table usuario {
-  id_usuario  int [pk, increment]
-  nome        varchar(100) [not null]
-  login       varchar(40) [not null, unique]
-  senha_hash  varchar(255) [not null]
-  id_papel    int [not null]
-  id_filial   int [not null]
+  id_usuario int [pk, increment]
+  nome varchar(100) [not null]
+  email varchar(120) [not null, unique]
+  senha_hash char(60) [not null, note: 'RNF04: hash bcrypt']
+  perfil enum_perfil [not null]
+  id_filial int [null]
+}
+
+Enum enum_perfil {
+  ADMIN
+  GERENTE
+}
+
+// RF10: maquininha identificada por token (SHA-256)
+Table dispositivo {
+  id_dispositivo int [pk, increment]
+  id_filial int [not null]
+  descricao varchar(60) [not null]
+  token_hash char(64) [not null, unique]
+  ativo boolean [not null, default: true]
 }
 
 Table categoria {
   id_categoria int [pk, increment]
-  nome         varchar(40) [not null]  // entradas, principais, sobremesas, bebidas
+  nome_pt varchar(60) [not null, unique]
+  nome_en varchar(60) [not null]
+  ordem_exibicao int [not null]
 }
 
 Table produto {
-  id_produto   int [pk, increment]
-  nome         varchar(100) [not null]
-  descricao    varchar(255)
-  preco        decimal(10,2) [not null]  // dinheiro sempre decimal, nunca float
+  id_produto int [pk, increment]
   id_categoria int [not null]
-  ativo        boolean [not null, default: true]  // controle GLOBAL da matriz
+  nome_pt varchar(100) [not null]
+  nome_en varchar(100) [not null]
+  descricao_pt text
+  descricao_en text
+  ingredientes_pt text
+  ingredientes_en text
+  preco decimal(10,2) [not null, note: 'CHECK preco > 0']
+  url_foto varchar(255)
 }
 
-// disponibilidade LOCAL: matriz mantem o produto; a filial diz se tem hoje
-Table produto_filial {
-  id_produto  int [not null]
-  id_filial   int [not null]
-  disponivel  boolean [not null, default: true]
+Table alergeno {
+  id_alergeno int [pk, increment]
+  nome_pt varchar(50) [not null, unique]
+  nome_en varchar(50) [not null]
+}
 
+Table produto_alergeno {
+  id_produto int [not null]
+  id_alergeno int [not null]
   indexes {
-    (id_produto, id_filial) [pk]  // chave primaria composta -> garante 2FN
+    (id_produto, id_alergeno) [pk]
   }
 }
 
-Table mesa {
-  id_mesa   int [pk, increment]
-  numero    int [not null]
-  status    varchar(20) [not null, default: 'livre']  // livre / ocupada
+// prato x vinho (triggers garantem a categoria "Vinhos")
+Table harmonizacao {
+  id_prato int [not null]
+  id_vinho int [not null]
+  indexes {
+    (id_prato, id_vinho) [pk]
+  }
+}
+
+Table disponibilidade {
+  id_produto int [not null]
   id_filial int [not null]
+  ativo boolean [not null, default: true]
+  atualizado_em datetime [not null]
+  indexes {
+    (id_produto, id_filial) [pk]
+    (id_filial, ativo)
+  }
 }
 
-Table comanda {
-  id_comanda      int [pk, increment]
-  id_mesa         int [not null]
-  id_usuario      int [not null]  // garcom que abriu (trilha)
-  id_filial       int [not null]
-  data_abertura   datetime [not null]
-  data_fechamento datetime
-  status          varchar(20) [not null, default: 'aberta']  // aberta / fechada
+// RF11: historico somente-anexacao
+Table historico_disponibilidade {
+  id_historico bigint [pk, increment]
+  id_produto int [not null]
+  id_filial int [not null]
+  id_usuario int [not null]
+  acao enum_acao [not null]
+  data_hora datetime [not null]
+  indexes {
+    (id_filial, data_hora)
+  }
 }
 
-Table item_comanda {
-  id_item        int [pk, increment]
-  id_comanda     int [not null]
-  id_produto     int [not null]
-  quantidade     int [not null, default: 1]
-  preco_unitario decimal(10,2) [not null]  // preco COPIADO no momento do pedido
+Enum enum_acao {
+  ATIVAR
+  DESATIVAR
 }
 
-Table pagamento {
-  id_pagamento   int [pk, increment]
-  id_comanda     int [not null, unique]  // 1:1 com comanda (um pagamento por comanda)
-  forma          varchar(20) [not null]  // dinheiro / cartao / pix
-  valor          decimal(10,2) [not null]
-  data_pagamento datetime [not null]
+// Caixa de saida da replicacao para o MongoDB (secao 5.4), preenchida
+// pelo trigger trg_historico_pendente na mesma transacao do evento
+Table replicacao_pendente {
+  id_historico bigint [pk]
+  criado_em datetime [not null]
 }
 
-Table auditoria {
-  id_auditoria int [pk, increment]
-  id_usuario   int [not null]
-  acao         varchar(255) [not null]
-  data_hora    datetime [not null]
-}
-
-// ----------------- Relacionamentos -----------------
-Ref: usuario.id_papel        > papel.id_papel
-Ref: usuario.id_filial       > filial.id_filial
-Ref: produto.id_categoria    > categoria.id_categoria
-Ref: produto_filial.id_produto > produto.id_produto
-Ref: produto_filial.id_filial  > filial.id_filial
-Ref: mesa.id_filial          > filial.id_filial
-Ref: comanda.id_mesa         > mesa.id_mesa
-Ref: comanda.id_usuario      > usuario.id_usuario
-Ref: comanda.id_filial       > filial.id_filial
-Ref: item_comanda.id_comanda > comanda.id_comanda
-Ref: item_comanda.id_produto > produto.id_produto
-Ref: pagamento.id_comanda    - comanda.id_comanda   // "-" = relacao 1:1
-Ref: auditoria.id_usuario    > usuario.id_usuario
+Ref: usuario.id_filial > filial.id_filial
+Ref: dispositivo.id_filial > filial.id_filial
+Ref: produto.id_categoria > categoria.id_categoria
+Ref: produto_alergeno.id_produto > produto.id_produto [delete: cascade]
+Ref: produto_alergeno.id_alergeno > alergeno.id_alergeno
+Ref: harmonizacao.id_prato > produto.id_produto [delete: cascade]
+Ref: harmonizacao.id_vinho > produto.id_produto [delete: cascade]
+Ref: disponibilidade.id_produto > produto.id_produto [delete: cascade]
+Ref: disponibilidade.id_filial > filial.id_filial [delete: cascade]
+Ref: historico_disponibilidade.id_produto > produto.id_produto
+Ref: historico_disponibilidade.id_filial > filial.id_filial
+Ref: historico_disponibilidade.id_usuario > usuario.id_usuario
+Ref: replicacao_pendente.id_historico - historico_disponibilidade.id_historico

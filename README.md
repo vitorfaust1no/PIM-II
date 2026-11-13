@@ -28,8 +28,10 @@ saborEcia/
 - `testes_modelo_fisico.sql` — testes do modelo físico (estrutura, transação,
   ROLLBACK e testes negativos de CHECK, trigger, FK e UNIQUE). Rode depois do script
   acima, com `mysql --force`, pois os testes negativos devem terminar em erro.
-- `sabor-cia.dbml` — modelo do banco em formato DBML.
-- `diagramaDB.pdf` — diagrama do banco de dados exportado.
+- `sabor-cia.dbml` — modelo lógico em formato DBML (dbdiagram.io), espelho do
+  script SQL.
+- `diagramaDB.pdf` — diagrama do modelo lógico (o mesmo da Figura 6, gerado de
+  `diagramas/06_logico.puml`).
 
 ### `docs/`
 - `pseudocodigo_funcionalidades.txt` — pseudocódigo das principais funcionalidades (Apêndice C).

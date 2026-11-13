@@ -91,6 +91,12 @@ entity historico_disponibilidade {
   * data_hora : DATETIME
 }
 
+entity replicacao_pendente {
+  * id_historico : BIGINT <<PK, FK>>
+  --
+  * criado_em : DATETIME
+}
+
 categoria ||--o{ produto
 alergeno ||--o{ produto_alergeno
 produto ||--o{ produto_alergeno
@@ -103,4 +109,5 @@ filial ||--o{ dispositivo
 produto ||--o{ historico_disponibilidade
 filial ||--o{ historico_disponibilidade
 usuario ||--o{ historico_disponibilidade
+historico_disponibilidade ||--o| replicacao_pendente : caixa de saída
 @enduml
