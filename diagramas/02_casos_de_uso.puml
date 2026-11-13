@@ -1,0 +1,59 @@
+@startuml 02_casos_de_uso
+' Diagrama de casos de uso do Sabor & Cia Bistro - Figura 1 do relatorio.
+' Nomes e numeracao iguais ao Quadro 3 (Casos de uso do sistema) da secao 4.3.1.
+' Atores externos e gerente a esquerda, UC04 Fazer login no centro e Administrador a
+' direita com os casos de uso de manutencao, para nao cruzar linhas. Proporcao larga
+' (cerca de 16 x 6 cm no relatorio) para nao empurrar o capitulo 4 para outra pagina,
+' com fonte maior e rotulos quebrados para ficar legivel impresso.
+' Sem titulo embutido: a legenda ABNT "Figura 1 - ..." ja identifica a figura.
+' Renderizar (a imagem passa de 4096 px, limite padrao do PlantUML):
+'   docker run --rm -e PLANTUML_LIMIT_SIZE=8192 -v "$PWD/diagramas:/data" -w /data plantuml/plantuml -tpng 02_casos_de_uso.puml
+!include estilo.iuml
+skinparam defaultFontSize 20
+skinparam dpi 300
+skinparam nodesep 12
+skinparam ranksep 40
+skinparam packageStyle rectangle
+left to right direction
+
+actor "Cliente" as cliente
+actor "Gerente\nde filial" as gerente
+actor "Maquininha\n«sistema\nexterno»" as maquininha
+actor "Administrador\n(matriz)" as admin
+
+rectangle "Sistema de Cardápio Digital" {
+  usecase "UC01\nVisualizar\ncardápio da filial" as UC01
+  usecase "UC05 Alterar\ndisponibilidade\nde produto" as UC05
+  usecase "UC12 Consultar\ncatálogo\ndisponível (API)" as UC12
+  usecase "UC02 Trocar\nidioma" as UC02
+  usecase "UC03 Filtrar\npor categoria/\nalérgeno" as UC03
+  usecase "UC04 Fazer\nlogin" as UC04
+  usecase "UC09 Gerar\nQR code" as UC09
+  usecase "UC06 Manter\nprodutos" as UC06
+  usecase "UC07 Manter\ncategorias" as UC07
+  usecase "UC08 Manter\nfiliais e\nmaquininhas" as UC08
+  usecase "UC10 Manter\nusuários" as UC10
+  usecase "UC11 Consultar\nrelatório de\nindisponibilidade" as UC11
+}
+
+cliente --> UC01
+gerente --> UC05
+maquininha --> UC12
+
+UC01 <.. UC02 : <<extend>>
+UC01 <.. UC03 : <<extend>>
+UC05 ..> UC04 : <<include>>
+
+UC04 <.. UC06 : <<include>>
+UC04 <.. UC07 : <<include>>
+UC04 <.. UC08 : <<include>>
+UC04 <.. UC10 : <<include>>
+UC04 <.. UC11 : <<include>>
+UC09 ..> UC08 : <<extend>>
+
+UC06 <-- admin
+UC07 <-- admin
+UC08 <-- admin
+UC10 <-- admin
+UC11 <-- admin
+@enduml

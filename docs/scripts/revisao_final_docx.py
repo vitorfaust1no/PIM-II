@@ -48,7 +48,7 @@ RF_NOVO = (
     "após três tentativas inválidas; RF02 — gerar o QR code de acesso ao cardápio de cada "
     "filial (administrador); RF03 — alternar o idioma do cardápio entre português e inglês; "
     "RF04 — cadastrar as maquininhas de cada filial e emitir ou revogar seus tokens de "
-    "acesso (administrador, no UC08 Manter filiais); RF05 — cadastrar e manter produtos, categorias, filiais e usuários "
+    "acesso (administrador, no UC08 Manter filiais e maquininhas); RF05 — cadastrar e manter produtos, categorias, filiais e usuários "
     "(administrador); RF06 — ativar e desativar produtos por filial (gerente); RF07 — exibir "
     "o cardápio ativo da filial ao cliente; RF08 — filtrar o cardápio por categoria; RF09 — "
     "filtrar o cardápio por alérgeno; RF10 — expor o catálogo disponível às maquininhas dos "
