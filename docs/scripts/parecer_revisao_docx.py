@@ -20,7 +20,6 @@ Uso (da raiz, com o .docx fechado no Word):  python docs/scripts/parecer_revisao
 
 from __future__ import annotations
 
-import re
 import shutil
 import sys
 from pathlib import Path
@@ -30,7 +29,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from evidencias_docx import clonar, definir_texto, substituir_regex  # noqa: E402
+from evidencias_docx import aplicar_trocas_ancoradas, clonar, definir_texto  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -59,22 +58,6 @@ TROCAS = [
      "não devem ser tomadas como prática recomendada",
      "não devem ser reutilizadas nem tomadas como prática recomendada"),
 ]
-
-
-def aplicar_trocas(doc) -> int:
-    feitas = 0
-    for inicio, antigo, novo in TROCAS:
-        alvos = [p for p in doc.paragraphs if p.text.startswith(inicio)]
-        if len(alvos) != 1:
-            raise SystemExit(f"paragrafo '{inicio}' casou {len(alvos)} vezes")
-        p = alvos[0]
-        if novo in p.text:
-            continue
-        if p.text.count(antigo) != 1:
-            raise SystemExit(f"trecho {antigo!r} nao encontrado em '{inicio}'")
-        substituir_regex(p._p, re.escape(antigo), lambda m, t=novo: t)
-        feitas += 1
-    return feitas
 
 
 def _espaco_antes(p_el, twips: int | None) -> None:
@@ -161,7 +144,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     print("Capa inserida." if inserir_capa(doc) else "Capa ja existia.")
-    print(f"Trocas de texto: {aplicar_trocas(doc)}.")
+    print(f"Trocas de texto: {aplicar_trocas_ancoradas(doc, TROCAS)}.")
     print(f"Quadros com cabecalho repetido: {repetir_cabecalhos(doc)}.")
     doc.save(ALVO)
     print("Abra no Word, atualize os campos (sumario, listas e paginas) e reexporte o PDF.")

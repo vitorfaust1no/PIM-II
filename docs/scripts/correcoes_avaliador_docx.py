@@ -21,7 +21,6 @@ Uso:  python docs/scripts/correcoes_avaliador_docx.py
 from __future__ import annotations
 
 import io
-import re
 import shutil
 import sys
 from pathlib import Path
@@ -32,7 +31,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ajustar_figuras import localizar_figura  # noqa: E402
-from evidencias_docx import achar, substituir_regex  # noqa: E402
+from evidencias_docx import aplicar_trocas_ancoradas  # noqa: E402
 from escopo_gravacao_docx import TEXTO_91, TEXTO_91_ANTIGO  # noqa: E402
 from replicacao_docx import reescrever_54  # noqa: E402
 
@@ -199,23 +198,6 @@ FIGURAS = [
 ]
 
 
-def aplicar_trocas(doc) -> int:
-    """`antigo` pode ser uma tupla com versoes anteriores do trecho (o texto foi
-    enxugado mais de uma vez); qualquer uma delas e trocada por `novo`."""
-    feitas = 0
-    for inicio, antigo, novo in TROCAS:
-        if any(novo in q.text for q in doc.paragraphs):
-            continue  # ja aplicada (o inicio do paragrafo pode ter mudado)
-        antigos = antigo if isinstance(antigo, tuple) else (antigo,)
-        achados = [(q, a) for q in doc.paragraphs for a in antigos if a in q.text]
-        if len(achados) != 1:
-            raise SystemExit(f"trecho de '{inicio}' casou {len(achados)} vezes")
-        q, a = achados[0]
-        substituir_regex(q._p, re.escape(a), lambda m, t=novo: t)  # texto literal
-        feitas += 1
-    return feitas
-
-
 def enxugar_56(doc) -> int:
     """Troca a introducao da 5.6 pela versao em prosa e remove as listagens."""
     P = doc.paragraphs
@@ -267,7 +249,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     doc = Document(ALVO)
-    trocas = aplicar_trocas(doc)
+    trocas = aplicar_trocas_ancoradas(doc, TROCAS)
     linhas_56 = enxugar_56(doc)
     itens_54 = condensar_54(doc)
     trocar_figuras(doc)

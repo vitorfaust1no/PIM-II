@@ -87,10 +87,13 @@ TROCAS = [
 
 def reescrever_54(doc) -> int:
     """Unica rotina que escreve a 5.4: tudo entre o paragrafo de abertura (ANCORA_54) e o
-    titulo 5.5 passa a ser TEXTO_54 + [FECHO_54], em qualquer versao anterior do .docx
-    (paragrafos a mais sao removidos; a menos, clonados do paragrafo de abertura). Usada
-    tambem por sincronizacao_historico_docx.py e correcoes_avaliador_docx.py. Devolve
-    quantos paragrafos mudaram (0 = a 5.4 ja estava atual)."""
+    titulo 5.5 passa a ser TEXTO_54 + [FECHO_54], em qualquer versao anterior do .docx.
+    Se a 5.4 nao estiver atual, o bloco antigo e removido e cada paragrafo novo e
+    clonado do paragrafo de abertura, para todos terem a formatacao de corpo (recuo
+    ABNT, justificado): reaproveitar paragrafos por posicao herdaria, por exemplo, a
+    formatacao de lista de uma alinea antiga. Paragrafos vazios logo antes do 5.5 sao
+    mantidos. Usada tambem por sincronizacao_historico_docx.py e
+    correcoes_avaliador_docx.py. Devolve quantos paragrafos escreveu (0 = ja atual)."""
     P = doc.paragraphs
     ini = [i for i, p in enumerate(P) if p.text.rstrip().endswith(ANCORA_54)]
     if len(ini) != 1:
@@ -99,25 +102,20 @@ def reescrever_54(doc) -> int:
     i_55 = next(i for i in range(ini[0] + 1, len(P)) if P[i].style.name == "Heading 2")
     if not P[i_55].text.startswith("5.5 "):
         raise SystemExit(f"esperava o titulo 5.5 apos a 5.4, achei {P[i_55].text[:40]!r}")
-    existentes = P[ini[0] + 1:i_55]
+    bloco = P[ini[0] + 1:i_55]
+    while bloco and not bloco[-1].text.strip():  # espacadores antes do 5.5: ficam
+        bloco = bloco[:-1]
     esperado = TEXTO_54 + [FECHO_54]
-    mudancas = 0
-    for p in existentes[len(esperado):]:  # sobras de uma versao antiga (ex.: alineas a-e)
+    if [p.text for p in bloco] == esperado:
+        return 0
+    for p in bloco:
         p._p.getparent().remove(p._p)
-        mudancas += 1
     ultimo = abertura._p
-    for k, texto in enumerate(esperado):
-        if k < len(existentes):
-            p_el = existentes[k]._p
-            if existentes[k].text != texto:
-                definir_texto(p_el, texto)
-                mudancas += 1
-        else:
-            p_el = definir_texto(clonar(abertura._p), texto)
-            ultimo.addnext(p_el)
-            mudancas += 1
+    for texto in esperado:
+        p_el = definir_texto(clonar(abertura._p), texto)  # sem os indicadores da abertura
+        ultimo.addnext(p_el)
         ultimo = p_el
-    return mudancas
+    return len(esperado)
 
 
 def main() -> None:

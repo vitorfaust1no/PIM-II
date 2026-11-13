@@ -336,6 +336,45 @@ def aplicar_trocas(doc, trocas) -> int:
     return feitas
 
 
+def alternativas(x) -> tuple:
+    return x if isinstance(x, tuple) else (x,)
+
+
+def paragrafo(doc, trecho):
+    """O unico paragrafo que contem o trecho (ou uma das alternativas da tupla)."""
+    achados = [p for p in doc.paragraphs if any(t in p.text for t in alternativas(trecho))]
+    if len(achados) != 1:
+        raise SystemExit(f"trecho {alternativas(trecho)[0][:50]!r} casou {len(achados)} vezes")
+    return achados[0]
+
+
+def aplicar_trocas_ancoradas(doc, trocas) -> int:
+    """Aplica uma lista de (trecho, antigo, novo) localizada por paragrafo.
+
+    `trecho` (ou tupla de alternativas) identifica o unico paragrafo-alvo. `antigo`
+    (ou tupla de versoes anteriores) e trocado por `novo` nesse paragrafo; com
+    antigo=None o paragrafo inteiro passa a ser `novo`, preservando os indicadores.
+    Idempotente: pula a troca se `novo` ja esta no paragrafo localizado ou, quando o
+    proprio trecho sumiu com a troca, em qualquer paragrafo. Devolve quantas aplicou."""
+    feitas = 0
+    for trecho, antigo, novo in trocas:
+        achados = [p for p in doc.paragraphs if any(t in p.text for t in alternativas(trecho))]
+        if antigo is None:
+            if any(p.text == novo for p in (achados or doc.paragraphs)):
+                continue
+            definir_texto(paragrafo(doc, trecho)._p, novo, manter_indicadores=True)
+        else:
+            if any(novo in p.text for p in (achados or doc.paragraphs)):
+                continue
+            p = paragrafo(doc, trecho)
+            # funcao em vez de string: o texto entra literal, sem escapar barras
+            if not any(substituir_regex(p._p, re.escape(a), lambda m, t=novo: t, limite=1)
+                       for a in alternativas(antigo)):
+                raise SystemExit(f"trecho antigo nao encontrado em {alternativas(trecho)[0][:50]!r}")
+        feitas += 1
+    return feitas
+
+
 # ----------------------------------------------------------------- resumo e abstract
 def _paragrafo_unico(doc, trecho: str):
     achados = [p for p in doc.paragraphs if trecho in p.text]

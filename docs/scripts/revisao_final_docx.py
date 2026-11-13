@@ -23,25 +23,23 @@ Uso:  python docs/scripts/revisao_final_docx.py
 
 from __future__ import annotations
 
-import json
 import re
 import shutil
 import sys
 from pathlib import Path
 
 from docx import Document
-from docx.oxml.ns import qn
 from docx.shared import Pt
 from docx.text.paragraph import Paragraph
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from evidencias_docx import (ABSTRACT, INDICADORES, RESUMO, clonar,  # noqa: E402
-                             definir_texto, resultados_testes, substituir_regex)
+from evidencias_docx import (ABSTRACT, INDICADORES, RESUMO,  # noqa: E402
+                             aplicar_trocas_ancoradas, clonar, definir_texto, paragrafo,
+                             resultados_testes)
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
 BACKUP = DOCS / "_backups" / "PIM_II_Sabor_e_Cia.pre-revisao-final.docx"
-EVIDENCIAS = DOCS / "evidencias"
 
 # ------------------------------------------------------------ textos novos
 RF_NOVO = (
@@ -205,21 +203,9 @@ TROCAS = [
 
 
 # ------------------------------------------------------------ utilitarios
-def alternativas(x) -> tuple:
-    return x if isinstance(x, tuple) else (x,)
-
-
 def normal(texto: str) -> str:
     """Texto com espacos colapsados (o Word deixa espacos e quebras extras)."""
     return " ".join(texto.split())
-
-
-def paragrafo(doc, trecho):
-    """O unico paragrafo que contem o trecho (ou uma das alternativas da tupla)."""
-    achados = [p for p in doc.paragraphs if any(t in p.text for t in alternativas(trecho))]
-    if len(achados) != 1:
-        raise SystemExit(f"trecho {alternativas(trecho)[0][:50]!r} casou {len(achados)} vezes")
-    return achados[0]
 
 
 def texto(p, novo: str) -> None:
@@ -237,26 +223,6 @@ def inserir_depois(p, novo: str):
     q = Paragraph(el, p._parent)
     texto(q, novo)
     return q
-
-
-def aplicar_trocas(doc, trocas=None) -> int:
-    feitas = 0
-    for trecho, antigo, novo in (TROCAS if trocas is None else trocas):
-        if antigo is None:
-            # o trecho pode ter sumido com a troca: confere o paragrafo inteiro
-            if any(p.text == novo for p in doc.paragraphs):
-                continue
-            texto(paragrafo(doc, trecho), novo)
-        else:
-            p = paragrafo(doc, trecho)
-            if novo in p.text:
-                continue
-            # funcao em vez de string: o texto entra literal, sem escapar barras
-            if not any(substituir_regex(p._p, re.escape(a), lambda m, t=novo: t, limite=1)
-                       for a in alternativas(antigo)):
-                raise SystemExit(f"trecho antigo nao encontrado em {alternativas(trecho)[0][:50]!r}")
-        feitas += 1
-    return feitas
 
 
 def remover_paragrafo_qr(doc) -> int:
@@ -359,7 +325,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     doc = Document(ALVO)
-    trocas = aplicar_trocas(doc)
+    trocas = aplicar_trocas_ancoradas(doc, TROCAS)
     testes = resultados_testes(doc)
     removidos = remover_paragrafo_qr(doc)
     uc = inserir_uc05(doc)
