@@ -85,7 +85,7 @@
     {
       "id": "ST13",
       "descricao": "Caixa de saída da replicação (trigger de pendência)",
-      "esperado": "Todo evento pendente; ROLLBACK sem pendência; COMMIT com pendência",
+      "esperado": "Todo evento pendente; ROLLBACK sem evento nem pendência; COMMIT com pendência",
       "status": "PASSOU"
     }
   ],
@@ -106,7 +106,8 @@
       "SQL_03_testes_p5.png",
       "SQL_03_testes_p6.png",
       "SQL_03_testes_p7.png",
-      "SQL_03_testes_p8.png"
+      "SQL_03_testes_p8.png",
+      "SQL_03_testes_p9.png"
     ]
   },
   "testes_por_imagem": [
@@ -134,6 +135,9 @@
     [
       "ST11",
       "ST12"
+    ],
+    [
+      "ST13"
     ],
     [
       "ST13"

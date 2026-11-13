@@ -79,10 +79,10 @@ CHECAGENS = {
              "5 produtos, 3 usuários, 2 harmonizações, 15 disponibilidades",
              [r"\|\s+5 \|\s+3 \|\s+2 \|\s+15 \|"]),
     "ST13": ("Caixa de saída da replicação (trigger de pendência)",
-             "Todo evento pendente; ROLLBACK sem pendência; COMMIT com pendência",
+             "Todo evento pendente; ROLLBACK sem evento nem pendência; COMMIT com pendência",
              [r"eventos[\s\S]*?\|\s+(\d+) \|\s+\1 \|",
-              r"pendencias_apos_rollback[\s\S]*?\|\s+0 \|",
-              r"pendencia_do_novo_evento[\s\S]*?\|\s+1 \|"]),
+              r"pendencias_apos_rollback[\s\S]*?\|\s+0 \|\s+1 \|",
+              r"pendencia_do_novo_evento[\s\S]*?\|\s+1 \|\s+1 \|"]),
 }
 
 

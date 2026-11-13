@@ -14,7 +14,7 @@ Query OK, 0 rows affected (0.00 sec)
 -- Testes do modelo físico (executar DEPOIS de modelo_fisico_mysql.sql)
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 
 --------------
 --
@@ -68,7 +68,7 @@ SELECT COUNT(*) AS tabelas FROM information_schema.tables
 +---------+
 |      11 |
 +---------+
-1 row in set (0.00 sec)
+1 row in set (0.01 sec)
 
 --------------
 SELECT trigger_name, event_manipulation AS evento, event_object_table AS tabela
@@ -83,7 +83,7 @@ SELECT trigger_name, event_manipulation AS evento, event_object_table AS tabela
 | trg_harmonizacao_valida_upd | UPDATE | harmonizacao              |
 | trg_historico_pendente      | INSERT | historico_disponibilidade |
 +-----------------------------+--------+---------------------------+
-3 rows in set (0.01 sec)
+3 rows in set (0.00 sec)
 
 --------------
 -- ST02 - Carga de exemplo
@@ -171,7 +171,7 @@ SET d.ativo = FALSE
 WHERE d.id_produto = @produto AND d.id_filial = u.id_filial AND d.ativo = TRUE
 --------------
 
-Query OK, 0 rows affected (0.01 sec)
+Query OK, 0 rows affected (0.00 sec)
 Rows matched: 0  Changed: 0  Warnings: 0
 
 --------------
@@ -186,7 +186,7 @@ SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
 FROM usuario u WHERE u.id_usuario = @usuario AND @alterou > 0
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 
 --------------
@@ -242,7 +242,7 @@ SELECT ativo AS dentro_da_transacao FROM disponibilidade
 ROLLBACK
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 
 --------------
 SELECT ativo AS apos_rollback FROM disponibilidade
@@ -254,7 +254,7 @@ SELECT ativo AS apos_rollback FROM disponibilidade
 +---------------+
 |             1 |
 +---------------+
-1 row in set (0.01 sec)
+1 row in set (0.00 sec)
 
 --------------
 -- ST06 - CHECK: preco deve ser maior que zero (deve falhar)
@@ -306,7 +306,7 @@ ERROR 1644 (45000) at line 72: Harmonizacao deve ligar um prato a um vinho
 -- ST09 - FK: disponibilidade de produto inexistente (deve falhar)
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 
 --------------
 INSERT INTO disponibilidade (id_produto, id_filial) VALUES (99, 1)
@@ -381,7 +381,25 @@ SELECT (SELECT COUNT(*) FROM historico_disponibilidade) AS eventos,
 1 row in set (0.00 sec)
 
 --------------
--- (b) evento desfeito por ROLLBACK nao deixa pendencia
+-- (b) e (c) usam a transacao RF06/RF11 completa (como no ST04): o gerente 2
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+-- (filial 1) desativa o produto 1, e o evento so existe se o estado mudou.
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+SET @usuario = 2, @produto = 1
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+-- (b) transacao desfeita por ROLLBACK nao deixa evento nem pendencia
 --------------
 
 Query OK, 0 rows affected (0.00 sec)
@@ -390,7 +408,7 @@ Query OK, 0 rows affected (0.00 sec)
 SELECT COUNT(*) INTO @pend_antes FROM replicacao_pendente
 --------------
 
-Query OK, 1 row affected (0.01 sec)
+Query OK, 1 row affected (0.00 sec)
 
 --------------
 START TRANSACTION
@@ -399,31 +417,50 @@ START TRANSACTION
 Query OK, 0 rows affected (0.00 sec)
 
 --------------
-INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
-VALUES (1, 1, 2, 'DESATIVAR')
+UPDATE disponibilidade d
+JOIN usuario u ON u.id_usuario = @usuario AND u.perfil = 'GERENTE'
+SET d.ativo = FALSE
+WHERE d.id_produto = @produto AND d.id_filial = u.id_filial AND d.ativo = TRUE
 --------------
 
 Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+--------------
+SET @alterou = ROW_COUNT()
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
+SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
+FROM usuario u WHERE u.id_usuario = @usuario AND @alterou > 0
+--------------
+
+Query OK, 1 row affected (0.00 sec)
+Records: 1  Duplicates: 0  Warnings: 0
 
 --------------
 ROLLBACK
 --------------
 
-Query OK, 0 rows affected (0.00 sec)
+Query OK, 0 rows affected (0.01 sec)
 
 --------------
-SELECT (SELECT COUNT(*) FROM replicacao_pendente) - @pend_antes AS pendencias_apos_rollback
+SELECT (SELECT COUNT(*) FROM replicacao_pendente) - @pend_antes AS pendencias_apos_rollback,
+       (SELECT ativo FROM disponibilidade WHERE id_produto = 1 AND id_filial = 1) AS ativo_apos_rollback
 --------------
 
-+--------------------------+
-| pendencias_apos_rollback |
-+--------------------------+
-|                        0 |
-+--------------------------+
++--------------------------+---------------------+
+| pendencias_apos_rollback | ativo_apos_rollback |
++--------------------------+---------------------+
+|                        0 |                   1 |
++--------------------------+---------------------+
 1 row in set (0.00 sec)
 
 --------------
--- (c) evento confirmado gera pendencia com o mesmo id
+-- (c) transacao confirmada: o produto e desativado e o evento gera pendencia com o mesmo id
 --------------
 
 Query OK, 0 rows affected (0.00 sec)
@@ -435,11 +472,29 @@ START TRANSACTION
 Query OK, 0 rows affected (0.00 sec)
 
 --------------
-INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
-VALUES (1, 1, 2, 'DESATIVAR')
+UPDATE disponibilidade d
+JOIN usuario u ON u.id_usuario = @usuario AND u.perfil = 'GERENTE'
+SET d.ativo = FALSE
+WHERE d.id_produto = @produto AND d.id_filial = u.id_filial AND d.ativo = TRUE
 --------------
 
 Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+--------------
+SET @alterou = ROW_COUNT()
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
+SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
+FROM usuario u WHERE u.id_usuario = @usuario AND @alterou > 0
+--------------
+
+Query OK, 1 row affected (0.00 sec)
+Records: 1  Duplicates: 0  Warnings: 0
 
 --------------
 SET @novo = LAST_INSERT_ID()
@@ -454,15 +509,15 @@ COMMIT
 Query OK, 0 rows affected (0.01 sec)
 
 --------------
-SELECT COUNT(*) AS pendencia_do_novo_evento FROM replicacao_pendente
- WHERE id_historico = @novo
+SELECT @alterou AS linhas_alteradas,
+       (SELECT COUNT(*) FROM replicacao_pendente WHERE id_historico = @novo) AS pendencia_do_novo_evento
 --------------
 
-+--------------------------+
-| pendencia_do_novo_evento |
-+--------------------------+
-|                        1 |
-+--------------------------+
++------------------+--------------------------+
+| linhas_alteradas | pendencia_do_novo_evento |
++------------------+--------------------------+
+|                1 |                        1 |
++------------------+--------------------------+
 1 row in set (0.00 sec)
 
 Bye

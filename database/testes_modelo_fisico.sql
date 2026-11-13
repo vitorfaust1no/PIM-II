@@ -91,18 +91,34 @@ SELECT (SELECT COUNT(*) FROM produto)      AS produtos,
 -- (a) todo evento do historico tem pendencia de replicacao
 SELECT (SELECT COUNT(*) FROM historico_disponibilidade) AS eventos,
        (SELECT COUNT(*) FROM replicacao_pendente)       AS pendentes;
--- (b) evento desfeito por ROLLBACK nao deixa pendencia
+-- (b) e (c) usam a transacao RF06/RF11 completa (como no ST04): o gerente 2
+-- (filial 1) desativa o produto 1, e o evento so existe se o estado mudou.
+SET @usuario = 2, @produto = 1;
+-- (b) transacao desfeita por ROLLBACK nao deixa evento nem pendencia
 SELECT COUNT(*) INTO @pend_antes FROM replicacao_pendente;
 START TRANSACTION;
+UPDATE disponibilidade d
+JOIN usuario u ON u.id_usuario = @usuario AND u.perfil = 'GERENTE'
+SET d.ativo = FALSE
+WHERE d.id_produto = @produto AND d.id_filial = u.id_filial AND d.ativo = TRUE;
+SET @alterou = ROW_COUNT();
 INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
-VALUES (1, 1, 2, 'DESATIVAR');
+SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
+FROM usuario u WHERE u.id_usuario = @usuario AND @alterou > 0;
 ROLLBACK;
-SELECT (SELECT COUNT(*) FROM replicacao_pendente) - @pend_antes AS pendencias_apos_rollback;
--- (c) evento confirmado gera pendencia com o mesmo id
+SELECT (SELECT COUNT(*) FROM replicacao_pendente) - @pend_antes AS pendencias_apos_rollback,
+       (SELECT ativo FROM disponibilidade WHERE id_produto = 1 AND id_filial = 1) AS ativo_apos_rollback;
+-- (c) transacao confirmada: o produto e desativado e o evento gera pendencia com o mesmo id
 START TRANSACTION;
+UPDATE disponibilidade d
+JOIN usuario u ON u.id_usuario = @usuario AND u.perfil = 'GERENTE'
+SET d.ativo = FALSE
+WHERE d.id_produto = @produto AND d.id_filial = u.id_filial AND d.ativo = TRUE;
+SET @alterou = ROW_COUNT();
 INSERT INTO historico_disponibilidade (id_produto, id_filial, id_usuario, acao)
-VALUES (1, 1, 2, 'DESATIVAR');
+SELECT @produto, u.id_filial, u.id_usuario, 'DESATIVAR'
+FROM usuario u WHERE u.id_usuario = @usuario AND @alterou > 0;
 SET @novo = LAST_INSERT_ID();
 COMMIT;
-SELECT COUNT(*) AS pendencia_do_novo_evento FROM replicacao_pendente
- WHERE id_historico = @novo;
+SELECT @alterou AS linhas_alteradas,
+       (SELECT COUNT(*) FROM replicacao_pendente WHERE id_historico = @novo) AS pendencia_do_novo_evento;
