@@ -34,7 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ajustar_figuras import localizar_figura  # noqa: E402
 from evidencias_docx import achar, substituir_regex  # noqa: E402
 from escopo_gravacao_docx import TEXTO_91, TEXTO_91_ANTIGO  # noqa: E402
-from replicacao_docx import TEXTO_54  # noqa: E402
+from replicacao_docx import reescrever_54  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -190,7 +190,6 @@ NOVO_56 = (
     "ordem de exibição da categoria. Esses comandos foram executados nos testes da seção 5.7.")
 
 INICIO_54 = "Os principais cenários de falha"
-NOVO_54 = TEXTO_54[2]  # cenarios de falha: texto atual em replicacao_docx.py
 
 # (inicio da legenda, arquivo, largura em cm)
 FIGURAS = [
@@ -241,25 +240,12 @@ def enxugar_56(doc) -> int:
 
 
 def condensar_54(doc) -> int:
-    """Junta a introducao e os itens a) a e) dos cenarios de falha em um paragrafo."""
-    P = doc.paragraphs
-    try:
-        i = next(k for k, p in enumerate(P) if p.text.startswith(INICIO_54))
-    except StopIteration:
+    """Versao antiga da 5.4 (introducao + itens a) a e) dos cenarios de falha): reescreve a
+    secao INTEIRA pela rotina unica de replicacao_docx.py. Condensar so o paragrafo de
+    falhas deixaria os paragrafos anteriores falando do antigo ponto de controle."""
+    if not any(p.text.startswith(INICIO_54) for p in doc.paragraphs):
         return 0
-    removidos = 0
-    for p in P[i + 1:]:
-        if not p.text[:3] in ("a) ", "b) ", "c) ", "d) ", "e) "):
-            break
-        p._p.getparent().remove(p._p)
-        removidos += 1
-    if removidos != 5:
-        raise SystemExit(f"esperava 5 itens de falha na 5.4, achei {removidos}")
-    intro = P[i]
-    for r in intro.runs[1:]:
-        r._r.getparent().remove(r._r)
-    intro.runs[0].text = NOVO_54
-    return removidos
+    return reescrever_54(doc)
 
 
 def trocar_figuras(doc) -> None:

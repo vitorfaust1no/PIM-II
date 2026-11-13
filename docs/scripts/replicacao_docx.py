@@ -18,7 +18,6 @@ Uso (da raiz, com o .docx fechado no Word):  python docs/scripts/replicacao_docx
 
 from __future__ import annotations
 
-import re
 import shutil
 import sys
 from pathlib import Path
@@ -26,7 +25,7 @@ from pathlib import Path
 from docx import Document
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from evidencias_docx import definir_texto, substituir_regex  # noqa: E402
+from evidencias_docx import aplicar_trocas, clonar, definir_texto  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -87,31 +86,38 @@ TROCAS = [
 
 
 def reescrever_54(doc) -> int:
+    """Unica rotina que escreve a 5.4: tudo entre o paragrafo de abertura (ANCORA_54) e o
+    titulo 5.5 passa a ser TEXTO_54 + [FECHO_54], em qualquer versao anterior do .docx
+    (paragrafos a mais sao removidos; a menos, clonados do paragrafo de abertura). Usada
+    tambem por sincronizacao_historico_docx.py e correcoes_avaliador_docx.py. Devolve
+    quantos paragrafos mudaram (0 = a 5.4 ja estava atual)."""
     P = doc.paragraphs
     ini = [i for i, p in enumerate(P) if p.text.rstrip().endswith(ANCORA_54)]
-    fim = [i for i, p in enumerate(P) if p.text.startswith(INICIO_FECHO_54)]
-    if len(ini) != 1 or len(fim) != 1 or fim[0] - ini[0] - 1 != len(TEXTO_54):
-        raise SystemExit("estrutura inesperada na 5.4 (esperava 3 paragrafos entre a "
-                         "abertura e o fecho)")
-    trocados = 0
-    for p, texto in zip(P[ini[0] + 1:fim[0]], TEXTO_54):
-        if p.text != texto:
-            definir_texto(p._p, texto)
-            trocados += 1
-    return trocados
-
-
-def aplicar_trocas(doc) -> int:
-    feitas = 0
-    for antigo, novo in TROCAS:
-        if any(novo in p.text for p in doc.paragraphs):
-            continue
-        alvos = [p for p in doc.paragraphs if antigo in p.text]
-        if len(alvos) != 1:
-            raise SystemExit(f"trecho {antigo[:60]!r} casou {len(alvos)} vezes")
-        substituir_regex(alvos[0]._p, re.escape(antigo), lambda m, t=novo: t)
-        feitas += 1
-    return feitas
+    if len(ini) != 1:
+        raise SystemExit(f"abertura da 5.4 casou {len(ini)} vezes")
+    abertura = P[ini[0]]
+    i_55 = next(i for i in range(ini[0] + 1, len(P)) if P[i].style.name == "Heading 2")
+    if not P[i_55].text.startswith("5.5 "):
+        raise SystemExit(f"esperava o titulo 5.5 apos a 5.4, achei {P[i_55].text[:40]!r}")
+    existentes = P[ini[0] + 1:i_55]
+    esperado = TEXTO_54 + [FECHO_54]
+    mudancas = 0
+    for p in existentes[len(esperado):]:  # sobras de uma versao antiga (ex.: alineas a-e)
+        p._p.getparent().remove(p._p)
+        mudancas += 1
+    ultimo = abertura._p
+    for k, texto in enumerate(esperado):
+        if k < len(existentes):
+            p_el = existentes[k]._p
+            if existentes[k].text != texto:
+                definir_texto(p_el, texto)
+                mudancas += 1
+        else:
+            p_el = definir_texto(clonar(abertura._p), texto)
+            ultimo.addnext(p_el)
+            mudancas += 1
+        ultimo = p_el
+    return mudancas
 
 
 def main() -> None:
@@ -120,7 +126,7 @@ def main() -> None:
         BACKUP.parent.mkdir(exist_ok=True)
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
-    print(f"5.4: {reescrever_54(doc)} paragrafo(s) reescrito(s); trocas: {aplicar_trocas(doc)}.")
+    print(f"5.4: {reescrever_54(doc)} paragrafo(s) reescrito(s); trocas: {aplicar_trocas(doc, TROCAS)}.")
     doc.save(ALVO)
     print("Abra no Word, atualize os campos (sumario, listas e paginas) e reexporte o PDF.")
 

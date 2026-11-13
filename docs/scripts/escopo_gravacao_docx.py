@@ -18,7 +18,6 @@ Uso (da raiz, com o .docx fechado no Word):  python docs/scripts/escopo_gravacao
 
 from __future__ import annotations
 
-import re
 import shutil
 import sys
 from pathlib import Path
@@ -26,7 +25,7 @@ from pathlib import Path
 from docx import Document
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from evidencias_docx import substituir_regex  # noqa: E402
+from evidencias_docx import OPCIONAL, aplicar_trocas  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -46,8 +45,6 @@ TEXTO_91_ANTIGO = (
     "API grava a mudança e o evento de histórico no MySQL e propaga o novo estado ao cardápio "
     "e às maquininhas dos garçons em até 30 segundos (meta do RNF01)."
 )
-
-OPCIONAL = "opcional"  # troca que so se aplica se o trecho antigo existir
 
 # (trecho atual, trecho novo[, OPCIONAL]): cada trecho atual aparece uma unica vez
 TROCAS = [
@@ -82,28 +79,13 @@ TROCAS = [
 ]
 
 
-def aplicar_trocas(doc) -> int:
-    feitas = 0
-    for antigo, novo, *opcao in TROCAS:
-        if any(novo in p.text for p in doc.paragraphs):
-            continue  # ja aplicada
-        alvos = [p for p in doc.paragraphs if antigo in p.text]
-        if not alvos and opcao == [OPCIONAL]:
-            continue  # migracao de uma versao que este documento nunca teve
-        if len(alvos) != 1:
-            raise SystemExit(f"trecho {antigo[:60]!r} casou {len(alvos)} vezes")
-        substituir_regex(alvos[0]._p, re.escape(antigo), lambda m, t=novo: t)
-        feitas += 1
-    return feitas
-
-
 def main() -> None:
     doc = Document(ALVO)
     if not BACKUP.exists():
         BACKUP.parent.mkdir(exist_ok=True)
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
-    print(f"Trocas de texto: {aplicar_trocas(doc)}.")
+    print(f"Trocas de texto: {aplicar_trocas(doc, TROCAS)}.")
     doc.save(ALVO)
     print("Abra no Word, atualize os campos (sumario, listas e paginas) e reexporte o PDF.")
 

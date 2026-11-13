@@ -35,7 +35,8 @@ from docx.shared import Pt
 from docx.text.paragraph import Paragraph
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from evidencias_docx import INDICADORES, clonar, definir_texto, substituir_regex  # noqa: E402
+from evidencias_docx import (ABSTRACT, INDICADORES, RESUMO, clonar,  # noqa: E402
+                             definir_texto, resultados_testes, substituir_regex)
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -111,8 +112,7 @@ DIFERENCIAIS = [
     "g) complemento ao atendimento, sem substituir o garçom.",
 ]
 
-RESUMO = "com controle de disponibilidade de pratos por unidade, para a rede"
-ABSTRACT = "This paper presents the design of an accessible digital menu"
+# RESUMO e ABSTRACT (trechos que localizam esses paragrafos) vem de evidencias_docx.py
 
 # (paragrafo, trecho antigo, trecho novo). O paragrafo e identificado por um trecho
 # do seu texto; o trecho antigo e None (troca o paragrafo inteiro) ou o texto a
@@ -255,37 +255,6 @@ def aplicar_trocas(doc, trocas=None) -> int:
             if not any(substituir_regex(p._p, re.escape(a), lambda m, t=novo: t, limite=1)
                        for a in alternativas(antigo)):
                 raise SystemExit(f"trecho antigo nao encontrado em {alternativas(trecho)[0][:50]!r}")
-        feitas += 1
-    return feitas
-
-
-def resultados_testes(doc) -> int:
-    """Frase do Resumo e do Abstract com o resultado dos testes, lido dos resumo.json."""
-    def contagem(pasta: str) -> tuple[int, int]:
-        dados = json.loads((EVIDENCIAS / pasta / "resumo.json").read_text(encoding="utf-8"))
-        return dados["passou"], dados["total"]
-    (pc, tc), (ps, ts) = contagem("c"), contagem("sql")
-    frases = [
-        (RESUMO, "centrada na privacidade.",
-         "A simulação e o modelo físico foram verificados por testes executados",
-         f"A simulação e o modelo físico foram verificados por testes executados, com {pc} de "
-         f"{tc} casos aprovados na simulação e {ps} de {ts} no modelo físico."),
-        (ABSTRACT, "privacy-centered proposal.",
-         "The simulation and the physical model were verified by executed tests",
-         f"The simulation and the physical model were verified by executed tests, with {pc} out "
-         f"of {tc} cases passing in the simulation and {ps} out of {ts} in the physical model."),
-    ]
-    feitas = 0
-    for trecho, ancora, inicio, frase in frases:
-        p = paragrafo(doc, trecho)
-        if frase in p.text:
-            continue
-        if inicio in p.text:  # frase de uma execucao anterior: troca ate o ponto final
-            n = substituir_regex(p._p, re.escape(inicio) + r"[^.]*\.", lambda m, t=frase: t, limite=1)
-        else:
-            n = substituir_regex(p._p, re.escape(ancora), lambda m, t=ancora + " " + frase: t, limite=1)
-        if n != 1:
-            raise SystemExit(f"frase dos testes nao inserida em {trecho[:50]!r}")
         feitas += 1
     return feitas
 

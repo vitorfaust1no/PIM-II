@@ -12,20 +12,18 @@ Uso:  python docs/scripts/sincronizacao_historico_docx.py
 
 from __future__ import annotations
 
-import copy
 import shutil
 import sys
 from pathlib import Path
 
 from docx import Document
-from docx.text.paragraph import Paragraph
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 # Texto da 5.4 (abertura, mecanismo, cenarios de falha e fecho): fonte unica em
 # replicacao_docx.py, que trocou o ponto de controle pela caixa de saida
 # replicacao_pendente. A versao antiga deste script (com as alineas a-e) brigava com
 # correcoes_avaliador_docx.py, que as condensava.
-from replicacao_docx import ANCORA_54, FECHO_54, TEXTO_54  # noqa: E402
+from replicacao_docx import reescrever_54  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -37,38 +35,9 @@ EXTRA_74 = (" Já o histórico analítico é replicado de forma assíncrona e id
             "para o MongoDB, com recuperação automática de falhas, conforme descrito na seção 5.4.")
 
 
-def _clonar_depois(ref: Paragraph, depois_de, texto: str) -> Paragraph:
-    """Copia o paragrafo ref (formatacao), insere apos o elemento depois_de e troca o texto."""
-    novo = copy.deepcopy(ref._p)
-    depois_de.addnext(novo)
-    par = Paragraph(novo, ref._parent)
-    for r in par.runs[1:]:
-        r._r.getparent().remove(r._r)
-    par.runs[0].text = texto
-    return par
-
-
 def inserir_54(doc) -> bool:
-    P = doc.paragraphs
-    alvos = [i for i, p in enumerate(P) if p.text.rstrip().endswith(ANCORA_54)]
-    if len(alvos) != 1:
-        raise SystemExit(f"ancora 5.4 casou {len(alvos)} vezes")
-    i_corpo = alvos[0]
-    i_55 = next(i for i in range(i_corpo + 1, len(P)) if P[i].style.name == "Heading 2")
-    assert P[i_55].text.startswith("5.5 "), P[i_55].text
-    esperado = TEXTO_54 + [FECHO_54]
-    existentes = P[i_corpo + 1:i_55]
-    if [p.text for p in existentes] == esperado:
-        return False
-    # remove a versao anterior do bloco (inserida por execucao antiga deste script)
-    for p in existentes:
-        p._p.getparent().remove(p._p)
-    corpo = P[i_corpo]
-    el = corpo._p
-    for texto in TEXTO_54:
-        el = _clonar_depois(corpo, el, texto)._p
-    _clonar_depois(corpo, el, FECHO_54)
-    return True
+    """A 5.4 e escrita por uma unica rotina, em replicacao_docx.py."""
+    return reescrever_54(doc) > 0
 
 
 def ajustar_74(doc) -> bool:

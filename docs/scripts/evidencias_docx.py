@@ -51,6 +51,9 @@ TRAV = "–"
 FRASE_94 = (" Dentro desse escopo, a lógica central e o modelo físico foram verificados por "
             "testes executados, cujos resultados constam nas seções 5.7 e 6.8 e no Apêndice D.")
 REPOSITORIO = "https://github.com/vitorfaust1no/PIM-II"
+# trechos que localizam o Resumo e o Abstract (tambem usados por revisao_final_docx.py)
+RESUMO = "com controle de disponibilidade de pratos por unidade, para a rede"
+ABSTRACT = "This paper presents the design of an accessible digital menu"
 TITULO_QUADRO_SQL = "Testes do modelo físico em MySQL"
 TITULO_QUADRO_C = "Casos de teste da simulação em C"
 # inicio dos titulos das figuras inseridas (para reconhece-las nas listas)
@@ -307,6 +310,69 @@ def tabela(modelo_tbl, cabecalho: list[str], linhas: list[list[str]], larguras: 
     for ln in linhas:
         tbl.append(montar(tr_dado, ln))
     return tbl
+
+
+# ----------------------------------------------------------------- trocas de texto
+OPCIONAL = "opcional"  # troca que so se aplica se o trecho antigo existir (migracao)
+
+
+def aplicar_trocas(doc, trocas) -> int:
+    """Aplica uma lista de (trecho atual, trecho novo[, OPCIONAL]), uma vez cada.
+
+    Idempotente: se o trecho novo ja esta no documento, nao faz nada. O trecho atual
+    precisa aparecer em exatamente um paragrafo, salvo nas trocas OPCIONAL, que sao
+    puladas quando o documento nunca teve aquela versao. Devolve quantas aplicou."""
+    feitas = 0
+    for antigo, novo, *opcao in trocas:
+        if any(novo in p.text for p in doc.paragraphs):
+            continue  # ja aplicada
+        alvos = [p for p in doc.paragraphs if antigo in p.text]
+        if not alvos and opcao == [OPCIONAL]:
+            continue
+        if len(alvos) != 1:
+            raise SystemExit(f"trecho {antigo[:60]!r} casou {len(alvos)} vezes")
+        substituir_regex(alvos[0]._p, re.escape(antigo), lambda m, t=novo: t)
+        feitas += 1
+    return feitas
+
+
+# ----------------------------------------------------------------- resumo e abstract
+def _paragrafo_unico(doc, trecho: str):
+    achados = [p for p in doc.paragraphs if trecho in p.text]
+    if len(achados) != 1:
+        raise SystemExit(f"trecho {trecho[:50]!r} casou {len(achados)} vezes")
+    return achados[0]
+
+
+def resultados_testes(doc) -> int:
+    """Frase do Resumo e do Abstract com o resultado dos testes, lido dos resumo.json."""
+    def contagem(pasta: str) -> tuple[int, int]:
+        dados = json.loads((EVID / pasta / "resumo.json").read_text(encoding="utf-8"))
+        return dados["passou"], dados["total"]
+    (pc, tc), (ps, ts) = contagem("c"), contagem("sql")
+    frases = [
+        (RESUMO, "centrada na privacidade.",
+         "A simulação e o modelo físico foram verificados por testes executados",
+         f"A simulação e o modelo físico foram verificados por testes executados, com {pc} de "
+         f"{tc} casos aprovados na simulação e {ps} de {ts} no modelo físico."),
+        (ABSTRACT, "privacy-centered proposal.",
+         "The simulation and the physical model were verified by executed tests",
+         f"The simulation and the physical model were verified by executed tests, with {pc} out "
+         f"of {tc} cases passing in the simulation and {ps} out of {ts} in the physical model."),
+    ]
+    feitas = 0
+    for trecho, ancora, inicio, frase in frases:
+        p = _paragrafo_unico(doc, trecho)
+        if frase in p.text:
+            continue
+        if inicio in p.text:  # frase de uma execucao anterior: troca ate o ponto final
+            n = substituir_regex(p._p, re.escape(inicio) + r"[^.]*\.", lambda m, t=frase: t, limite=1)
+        else:
+            n = substituir_regex(p._p, re.escape(ancora), lambda m, t=ancora + " " + frase: t, limite=1)
+        if n != 1:
+            raise SystemExit(f"frase dos testes nao inserida em {trecho[:50]!r}")
+        feitas += 1
+    return feitas
 
 
 # ----------------------------------------------------------------- remocao e numeracao
@@ -699,7 +765,6 @@ def main() -> None:
         ref_el = nova
 
     # ---- Resumo e Abstract: contagem de testes lida dos resumo.json ----
-    from revisao_final_docx import resultados_testes  # import local: ele importa este modulo
     resultados_testes(doc)
 
     renumerar_legendas(doc)
