@@ -85,9 +85,20 @@ inicio
         escreva("O produto ja estava nesse estado. Nada foi alterado.")
         retorne
     fimse
+    // tudo ou nada: se o cardapio ou o historico nao puder ser gravado,
+    // volta ao estado anterior (como a transacao do banco)
     disponibilidade[pos][filial] <- novoEstado
-    SalvarDados()                                  // grava cardapio.txt
-    RegistrarHistorico(acao, id, filial, login)    // acrescenta em historico.txt
+    se nao SalvarDados() entao                     // grava cardapio.txt
+        disponibilidade[pos][filial] <- 1 - novoEstado
+        escreva("A alteracao foi desfeita.")
+        retorne
+    fimse
+    se nao RegistrarHistorico(acao, id, filial, login) entao  // historico.txt
+        disponibilidade[pos][filial] <- 1 - novoEstado
+        SalvarDados()
+        escreva("A alteracao foi desfeita.")
+        retorne
+    fimse
     escreva("Alteracao registrada.")
 fimfuncao
  
