@@ -8,7 +8,7 @@
    legiveis (ajustar_figuras.py tambem passa a usar 16 cm).
 
 Confira o limite de 30 paginas do desenvolvimento depois de exportar o PDF pelo Word.
-Idempotente. Faz backup em docs/_backups/PIM_II_Sabor_e_Cia.pre-parecer.docx na primeira vez.
+Idempotente. Faz backup em docs/_backups/PIM_II_Sabor_e_Cia.pre-ajustes-parecer.docx na primeira vez.
 Uso:  python docs/scripts/ajustes_parecer_docx.py
 """
 
@@ -28,7 +28,7 @@ from evidencias_docx import aplicar_trocas_ancoradas  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
-BACKUP = DOCS / "_backups" / "PIM_II_Sabor_e_Cia.pre-parecer.docx"
+BACKUP = DOCS / "_backups" / "PIM_II_Sabor_e_Cia.pre-ajustes-parecer.docx"
 
 TROCAS = [
     ("O projeto busca disponibilidade e tolerância a falhas",
