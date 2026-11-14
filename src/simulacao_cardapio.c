@@ -39,6 +39,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/stat.h> /* stat: o arquivo existe e e um arquivo comum? */
+#ifndef S_ISREG /* o MSVC nao define S_ISREG (so S_IFMT e S_IFREG) */
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
 #ifdef _WIN32
 #include <windows.h> /* MoveFileExA: troca do arquivo (salvarDados) */
 #include <io.h>      /* _commit: forca a gravacao no disco */
@@ -163,7 +166,7 @@ int gravarNoDisco(FILE *arq) {
    por outro programa tambem conta como existente. */
 int arquivoComum(const char *nome) {
     struct stat info;
-    return stat(nome, &info) == 0 && (info.st_mode & S_IFMT) == S_IFREG;
+    return stat(nome, &info) == 0 && S_ISREG(info.st_mode); /* S_ISREG: POSIX */
 }
 
 /* RF11: acrescenta uma linha no historico: data/hora;acao;produto;filial;usuario.
