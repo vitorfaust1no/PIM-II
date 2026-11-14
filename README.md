@@ -44,8 +44,13 @@ saborEcia/
   (requerem `python-docx` e `Pillow`; ex.: `python docs/scripts/reparar_docx.py`).
 
 ### `diagramas/`
-- Fontes editáveis: `atividades-sabor-cia.drawio`, `casos-de-uso-sabor-cia.drawio`,
-  `classes-sabor-cia.drawio` e `estilo.iuml` (estilo PlantUML).
+- Fontes editáveis: `01_arquitetura.puml`, `02_casos_de_uso.puml`, `04_atividades.puml` e
+  `06_logico.puml` (PlantUML, com o estilo `estilo.iuml`), `05_conceitual.dot` e
+  `classes-sabor-cia.drawio`. Os `.puml` são renderizados com
+  `docker run --rm -e PLANTUML_LIMIT_SIZE=8192 -v "$PWD/diagramas:/data" -w /data plantuml/plantuml -tpng <arquivo>.puml`
+  e entram no relatório por `python docs/scripts/ajustar_figuras.py`.
+  `atividades-sabor-cia.drawio` e `casos-de-uso-sabor-cia.drawio` são de uma versão anterior
+  do sistema (comanda e cozinha) e não geram mais as Figuras 1 e 3.
 - `sem_titulo/` — mesmas imagens sem a faixa de título, usadas no relatório.
 - Imagens exportadas: `01_arquitetura.png`, `02_casos_de_uso.png`, `03_classes.png`,
   `04_atividades.png`, `05_conceitual.png`, `06_logico.png`, `07_fluxo_alterar.png`,

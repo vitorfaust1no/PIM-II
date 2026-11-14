@@ -45,7 +45,8 @@ FIGURAS = [
 # (arquitetura na vertical, modelo conceitual compacto, para ficarem legiveis
 # impressos; o logico e o de casos de uso vem direto do PlantUML): so apara as bordas e
 # nao confere a proporcao antiga no docx.
-SEM_TITULO = {"01_arquitetura.png", "02_casos_de_uso.png", "05_conceitual.png", "06_logico.png"}
+SEM_TITULO = {"01_arquitetura.png", "02_casos_de_uso.png", "04_atividades.png", "05_conceitual.png",
+              "06_logico.png"}
 LIMIAR = 200     # pixel com algum canal abaixo disso conta como "tinta"
 GAP_MIN = 8       # linhas em branco que separam o titulo do diagrama
 

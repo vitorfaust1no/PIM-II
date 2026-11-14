@@ -1,0 +1,59 @@
+@startuml 04_atividades
+' Diagrama de atividades - alterar disponibilidade de produto (Figura 3 do relatorio).
+' Segue a secao 5.4 (caixa de saida transacional): disponibilidade, evento de historico e
+' pendencia de replicacao sao gravados na MESMA transacao do MySQL; so depois do COMMIT o
+' novo estado vai ao cardapio e as maquininhas, e o servico de replicacao copia o evento
+' para o MongoDB de forma assincrona. Os dois ramos usam "split" (sem barra de juncao):
+' a confirmacao ao gerente nao espera a copia para o MongoDB.
+' Sem titulo embutido: a legenda ABNT "Figura 3 - ..." ja identifica a figura.
+' Renderizar (da raiz do projeto; a imagem passa de 4096 px, limite padrao do PlantUML):
+'   docker run --rm -e PLANTUML_LIMIT_SIZE=8192 -v "$PWD/diagramas:/data" -w /data plantuml/plantuml -tpng 04_atividades.puml
+' Depois: python docs/scripts/ajustar_figuras.py (apara as bordas e troca a figura no .docx).
+!include estilo.iuml
+skinparam defaultFontSize 16
+skinparam dpi 300
+
+|Gerente|
+start
+:Chef avisa que
+um prato esgotou;
+:Acessar o painel e
+fazer login (UC04);
+|Sistema (API e MySQL)|
+if (Credenciais válidas?) then (não)
+  :Exibir mensagem
+  de erro;
+  stop
+else (sim)
+  :Exibir produtos da
+  filial do gerente;
+endif
+|Gerente|
+:Selecionar produto e
+marcar como inativo;
+|Sistema (API e MySQL)|
+if (Alteração é na filial do gerente?) then (não)
+  :Negar alteração;
+  stop
+else (sim)
+  partition "Transação no MySQL" {
+    :Atualizar disponibilidade;
+    :Registrar evento no histórico e
+    pendência de replicação (trigger);
+    :Confirmar transação (COMMIT);
+  }
+endif
+split
+  :Atualizar cardápio
+  público e maquininhas;
+  :Confirmar alteração
+  ao gerente;
+  stop
+split again
+  |Serviço de replicação|
+  :Copiar evento para o MongoDB
+  (assíncrono, em lote);
+  :Apagar pendência;
+  stop
+end split
+@enduml
