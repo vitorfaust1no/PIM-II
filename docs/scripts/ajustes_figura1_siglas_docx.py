@@ -2,7 +2,9 @@
 
 1. Nome do UC08 unificado como "Manter filiais e maquininhas" (Quadro 3 e Figura 1): o
    RF04 da secao 4.1 dizia "no UC08 Manter filiais".
-2. Lista de abreviaturas e siglas: AA (nivel da WCAG), IPsec (secao 7.2) e PC (Quadro 5).
+2. Lista de abreviaturas e siglas: IPsec (secao 7.2) e PC (Quadro 5; a ABNT lista a sigla
+   no singular, o texto usa "PCs"). Tira "AA", posta numa versao anterior: e o nome de um
+   nivel de conformidade da WCAG, nao uma sigla com forma por extenso.
 3. Linhas "Fonte: ..." das figuras e quadros passam de 9 pt para 10 pt, o tamanho das
    demais notas (Manual: tamanho 10 para citacoes longas e notas).
 
@@ -20,12 +22,11 @@ import sys
 from pathlib import Path
 
 from docx import Document
-from docx.oxml.ns import qn
 from docx.shared import Pt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from evidencias_docx import aplicar_trocas_ancoradas, clonar  # noqa: E402
-from revisao_manual_docx import entradas_siglas  # noqa: E402
+from evidencias_docx import aplicar_trocas_ancoradas  # noqa: E402
+from revisao_manual_docx import completar_siglas, entradas_siglas  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -37,34 +38,21 @@ TROCAS = [
 ]
 
 SIGLAS = [
-    ("AA", "Nível de conformidade intermediário da WCAG"),
     ("IPsec", "Internet Protocol Security"),
     ("PC", "Personal Computer"),
 ]
+SIGLAS_RETIRADAS = ["AA"]
 
 TAM_FONTE = Pt(10)
 
 
-def completar_siglas(doc) -> int:
-    """Insere cada sigla que falta em ordem alfabetica, clonando uma entrada existente
-    ('SIGLA<tab>extenso', com a sigla e o extenso nos dois primeiros w:t)."""
+def retirar_siglas(doc) -> int:
+    """Apaga da lista de siglas as entradas de SIGLAS_RETIRADAS, se ainda existirem."""
     feitas = 0
-    for sigla, extenso in SIGLAS:
-        entradas = entradas_siglas(doc)
-        if any(p.text.split("\t")[0] == sigla for p in entradas):
-            continue
-        novo = clonar(entradas[0]._p)
-        ts = list(novo.iter(qn("w:t")))
-        ts[0].text, ts[1].text = sigla, extenso
-        for t in ts[2:]:
-            t.text = ""
-        depois = next((p for p in entradas if p.text.split("\t")[0].lower() > sigla.lower()),
-                      None)
-        if depois is None:
-            entradas[-1]._p.addnext(novo)
-        else:
-            depois._p.addprevious(novo)
-        feitas += 1
+    for p in entradas_siglas(doc):
+        if p.text.split("	")[0] in SIGLAS_RETIRADAS:
+            p._p.getparent().remove(p._p)
+            feitas += 1
     return feitas
 
 
@@ -91,10 +79,11 @@ def main() -> None:
         print("Backup:", BACKUP)
     doc = Document(ALVO)
     trocas = aplicar_trocas_ancoradas(doc, TROCAS)
-    siglas = completar_siglas(doc)
+    siglas = completar_siglas(doc, SIGLAS)
+    retiradas = retirar_siglas(doc)
     fontes = fontes_10pt(doc)
     doc.save(ALVO)
-    print(f"trechos alterados={trocas} siglas novas={siglas} fontes em 10 pt={fontes}")
+    print(f"trechos alterados={trocas} siglas novas={siglas} retiradas={retiradas} fontes em 10 pt={fontes}")
 
 
 if __name__ == "__main__":

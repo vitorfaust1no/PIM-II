@@ -705,9 +705,11 @@ def main() -> None:
             "no relatório do CT12."),
         par("Os casos cobrem os fluxos principais e as entradas inválidas (Quadro {q_c}), e "
             f"{res_c['passou']} de {res_c['total']} obtiveram o resultado esperado; as telas de "
-            "cada execução estão no Apêndice D (Figuras {fig_c_ini} a {fig_c_fim})." if c_ok else
-            "Os casos e os resultados obtidos estão no Quadro {q_c}, no Apêndice D, junto com as "
-            "telas de cada execução (Figuras {fig_c_ini} a {fig_c_fim}).", refs),
+            "cada execução são as Figuras {fig_c_ini} a {fig_c_fim} (Apêndice D – Evidências de "
+            "execução dos testes)." if c_ok else
+            "Os casos e os resultados obtidos estão no Quadro {q_c}, junto com as telas de cada "
+            "execução, nas Figuras {fig_c_ini} a {fig_c_fim} (Apêndice D – Evidências de "
+            "execução dos testes).", refs),
     ]
     quadro_c = [cap_c,
                 tabela(tbl_modelo, ["Caso", "Requisito", "Procedimento", "Resultado esperado",
