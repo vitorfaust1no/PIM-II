@@ -32,7 +32,9 @@ ALVO = RAIZ / "docs" / "PIM_II_Sabor_e_Cia.docx"
 FIGURAS = [
     ("Diagrama de casos de uso", "02_casos_de_uso.png", 16.0),
     ("Diagrama de classes", "03_classes.png", 16.0),
-    ("Diagrama de atividades", "04_atividades.png", 16.0),  # era 12 cm (ajustes_parecer_docx.py)
+    # 14 cm: com o laco das 3 tentativas (RF01) a figura ficou mais alta; a 16 cm o
+    # desenvolvimento passaria de 30 paginas
+    ("Diagrama de atividades", "04_atividades.png", 14.0),
     ("Arquitetura do sistema", "01_arquitetura.png", 16.0),
     ("Modelo conceitual", "05_conceitual.png", 16.0),
     ("Modelo lógico", "06_logico.png", None),
@@ -47,6 +49,10 @@ FIGURAS = [
 # nao confere a proporcao antiga no docx.
 SEM_TITULO = {"01_arquitetura.png", "02_casos_de_uso.png", "04_atividades.png", "05_conceitual.png",
               "06_logico.png"}
+# Como esses PNGs nao passam pelo recorte nem pela conferencia de proporcao, a fonte
+# (.puml/.dot de mesmo nome) e conferida: um titulo embutido repetiria a legenda ABNT.
+TITULO_NA_FONTE = {".puml": re.compile(r"^[ \t]*title\b", re.I | re.M),
+                   ".dot": re.compile(r"^[ \t]*(?:graph[ \t]*\[[^\]]*\b)?label[ \t]*=", re.M)}
 LIMIAR = 200     # pixel com algum canal abaixo disso conta como "tinta"
 GAP_MIN = 8       # linhas em branco que separam o titulo do diagrama
 
@@ -88,6 +94,14 @@ def recortar_titulo(caminho: Path) -> Image.Image:
     return aparar(im.crop((0, y, im.width, im.height)))
 
 
+def conferir_fonte_sem_titulo(arquivo: str) -> None:
+    for ext, padrao in TITULO_NA_FONTE.items():
+        fonte = DIAG / Path(arquivo).with_suffix(ext).name
+        if fonte.exists() and padrao.search(fonte.read_text(encoding="utf-8")):
+            raise SystemExit(f"{fonte.name}: tem titulo embutido; a legenda ABNT ja identifica "
+                             "a figura (tire o titulo e renderize de novo)")
+
+
 def localizar_figura(doc, titulo: str) -> InlineShape:
     """Devolve a imagem do paragrafo seguinte a legenda 'Figura n – <titulo>...'."""
     achadas = []
@@ -115,6 +129,7 @@ def main() -> None:
         prop_doc = forma.width / forma.height
         prop_png = original.width / original.height
         if arquivo in SEM_TITULO:
+            conferir_fonte_sem_titulo(arquivo)
             nova = aparar(original.convert("RGB"))
         else:
             nova = recortar_titulo(DIAG / arquivo)

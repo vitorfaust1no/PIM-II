@@ -4,8 +4,8 @@
    como resultado alcancado (as demais secoes ja diziam isso).
 2. Quadro 2 (Product backlog): colunas ID e Prioridade estreitas e a da historia do
    usuario larga, para as historias nao quebrarem em tres ou quatro linhas.
-3. Figura 3 (diagrama de atividades): de 12 para 16 cm de largura, para as letras ficarem
-   legiveis (ajustar_figuras.py tambem passa a usar 16 cm).
+A Figura 3 (diagrama de atividades) passou de 12 para 16 cm (hoje 14 cm); essa largura fica
+so em ajustar_figuras.py (FIGURAS), que troca a imagem e o tamanho.
 
 Confira o limite de 30 paginas do desenvolvimento depois de exportar o PDF pelo Word.
 Idempotente. Faz backup em docs/_backups/PIM_II_Sabor_e_Cia.pre-ajustes-parecer.docx na primeira vez.
@@ -20,10 +20,8 @@ from pathlib import Path
 
 from docx import Document
 from docx.oxml.ns import qn
-from docx.shared import Cm
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ajustar_figuras import localizar_figura  # noqa: E402
 from evidencias_docx import aplicar_trocas_ancoradas  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
@@ -41,7 +39,6 @@ TROCAS = [
 
 # Quadro 2: ID | Item (historia do usuario) | Prioridade, em twips (total 9061 = 16 cm)
 LARGURAS_BACKLOG = [850, 6611, 1600]
-LARGURA_FIG3_CM = 16.0
 
 
 def colunas_backlog(doc) -> int:
@@ -60,19 +57,9 @@ def colunas_backlog(doc) -> int:
         if len(tcs) != len(LARGURAS_BACKLOG):
             raise SystemExit("linha do Quadro 2 com celulas mescladas; ajuste a mao")
         for tc, w in zip(tcs, LARGURAS_BACKLOG):
-            tcw = tc.find(qn("w:tcPr")).find(qn("w:tcW"))
+            tcw = tc.get_or_add_tcPr().get_or_add_tcW()
             tcw.set(qn("w:w"), str(w))
             tcw.set(qn("w:type"), "dxa")
-    return 1
-
-
-def ampliar_figura3(doc) -> int:
-    forma = localizar_figura(doc, "Diagrama de atividades")
-    if abs(forma.width.cm - LARGURA_FIG3_CM) < 0.05:
-        return 0
-    prop = forma.width / forma.height
-    forma.width = Cm(LARGURA_FIG3_CM)
-    forma.height = Cm(LARGURA_FIG3_CM / prop)
     return 1
 
 
@@ -85,9 +72,8 @@ def main() -> None:
     doc = Document(ALVO)
     trocas = aplicar_trocas_ancoradas(doc, TROCAS)
     quadro = colunas_backlog(doc)
-    figura = ampliar_figura3(doc)
     doc.save(ALVO)
-    print(f"trechos alterados={trocas} colunas do Quadro 2={quadro} Figura 3 ampliada={figura}")
+    print(f"trechos alterados={trocas} colunas do Quadro 2={quadro}")
 
 
 if __name__ == "__main__":

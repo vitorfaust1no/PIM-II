@@ -89,14 +89,6 @@ TROCAS = [
     # a contagem de testes do Resumo/Abstract sai dos resumo.json (evidencias_docx.py)
 ]
 
-# paragrafos (4.4, 9.1 e 9.2) reescritos depois por revisao_manual_docx.py
-SUPERADAS_PELO_MANUAL = {
-    "evolução futura, conforme discutido no capítulo 9.",
-    TEXTO_91_ANTIGO,
-    "as redes levam essa lógica com segurança",
-    "direitos humanos garante acessibilidade",
-}
-
 
 def main() -> None:
     doc = Document(ALVO)
@@ -105,7 +97,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     print(f"Trocas de texto: "
-          f"{aplicar_trocas(doc, sem_superadas(doc, TROCAS, SUPERADAS_PELO_MANUAL))}.")
+          f"{aplicar_trocas(doc, sem_superadas(doc, TROCAS, 'escopo_gravacao'))}.")
     doc.save(ALVO)
     print("Abra no Word, atualize os campos (sumario, listas e paginas) e reexporte o PDF.")
 

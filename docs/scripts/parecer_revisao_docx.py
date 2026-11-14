@@ -60,10 +60,6 @@ TROCAS = [
      "não devem ser reutilizadas nem tomadas como prática recomendada"),
 ]
 
-# a Conclusao (limitacoes) foi reescrita depois por revisao_manual_docx.py: reaplicar a
-# troca acima duplicaria a frase da meta do RNF01
-SUPERADAS_PELO_MANUAL = {"Como limitações, registra-se"}
-
 
 def _espaco_antes(p_el, twips: int | None) -> None:
     ppr = p_el.find(qn("w:pPr"))
@@ -149,7 +145,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     print("Capa inserida." if inserir_capa(doc) else "Capa ja existia.")
-    trocas = sem_superadas(doc, TROCAS, SUPERADAS_PELO_MANUAL)
+    trocas = sem_superadas(doc, TROCAS, "parecer_revisao")
     print(f"Trocas de texto: {aplicar_trocas_ancoradas(doc, trocas)}.")
     print(f"Quadros com cabecalho repetido: {repetir_cabecalhos(doc)}.")
     doc.save(ALVO)

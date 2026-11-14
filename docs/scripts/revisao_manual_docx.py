@@ -190,16 +190,54 @@ def revisado_pelo_manual(doc) -> bool:
     return any(p.text.endswith(TITULO_EVO) for p in doc.paragraphs)
 
 
-def sem_superadas(doc, trocas, superadas: set[str]) -> list:
+# Trocas dos scripts anteriores cujo paragrafo-alvo este script reescreveu, num lugar so:
+# uma reescrita futura de paragrafo entra aqui, sem editar os scripts antigos. Chave: nome do
+# script (sem "_docx.py"); valores: inicio do primeiro elemento da troca (trecho ou texto
+# antigo), que deve casar com exatamente uma troca daquele script.
+SUPERADAS = {
+    # 4.5, 9.2, antiga 9.3 e 9.1
+    "correcoes_avaliador": {
+        "A arquitetura da solução organiza-se em três camadas",
+        "A engenharia de software definiu os requisitos",
+        "A simulação em C representa, de forma concentrada",
+        "O cliente acessa, por QR code",
+    },
+    # 4.4, 9.1 (TEXTO_91_ANTIGO) e 9.2
+    "escopo_gravacao": {
+        "evolução futura, conforme discutido no capítulo 9.",
+        "O cliente acessa, por QR code, o cardápio público da filial, que consulta a API REST",
+        "as redes levam essa lógica com segurança",
+        "direitos humanos garante acessibilidade",
+    },
+    # Conclusao (limitacoes): reaplicar a troca duplicaria a frase da meta do RNF01
+    "parecer_revisao": {"Como limitações, registra-se"},
+    # 4.3.1 e 6.2
+    "revisao_final": {
+        "O diagrama de casos de uso representa as interações entre os atores e o sistema.",
+        "O código foi decomposto em funções de responsabilidade única",
+    },
+}
+
+
+def sem_superadas(doc, trocas, script: str) -> list:
     """Para os scripts anteriores: tira da lista as trocas cujo paragrafo-alvo este script
-    reescreveu (identificadas pelo primeiro elemento da troca), mas so se ele ja foi
-    aplicado. Num documento anterior a esta revisao, as trocas seguem valendo."""
-    chaves = {alternativas(t[0])[0] for t in trocas}
-    if superadas - chaves:
-        raise SystemExit(f"trocas superadas inexistentes na lista: {sorted(superadas - chaves)}")
+    reescreveu (SUPERADAS[script]), mas so se ele ja foi aplicado. Num documento anterior a
+    esta revisao, as trocas seguem valendo."""
+    chaves = [alternativas(t[0])[0] for t in trocas]
+    tirar = set()
+    for s in SUPERADAS[script]:
+        # igualdade (todas as trocas com essa chave); sem nenhuma igual, vale o prefixo,
+        # que deve casar com uma troca so
+        casam = [i for i, c in enumerate(chaves) if c == s]
+        if not casam:
+            casam = [i for i, c in enumerate(chaves) if c.startswith(s)]
+            if len(casam) != 1:
+                raise SystemExit(f"{script}: troca superada {s[:50]!r} casa com {len(casam)} "
+                                 "trocas pelo prefixo; esperava 1")
+        tirar |= set(casam)
     if not revisado_pelo_manual(doc):
         return list(trocas)
-    return [t for t in trocas if alternativas(t[0])[0] not in superadas]
+    return [t for i, t in enumerate(trocas) if i not in tirar]
 
 
 def entradas_quadros(doc) -> list:
@@ -281,9 +319,10 @@ def entradas_siglas(doc) -> list:
     return entradas
 
 
-def completar_siglas(doc) -> int:
+def completar_siglas(doc, siglas=SIGLAS) -> int:
+    """Insere em ordem alfabetica cada (sigla, extenso) que falta na lista de siglas."""
     feitas = 0
-    for sigla, extenso in SIGLAS:
+    for sigla, extenso in siglas:
         entradas = entradas_siglas(doc)
         if any(p.text.split("\t")[0] == sigla for p in entradas):
             continue

@@ -113,12 +113,6 @@ DIFERENCIAIS = [
 
 # RESUMO e ABSTRACT (trechos que localizam esses paragrafos) vem de evidencias_docx.py
 
-# paragrafos (4.3.1 e 6.2) reescritos depois por revisao_manual_docx.py
-SUPERADAS_PELO_MANUAL = {
-    "O diagrama de casos de uso representa as interações entre os atores e o sistema.",
-    "O código foi decomposto em funções de responsabilidade única",
-}
-
 # (paragrafo, trecho antigo, trecho novo). O paragrafo e identificado por um trecho
 # do seu texto; o trecho antigo e None (troca o paragrafo inteiro) ou o texto a
 # substituir. Ambos aceitam uma tupla de alternativas (versoes anteriores do texto).
@@ -332,7 +326,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     doc = Document(ALVO)
-    trocas = aplicar_trocas_ancoradas(doc, sem_superadas(doc, TROCAS, SUPERADAS_PELO_MANUAL))
+    trocas = aplicar_trocas_ancoradas(doc, sem_superadas(doc, TROCAS, "revisao_final"))
     testes = resultados_testes(doc)
     removidos = remover_paragrafo_qr(doc)
     uc = inserir_uc05(doc)
