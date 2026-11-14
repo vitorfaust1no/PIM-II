@@ -39,8 +39,8 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/stat.h> /* stat: o arquivo existe e e um arquivo comum? */
-#ifndef S_ISREG /* o MSVC nao define S_ISREG (so S_IFMT e S_IFREG) */
-#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#ifndef S_ISREG /* o MSVC nao define S_ISREG; _S_IFMT e _S_IFREG existem sempre nele */
+#define S_ISREG(m) (((m) & _S_IFMT) == _S_IFREG)
 #endif
 #ifdef _WIN32
 #include <windows.h> /* MoveFileExA: troca do arquivo (salvarDados) */
