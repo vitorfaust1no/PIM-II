@@ -15,7 +15,8 @@ saborEcia/
 ├── database/        modelo e scripts do banco de dados
 ├── tests/           testes automatizados (simulação em C e modelo SQL)
 ├── docs/            documentação (pseudocódigo, manual, relatório, evidências)
-└── diagramas/       diagramas UML, conceitual/lógico e de rede
+├── diagramas/       diagramas UML, conceitual/lógico e de rede
+└── apresentacao/    slides da apresentação e vídeo narrado
 ```
 
 ### `src/`
@@ -55,6 +56,13 @@ saborEcia/
 - Imagens exportadas: `01_arquitetura.png`, `02_casos_de_uso.png`, `03_classes.png`,
   `04_atividades.png`, `05_conceitual.png`, `06_logico.png`, `07_fluxo_alterar.png`,
   `08_fluxo_cardapio.png`, `09_rede_geral.png`, `10_rede_filial.png`.
+
+### `apresentacao/`
+- `PIM_II_Sabor_e_Cia_slides.pptx` — slides da apresentação (20 slides, com anotações do
+  apresentador); `PIM_II_Sabor_e_Cia_slides.pdf` é a mesma apresentação exportada pelo
+  PowerPoint. O diagrama de atividades do slide 9 é uma versão de `04_atividades.puml` com
+  fonte maior, feita para a projeção.
+- `PIM_II_Sabor_e_Cia_apresentacao.mp4` — vídeo narrado, gerado por `python apresentacao/build.py`.
 
 
 ## Como executar a simulação no Windows
