@@ -15,18 +15,25 @@ skinparam dpi 300
 
 |Gerente|
 start
-:Chef avisa que um prato
-esgotou; acessar o painel;
-' RF01: ate 3 tentativas; na terceira invalida o acesso e negado
-repeat
-  :Informar login
-  e senha (UC04);
-  |Sistema (API e MySQL)|
-  if (3ª tentativa inválida?) then (sim)
+:Receber aviso do chef
+de que um prato esgotou;
+:Informar login e
+senha (UC04);
+|Sistema (API e MySQL)|
+' RF01, na ordem do autenticar() do C: valida, avisa o erro com a contagem e, na 3a
+' tentativa invalida, nega o acesso
+while (Credenciais válidas?) is (não)
+  :Exibir erro (n/3);
+  if (3ª tentativa?) then (sim)
     :Negar acesso;
     stop
+  else (não)
   endif
-repeat while (Credenciais válidas?) is (não) not (sim)
+  |Gerente|
+  :Informar login e
+  senha de novo;
+  |Sistema (API e MySQL)|
+endwhile (sim)
 :Exibir produtos da filial;
 |Gerente|
 :Selecionar produto e
