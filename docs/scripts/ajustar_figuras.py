@@ -32,9 +32,9 @@ ALVO = RAIZ / "docs" / "PIM_II_Sabor_e_Cia.docx"
 FIGURAS = [
     ("Diagrama de casos de uso", "02_casos_de_uso.png", 16.0),
     ("Diagrama de classes", "03_classes.png", 16.0),
-    # 14 cm: com o laco das 3 tentativas (RF01) a figura ficou mais alta; a 16 cm o
-    # desenvolvimento passaria de 30 paginas
-    ("Diagrama de atividades", "04_atividades.png", 14.0),
+    # 13 cm: com o laco das 3 tentativas (RF01, com a mensagem de erro) a figura ficou mais
+    # alta; mais larga, o desenvolvimento passaria de 30 paginas
+    ("Diagrama de atividades", "04_atividades.png", 13.0),
     ("Arquitetura do sistema", "01_arquitetura.png", 16.0),
     ("Modelo conceitual", "05_conceitual.png", 16.0),
     ("Modelo lógico", "06_logico.png", None),
@@ -51,8 +51,9 @@ SEM_TITULO = {"01_arquitetura.png", "02_casos_de_uso.png", "04_atividades.png", 
               "06_logico.png"}
 # Como esses PNGs nao passam pelo recorte nem pela conferencia de proporcao, a fonte
 # (.puml/.dot de mesmo nome) e conferida: um titulo embutido repetiria a legenda ABNT.
-TITULO_NA_FONTE = {".puml": re.compile(r"^[ \t]*title\b", re.I | re.M),
-                   ".dot": re.compile(r"^[ \t]*(?:graph[ \t]*\[[^\]]*\b)?label[ \t]*=", re.M)}
+TITULO_PUML = re.compile(r"^[ \t]*title\b", re.I | re.M)
+INCLUDE_PUML = re.compile(r"^[ \t]*!include[ \t]+(\S+)", re.M)
+LABEL_DOT = re.compile(r"\blabel[ \t]*=")
 LIMIAR = 200     # pixel com algum canal abaixo disso conta como "tinta"
 GAP_MIN = 8       # linhas em branco que separam o titulo do diagrama
 
@@ -94,10 +95,34 @@ def recortar_titulo(caminho: Path) -> Image.Image:
     return aparar(im.crop((0, y, im.width, im.height)))
 
 
+def titulo_no_puml(fonte: Path, vistos: set | None = None) -> bool:
+    """`title` no .puml ou em algum arquivo que ele traz com !include (ex.: estilo.iuml)."""
+    vistos = set() if vistos is None else vistos
+    if fonte in vistos or not fonte.exists():
+        return False
+    vistos.add(fonte)
+    texto = fonte.read_text(encoding="utf-8")
+    return bool(TITULO_PUML.search(texto)) or any(
+        titulo_no_puml(fonte.parent / inc, vistos) for inc in INCLUDE_PUML.findall(texto))
+
+
+def titulo_no_dot(fonte: Path) -> bool:
+    """`label` do proprio grafo: em `graph [...]` ou solto no nivel 1 de chaves. O label de
+    um subgraph (nivel 2 ou mais) e de nos e arestas (dentro de [...]) nao conta."""
+    nivel = 0
+    for linha in fonte.read_text(encoding="utf-8").splitlines():
+        sem_atributos = re.sub(r"\[[^\]]*\]", "", linha)
+        if nivel == 1 and (re.match(r"\s*graph\s*\[[^\]]*\blabel\s*=", linha)
+                           or LABEL_DOT.search(sem_atributos)):
+            return True
+        nivel += linha.count("{") - linha.count("}")
+    return False
+
+
 def conferir_fonte_sem_titulo(arquivo: str) -> None:
-    for ext, padrao in TITULO_NA_FONTE.items():
+    for ext, tem_titulo in ((".puml", titulo_no_puml), (".dot", titulo_no_dot)):
         fonte = DIAG / Path(arquivo).with_suffix(ext).name
-        if fonte.exists() and padrao.search(fonte.read_text(encoding="utf-8")):
+        if fonte.exists() and tem_titulo(fonte):
             raise SystemExit(f"{fonte.name}: tem titulo embutido; a legenda ABNT ja identifica "
                              "a figura (tire o titulo e renderize de novo)")
 

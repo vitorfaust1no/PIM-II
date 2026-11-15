@@ -97,7 +97,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     print(f"Trocas de texto: "
-          f"{aplicar_trocas(doc, sem_superadas(doc, TROCAS, 'escopo_gravacao'))}.")
+          f"{aplicar_trocas(doc, sem_superadas(doc, TROCAS, Path(__file__).stem))}.")
     doc.save(ALVO)
     print("Abra no Word, atualize os campos (sumario, listas e paginas) e reexporte o PDF.")
 

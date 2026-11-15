@@ -145,7 +145,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     print("Capa inserida." if inserir_capa(doc) else "Capa ja existia.")
-    trocas = sem_superadas(doc, TROCAS, "parecer_revisao")
+    trocas = sem_superadas(doc, TROCAS, Path(__file__).stem)
     print(f"Trocas de texto: {aplicar_trocas_ancoradas(doc, trocas)}.")
     print(f"Quadros com cabecalho repetido: {repetir_cabecalhos(doc)}.")
     doc.save(ALVO)

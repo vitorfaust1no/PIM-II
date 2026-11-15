@@ -326,7 +326,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     doc = Document(ALVO)
-    trocas = aplicar_trocas_ancoradas(doc, sem_superadas(doc, TROCAS, "revisao_final"))
+    trocas = aplicar_trocas_ancoradas(doc, sem_superadas(doc, TROCAS, Path(__file__).stem))
     testes = resultados_testes(doc)
     removidos = remover_paragrafo_qr(doc)
     uc = inserir_uc05(doc)

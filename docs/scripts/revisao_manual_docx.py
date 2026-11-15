@@ -21,6 +21,7 @@ Uso:  python docs/scripts/revisao_manual_docx.py
 
 from __future__ import annotations
 
+import importlib
 import re
 import shutil
 import sys
@@ -192,52 +193,59 @@ def revisado_pelo_manual(doc) -> bool:
 
 # Trocas dos scripts anteriores cujo paragrafo-alvo este script reescreveu, num lugar so:
 # uma reescrita futura de paragrafo entra aqui, sem editar os scripts antigos. Chave: nome do
-# script (sem "_docx.py"); valores: inicio do primeiro elemento da troca (trecho ou texto
-# antigo), que deve casar com exatamente uma troca daquele script.
+# script (Path(__file__).stem); valores: o primeiro elemento da troca (trecho ou texto
+# antigo), por igualdade. "@NOME" e uma constante do proprio script, lida dele, para nao
+# copiar aqui um texto longo que ele ja define.
 SUPERADAS = {
     # 4.5, 9.2, antiga 9.3 e 9.1
-    "correcoes_avaliador": {
+    "correcoes_avaliador_docx": {
         "A arquitetura da solução organiza-se em três camadas",
         "A engenharia de software definiu os requisitos",
         "A simulação em C representa, de forma concentrada",
         "O cliente acessa, por QR code",
     },
-    # 4.4, 9.1 (TEXTO_91_ANTIGO) e 9.2
-    "escopo_gravacao": {
+    # 4.4, 9.1 e 9.2
+    "escopo_gravacao_docx": {
         "evolução futura, conforme discutido no capítulo 9.",
-        "O cliente acessa, por QR code, o cardápio público da filial, que consulta a API REST",
+        "@TEXTO_91_ANTIGO",
         "as redes levam essa lógica com segurança",
         "direitos humanos garante acessibilidade",
     },
     # Conclusao (limitacoes): reaplicar a troca duplicaria a frase da meta do RNF01
-    "parecer_revisao": {"Como limitações, registra-se"},
+    "parecer_revisao_docx": {"Como limitações, registra-se"},
     # 4.3.1 e 6.2
-    "revisao_final": {
+    "revisao_final_docx": {
         "O diagrama de casos de uso representa as interações entre os atores e o sistema.",
         "O código foi decomposto em funções de responsabilidade única",
     },
 }
 
 
+def chaves_superadas(script: str) -> set[str]:
+    """SUPERADAS[script] com as referencias "@NOME" trocadas pelo valor da constante."""
+    chaves = set()
+    for c in SUPERADAS.get(script, set()):
+        if c.startswith("@"):
+            # import tardio: o script importa este modulo no topo
+            chaves.add(getattr(importlib.import_module(script), c[1:]))
+        else:
+            chaves.add(c)
+    return chaves
+
+
 def sem_superadas(doc, trocas, script: str) -> list:
-    """Para os scripts anteriores: tira da lista as trocas cujo paragrafo-alvo este script
-    reescreveu (SUPERADAS[script]), mas so se ele ja foi aplicado. Num documento anterior a
-    esta revisao, as trocas seguem valendo."""
-    chaves = [alternativas(t[0])[0] for t in trocas]
-    tirar = set()
-    for s in SUPERADAS[script]:
-        # igualdade (todas as trocas com essa chave); sem nenhuma igual, vale o prefixo,
-        # que deve casar com uma troca so
-        casam = [i for i, c in enumerate(chaves) if c == s]
-        if not casam:
-            casam = [i for i, c in enumerate(chaves) if c.startswith(s)]
-            if len(casam) != 1:
-                raise SystemExit(f"{script}: troca superada {s[:50]!r} casa com {len(casam)} "
-                                 "trocas pelo prefixo; esperava 1")
-        tirar |= set(casam)
+    """Para os scripts anteriores (script = Path(__file__).stem de quem chama): tira da lista
+    as trocas cujo paragrafo-alvo este script reescreveu, mas so se ele ja foi aplicado. Num
+    documento anterior a esta revisao, as trocas seguem valendo. Toda chave registrada deve
+    existir na lista de trocas, senao o registro ficou desatualizado."""
+    superadas = chaves_superadas(script)
+    chaves = {alternativas(t[0])[0] for t in trocas}
+    if superadas - chaves:
+        raise SystemExit(f"{script}: trocas superadas inexistentes na lista: "
+                         f"{sorted(c[:50] for c in superadas - chaves)}")
     if not revisado_pelo_manual(doc):
         return list(trocas)
-    return [t for i, t in enumerate(trocas) if i not in tirar]
+    return [t for t in trocas if alternativas(t[0])[0] not in superadas]
 
 
 def entradas_quadros(doc) -> list:
@@ -345,6 +353,16 @@ def completar_siglas(doc, siglas=SIGLAS) -> int:
         else:
             depois._p.addprevious(novo)
         feitas += 1
+    return feitas
+
+
+def retirar_siglas(doc, siglas) -> int:
+    """Apaga da lista de siglas as entradas cuja sigla esta em `siglas`, se existirem."""
+    feitas = 0
+    for p in entradas_siglas(doc):
+        if p.text.split("\t")[0] in siglas:
+            p._p.getparent().remove(p._p)
+            feitas += 1
     return feitas
 
 

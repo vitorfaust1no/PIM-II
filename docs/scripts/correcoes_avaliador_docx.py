@@ -250,7 +250,7 @@ def main() -> None:
         shutil.copy2(ALVO, BACKUP)
         print("Backup:", BACKUP)
     doc = Document(ALVO)
-    trocas = aplicar_trocas_ancoradas(doc, sem_superadas(doc, TROCAS, "correcoes_avaliador"))
+    trocas = aplicar_trocas_ancoradas(doc, sem_superadas(doc, TROCAS, Path(__file__).stem))
     linhas_56 = enxugar_56(doc)
     itens_54 = condensar_54(doc)
     trocar_figuras(doc)

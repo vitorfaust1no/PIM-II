@@ -26,7 +26,7 @@ from docx.shared import Pt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from evidencias_docx import aplicar_trocas_ancoradas  # noqa: E402
-from revisao_manual_docx import completar_siglas, entradas_siglas  # noqa: E402
+from revisao_manual_docx import completar_siglas, retirar_siglas  # noqa: E402
 
 DOCS = Path(__file__).resolve().parent.parent
 ALVO = DOCS / "PIM_II_Sabor_e_Cia.docx"
@@ -44,16 +44,6 @@ SIGLAS = [
 SIGLAS_RETIRADAS = ["AA"]
 
 TAM_FONTE = Pt(10)
-
-
-def retirar_siglas(doc) -> int:
-    """Apaga da lista de siglas as entradas de SIGLAS_RETIRADAS, se ainda existirem."""
-    feitas = 0
-    for p in entradas_siglas(doc):
-        if p.text.split("	")[0] in SIGLAS_RETIRADAS:
-            p._p.getparent().remove(p._p)
-            feitas += 1
-    return feitas
 
 
 def fontes_10pt(doc) -> int:
@@ -80,7 +70,7 @@ def main() -> None:
     doc = Document(ALVO)
     trocas = aplicar_trocas_ancoradas(doc, TROCAS)
     siglas = completar_siglas(doc, SIGLAS)
-    retiradas = retirar_siglas(doc)
+    retiradas = retirar_siglas(doc, SIGLAS_RETIRADAS)
     fontes = fontes_10pt(doc)
     doc.save(ALVO)
     print(f"trechos alterados={trocas} siglas novas={siglas} retiradas={retiradas} fontes em 10 pt={fontes}")

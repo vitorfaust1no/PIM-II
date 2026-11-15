@@ -4,7 +4,7 @@
    como resultado alcancado (as demais secoes ja diziam isso).
 2. Quadro 2 (Product backlog): colunas ID e Prioridade estreitas e a da historia do
    usuario larga, para as historias nao quebrarem em tres ou quatro linhas.
-A Figura 3 (diagrama de atividades) passou de 12 para 16 cm (hoje 14 cm); essa largura fica
+A Figura 3 (diagrama de atividades) passou de 12 para 16 cm (hoje 13 cm); essa largura fica
 so em ajustar_figuras.py (FIGURAS), que troca a imagem e o tamanho.
 
 Confira o limite de 30 paginas do desenvolvimento depois de exportar o PDF pelo Word.
