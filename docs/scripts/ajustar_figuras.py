@@ -11,7 +11,10 @@ Uso:  python docs/scripts/ajustar_figuras.py
 from __future__ import annotations
 
 import io
+import json
 import re
+import subprocess
+import tempfile
 from pathlib import Path
 
 from docx import Document
@@ -51,10 +54,11 @@ SEM_TITULO = {"01_arquitetura.png", "02_casos_de_uso.png", "04_atividades.png", 
               "06_logico.png"}
 # Como esses PNGs nao passam pelo recorte nem pela conferencia de proporcao, a fonte
 # (.puml/.dot de mesmo nome) e conferida: um titulo embutido repetiria a legenda ABNT.
+# A checagem pergunta as proprias ferramentas, na mesma imagem Docker que renderiza os
+# diagramas (README): o pre-processador do PlantUML expande includes, variaveis e tira
+# comentarios; o Graphviz le o .dot e diz se o grafo tem label proprio.
+IMAGEM_PLANTUML = "plantuml/plantuml"
 TITULO_PUML = re.compile(r"^[ \t]*title\b", re.I | re.M)
-# !include, !include_once, !include_many e !includesub, com ou sem aspas; "arquivo!N" ou
-# "arquivo!SUB" escolhe parte do arquivo, que e lido inteiro. <biblioteca> e url ficam de fora.
-INCLUDE_PUML = re.compile(r'^[ \t]*!include(?:_once|_many|sub)?[ \t]+"?([^"<\s!]+)', re.M)
 LIMIAR = 200     # pixel com algum canal abaixo disso conta como "tinta"
 GAP_MIN = 8       # linhas em branco que separam o titulo do diagrama
 
@@ -96,105 +100,69 @@ def recortar_titulo(caminho: Path) -> Image.Image:
     return aparar(im.crop((0, y, im.width, im.height)))
 
 
-def titulo_no_puml(fonte: Path, vistos: set | None = None) -> bool:
-    """`title` no .puml ou em algum arquivo que ele traz com !include (ex.: estilo.iuml).
-    Um include local que nao existe para o script: sem ele, a checagem nao vale."""
-    vistos = set() if vistos is None else vistos
-    if fonte in vistos:
-        return False
-    vistos.add(fonte)
-    texto = fonte.read_text(encoding="utf-8")
-    if TITULO_PUML.search(texto):
-        return True
-    for inc in INCLUDE_PUML.findall(texto):
-        alvo = fonte.parent / inc
-        if not alvo.exists():
-            raise SystemExit(f"{fonte.name}: include {inc!r} nao encontrado")
-        if titulo_no_puml(alvo, vistos):
-            return True
-    return False
+class DockerIndisponivel(Exception):
+    pass
 
 
-def tokens_dot(texto: str) -> list[str]:
-    """Separa o .dot em tokens, sem comentarios (//, /* */ e linhas #) e com cada string
-    ("..." ou <...> HTML, com aninhamento) num token so, para que chaves, colchetes e a
-    palavra label dentro de textos nao contem."""
-    toks, i, n = [], 0, len(texto)
-    inicio_linha = True
-    while i < n:
-        c = texto[i]
-        if c == "\n":
-            inicio_linha = True
-            i += 1
-            continue
-        if c.isspace():
-            i += 1
-            continue
-        if inicio_linha and c == "#":
-            i = texto.find("\n", i) if "\n" in texto[i:] else n
-            continue
-        inicio_linha = False
-        if texto.startswith("//", i):
-            i = texto.find("\n", i) if "\n" in texto[i:] else n
-        elif texto.startswith("/*", i):
-            j = texto.find("*/", i + 2)
-            i = n if j < 0 else j + 2
-        elif c == '"':
-            j = i + 1
-            while j < n and texto[j] != '"':
-                j += 2 if texto[j] == "\\" else 1
-            toks.append(texto[i:j + 1])
-            i = j + 1
-        elif c == "<":
-            j, nivel = i, 0
-            while j < n:
-                nivel += {"<": 1, ">": -1}.get(texto[j], 0)
-                j += 1
-                if nivel == 0:
-                    break
-            toks.append(texto[i:j])
-            i = j
-        elif c.isalnum() or c == "_":
-            j = i
-            while j < n and (texto[j].isalnum() or texto[j] in "_."):
-                j += 1
-            toks.append(texto[i:j])
-            i = j
-        else:
-            toks.append(c)
-            i += 1
-    return toks
+def _docker(args: list[str], fonte: Path, saida: Path | None = None,
+            entrada: bool = True) -> subprocess.CompletedProcess:
+    """Roda a imagem do PlantUML com a pasta de `fonte` em /data (e `saida` em /out). Com
+    entrada=True, a fonte vai pela entrada padrao."""
+    cmd = ["docker", "run", "--rm", "-i", "-v", f"{fonte.parent}:/data", "-w", "/data"]
+    if saida is not None:
+        cmd += ["-v", f"{saida}:/out"]
+    try:
+        r = subprocess.run(cmd + args, input=fonte.read_bytes() if entrada else None,
+                           capture_output=True, timeout=180)
+    except FileNotFoundError as e:
+        raise DockerIndisponivel("docker nao encontrado no PATH") from e
+    erro = r.stderr.decode("utf-8", "replace")
+    if r.returncode == 125 or "docker daemon" in erro.lower() or "cannot connect" in erro.lower():
+        raise DockerIndisponivel(erro.strip().splitlines()[-1] if erro.strip() else "docker falhou")
+    return r
 
 
-def titulo_no_dot(fonte: Path) -> bool:
-    """`label` do proprio grafo: atribuicao `label = ...` no corpo do grafo (nivel 1 de
-    chaves, fora de [...]) ou dentro de `graph [...]` nesse nivel. Labels de subgraph (nivel
-    2 ou mais), de nos e de arestas nao contam."""
-    toks = tokens_dot(fonte.read_text(encoding="utf-8"))
-    chaves = colchetes = 0
-    em_graph = False  # dentro de graph [...] no nivel 1
-    for k, t in enumerate(toks):
-        seguinte = toks[k + 1] if k + 1 < len(toks) else ""
-        if t == "{":
-            chaves += 1
-        elif t == "}":
-            chaves -= 1
-        elif t == "[":
-            colchetes += 1
-            em_graph = chaves == 1 and colchetes == 1 and k > 0 and toks[k - 1].lower() == "graph"
-        elif t == "]":
-            colchetes -= 1
-            em_graph = em_graph and colchetes > 0
-        elif t.lower() == "label" and seguinte == "=" and chaves == 1 and (
-                colchetes == 0 or em_graph):
-            return True
-    return False
+def titulo_no_puml(fonte: Path) -> bool | None:
+    """`title` na fonte ja pre-processada (includes expandidos, %dirpath() resolvido, sem
+    comentarios). None se o PlantUML nao conseguiu pre-processar (ex.: include inexistente).
+    A fonte vai pelo nome, nao pela entrada padrao, para o PlantUML saber onde ela esta."""
+    with tempfile.TemporaryDirectory() as tmp:
+        r = _docker([IMAGEM_PLANTUML, "-preproc", "-o", "/out", fonte.name], fonte,
+                    saida=Path(tmp), entrada=False)
+        pre = Path(tmp) / fonte.with_suffix(".preproc").name
+        texto = pre.read_text(encoding="utf-8", errors="replace") if pre.exists() else ""
+    if r.returncode != 0:
+        print(f"AVISO {fonte.name}: o PlantUML nao pre-processou a fonte "
+              f"({' '.join(texto.split()[-4:]) or 'sem saida'}); titulo nao conferido")
+        return None
+    return bool(TITULO_PUML.search(texto))
+
+
+def titulo_no_dot(fonte: Path) -> bool | None:
+    """`label` do proprio grafo, segundo o Graphviz (chave na raiz do JSON; labels de
+    subgrafos e nos ficam em "objects"). None se o dot nao leu a fonte."""
+    r = _docker(["--entrypoint", "dot", IMAGEM_PLANTUML, "-Tjson0"], fonte)
+    try:
+        grafo = json.loads(r.stdout.decode("utf-8"))
+    except ValueError:
+        erro = r.stderr.decode("utf-8", "replace").strip().splitlines()
+        print(f"AVISO {fonte.name}: o Graphviz nao leu a fonte ({erro[-1] if erro else 'sem saida'}); "
+              "titulo nao conferido")
+        return None
+    return bool(str(grafo.get("label", "")).strip())
 
 
 def conferir_fonte_sem_titulo(arquivo: str) -> None:
     for ext, tem_titulo in ((".puml", titulo_no_puml), (".dot", titulo_no_dot)):
         fonte = DIAG / Path(arquivo).with_suffix(ext).name
-        if fonte.exists() and tem_titulo(fonte):
+        if not fonte.exists():
+            continue
+        try:
+            achou = tem_titulo(fonte)
+        except DockerIndisponivel as e:
+            print(f"AVISO {fonte.name}: checagem de titulo pulada, Docker indisponivel ({e})")
+            continue
+        if achou:
             raise SystemExit(f"{fonte.name}: tem titulo embutido; a legenda ABNT ja identifica "
                              "a figura (tire o titulo e renderize de novo)")
 

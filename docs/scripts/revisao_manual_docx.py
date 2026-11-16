@@ -246,15 +246,16 @@ def chaves_superadas(script: str) -> set[str]:
 def sem_superadas(doc, trocas, script: str) -> list:
     """Para os scripts anteriores (script = Path(__file__).stem de quem chama): tira da lista
     as trocas cujo paragrafo-alvo este script reescreveu, mas so se ele ja foi aplicado. Num
-    documento anterior a esta revisao, as trocas seguem valendo e o registro nem e lido. Toda
-    chave registrada deve existir na lista de trocas, senao o registro ficou desatualizado."""
-    if not revisado_pelo_manual(doc):
-        return list(trocas)
+    documento anterior a esta revisao, as trocas seguem valendo. O registro e conferido
+    sempre (script presente e toda chave existente nas trocas), para que um registro
+    desatualizado pare a cadeia ja no primeiro documento, antes de ela mexer no relatorio."""
     superadas = chaves_superadas(script)
     chaves = {alternativas(t[0])[0] for t in trocas}
     if superadas - chaves:
         raise SystemExit(f"{script}: trocas superadas inexistentes na lista: "
                          f"{sorted(c[:50] for c in superadas - chaves)}")
+    if not revisado_pelo_manual(doc):
+        return list(trocas)
     return [t for t in trocas if alternativas(t[0])[0] not in superadas]
 
 
