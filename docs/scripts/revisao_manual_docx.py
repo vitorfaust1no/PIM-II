@@ -221,30 +221,40 @@ SUPERADAS = {
 }
 
 
+def _modulo_do_script(script: str):
+    """O modulo do script que chamou, sem carrega-lo de novo: quando ele roda direto
+    (python docs/scripts/x.py), ja esta em sys.modules como __main__."""
+    principal = sys.modules.get("__main__")
+    if principal is not None and Path(getattr(principal, "__file__", "")).stem == script:
+        return principal
+    return sys.modules.get(script) or importlib.import_module(script)
+
+
 def chaves_superadas(script: str) -> set[str]:
-    """SUPERADAS[script] com as referencias "@NOME" trocadas pelo valor da constante."""
+    """SUPERADAS[script] com as referencias "@NOME" trocadas pelo valor da constante.
+    Script sem entrada e erro: com outro nome (renomeado ou copiado), ele reaplicaria em
+    silencio trocas que esta revisao ja reescreveu."""
+    if script not in SUPERADAS:
+        raise SystemExit(f"{script}: sem entrada em SUPERADAS (revisao_manual_docx.py); "
+                         "se o script foi renomeado, renomeie a chave tambem")
     chaves = set()
-    for c in SUPERADAS.get(script, set()):
-        if c.startswith("@"):
-            # import tardio: o script importa este modulo no topo
-            chaves.add(getattr(importlib.import_module(script), c[1:]))
-        else:
-            chaves.add(c)
+    for c in SUPERADAS[script]:
+        chaves.add(getattr(_modulo_do_script(script), c[1:]) if c.startswith("@") else c)
     return chaves
 
 
 def sem_superadas(doc, trocas, script: str) -> list:
     """Para os scripts anteriores (script = Path(__file__).stem de quem chama): tira da lista
     as trocas cujo paragrafo-alvo este script reescreveu, mas so se ele ja foi aplicado. Num
-    documento anterior a esta revisao, as trocas seguem valendo. Toda chave registrada deve
-    existir na lista de trocas, senao o registro ficou desatualizado."""
+    documento anterior a esta revisao, as trocas seguem valendo e o registro nem e lido. Toda
+    chave registrada deve existir na lista de trocas, senao o registro ficou desatualizado."""
+    if not revisado_pelo_manual(doc):
+        return list(trocas)
     superadas = chaves_superadas(script)
     chaves = {alternativas(t[0])[0] for t in trocas}
     if superadas - chaves:
         raise SystemExit(f"{script}: trocas superadas inexistentes na lista: "
                          f"{sorted(c[:50] for c in superadas - chaves)}")
-    if not revisado_pelo_manual(doc):
-        return list(trocas)
     return [t for t in trocas if alternativas(t[0])[0] not in superadas]
 
 

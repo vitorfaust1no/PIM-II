@@ -52,8 +52,9 @@ SEM_TITULO = {"01_arquitetura.png", "02_casos_de_uso.png", "04_atividades.png", 
 # Como esses PNGs nao passam pelo recorte nem pela conferencia de proporcao, a fonte
 # (.puml/.dot de mesmo nome) e conferida: um titulo embutido repetiria a legenda ABNT.
 TITULO_PUML = re.compile(r"^[ \t]*title\b", re.I | re.M)
-INCLUDE_PUML = re.compile(r"^[ \t]*!include[ \t]+(\S+)", re.M)
-LABEL_DOT = re.compile(r"\blabel[ \t]*=")
+# !include, !include_once, !include_many e !includesub, com ou sem aspas; "arquivo!N" ou
+# "arquivo!SUB" escolhe parte do arquivo, que e lido inteiro. <biblioteca> e url ficam de fora.
+INCLUDE_PUML = re.compile(r'^[ \t]*!include(?:_once|_many|sub)?[ \t]+"?([^"<\s!]+)', re.M)
 LIMIAR = 200     # pixel com algum canal abaixo disso conta como "tinta"
 GAP_MIN = 8       # linhas em branco que separam o titulo do diagrama
 
@@ -96,26 +97,97 @@ def recortar_titulo(caminho: Path) -> Image.Image:
 
 
 def titulo_no_puml(fonte: Path, vistos: set | None = None) -> bool:
-    """`title` no .puml ou em algum arquivo que ele traz com !include (ex.: estilo.iuml)."""
+    """`title` no .puml ou em algum arquivo que ele traz com !include (ex.: estilo.iuml).
+    Um include local que nao existe para o script: sem ele, a checagem nao vale."""
     vistos = set() if vistos is None else vistos
-    if fonte in vistos or not fonte.exists():
+    if fonte in vistos:
         return False
     vistos.add(fonte)
     texto = fonte.read_text(encoding="utf-8")
-    return bool(TITULO_PUML.search(texto)) or any(
-        titulo_no_puml(fonte.parent / inc, vistos) for inc in INCLUDE_PUML.findall(texto))
+    if TITULO_PUML.search(texto):
+        return True
+    for inc in INCLUDE_PUML.findall(texto):
+        alvo = fonte.parent / inc
+        if not alvo.exists():
+            raise SystemExit(f"{fonte.name}: include {inc!r} nao encontrado")
+        if titulo_no_puml(alvo, vistos):
+            return True
+    return False
+
+
+def tokens_dot(texto: str) -> list[str]:
+    """Separa o .dot em tokens, sem comentarios (//, /* */ e linhas #) e com cada string
+    ("..." ou <...> HTML, com aninhamento) num token so, para que chaves, colchetes e a
+    palavra label dentro de textos nao contem."""
+    toks, i, n = [], 0, len(texto)
+    inicio_linha = True
+    while i < n:
+        c = texto[i]
+        if c == "\n":
+            inicio_linha = True
+            i += 1
+            continue
+        if c.isspace():
+            i += 1
+            continue
+        if inicio_linha and c == "#":
+            i = texto.find("\n", i) if "\n" in texto[i:] else n
+            continue
+        inicio_linha = False
+        if texto.startswith("//", i):
+            i = texto.find("\n", i) if "\n" in texto[i:] else n
+        elif texto.startswith("/*", i):
+            j = texto.find("*/", i + 2)
+            i = n if j < 0 else j + 2
+        elif c == '"':
+            j = i + 1
+            while j < n and texto[j] != '"':
+                j += 2 if texto[j] == "\\" else 1
+            toks.append(texto[i:j + 1])
+            i = j + 1
+        elif c == "<":
+            j, nivel = i, 0
+            while j < n:
+                nivel += {"<": 1, ">": -1}.get(texto[j], 0)
+                j += 1
+                if nivel == 0:
+                    break
+            toks.append(texto[i:j])
+            i = j
+        elif c.isalnum() or c == "_":
+            j = i
+            while j < n and (texto[j].isalnum() or texto[j] in "_."):
+                j += 1
+            toks.append(texto[i:j])
+            i = j
+        else:
+            toks.append(c)
+            i += 1
+    return toks
 
 
 def titulo_no_dot(fonte: Path) -> bool:
-    """`label` do proprio grafo: em `graph [...]` ou solto no nivel 1 de chaves. O label de
-    um subgraph (nivel 2 ou mais) e de nos e arestas (dentro de [...]) nao conta."""
-    nivel = 0
-    for linha in fonte.read_text(encoding="utf-8").splitlines():
-        sem_atributos = re.sub(r"\[[^\]]*\]", "", linha)
-        if nivel == 1 and (re.match(r"\s*graph\s*\[[^\]]*\blabel\s*=", linha)
-                           or LABEL_DOT.search(sem_atributos)):
+    """`label` do proprio grafo: atribuicao `label = ...` no corpo do grafo (nivel 1 de
+    chaves, fora de [...]) ou dentro de `graph [...]` nesse nivel. Labels de subgraph (nivel
+    2 ou mais), de nos e de arestas nao contam."""
+    toks = tokens_dot(fonte.read_text(encoding="utf-8"))
+    chaves = colchetes = 0
+    em_graph = False  # dentro de graph [...] no nivel 1
+    for k, t in enumerate(toks):
+        seguinte = toks[k + 1] if k + 1 < len(toks) else ""
+        if t == "{":
+            chaves += 1
+        elif t == "}":
+            chaves -= 1
+        elif t == "[":
+            colchetes += 1
+            em_graph = chaves == 1 and colchetes == 1 and k > 0 and toks[k - 1].lower() == "graph"
+        elif t == "]":
+            colchetes -= 1
+            em_graph = em_graph and colchetes > 0
+        elif t.lower() == "label" and seguinte == "=" and chaves == 1 and (
+                colchetes == 0 or em_graph):
             return True
-        nivel += linha.count("{") - linha.count("}")
     return False
 
 
