@@ -43,6 +43,9 @@ saborEcia/
   usadas na seção 5.7, na seção 6.8 e no Apêndice D do relatório.
 - `scripts/` — scripts Python que aplicam a revisão no relatório `.docx`
   (requerem `python-docx` e `Pillow`; ex.: `python docs/scripts/reparar_docx.py`).
+  O `ajustar_figuras.py` também confere, com o Docker e a imagem `plantuml/plantuml`,
+  que as fontes `.puml`/`.dot` não têm título embutido; sem Docker ele para, a menos
+  que seja rodado com `--sem-checagem`.
 
 ### `diagramas/`
 - Fontes editáveis: `01_arquitetura.puml`, `02_casos_de_uso.puml`, `04_atividades.puml` e

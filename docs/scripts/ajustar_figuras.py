@@ -6,10 +6,13 @@
    mantendo legendas e fontes, e ajusta a largura (16 cm nas figuras largas).
 Idempotente: reprocessa sempre a partir dos PNGs originais.
 Uso:  python docs/scripts/ajustar_figuras.py
+      (--sem-checagem: segue se o titulo de algum diagrama nao puder ser conferido,
+      ex.: sem Docker; a conferencia usa a imagem plantuml/plantuml)
 """
 
 from __future__ import annotations
 
+import argparse
 import io
 import json
 import re
@@ -100,71 +103,100 @@ def recortar_titulo(caminho: Path) -> Image.Image:
     return aparar(im.crop((0, y, im.width, im.height)))
 
 
-class DockerIndisponivel(Exception):
-    pass
+# Roda dentro do conteiner, com as fontes como argumentos: cada uma deixa em /out o
+# resultado (<fonte>.d/*.preproc ou <fonte>.json), a saida da ferramenta (<fonte>.log) e o
+# codigo de saida (<fonte>.rc). O laco sempre termina com 0, entao um codigo diferente
+# vindo do `docker run` e falha do proprio Docker, nunca da fonte.
+SCRIPT_CHECAGEM = r"""for f do
+  case "$f" in
+    *.puml) mkdir -p "/out/$f.d"
+            java -jar /opt/plantuml.jar -preproc -o "/out/$f.d" "$f" >"/out/$f.log" 2>&1 ;;
+    *) dot -Tjson0 "$f" >"/out/$f.json" 2>"/out/$f.log" ;;
+  esac
+  echo $? >"/out/$f.rc"
+done
+exit 0"""
+TEMPO_DOCKER = 300  # s; a primeira execucao pode baixar a imagem
 
 
-def _docker(args: list[str], fonte: Path, saida: Path | None = None,
-            entrada: bool = True) -> subprocess.CompletedProcess:
-    """Roda a imagem do PlantUML com a pasta de `fonte` em /data (e `saida` em /out). Com
-    entrada=True, a fonte vai pela entrada padrao."""
-    cmd = ["docker", "run", "--rm", "-i", "-v", f"{fonte.parent}:/data", "-w", "/data"]
-    if saida is not None:
-        cmd += ["-v", f"{saida}:/out"]
-    try:
-        r = subprocess.run(cmd + args, input=fonte.read_bytes() if entrada else None,
-                           capture_output=True, timeout=180)
-    except FileNotFoundError as e:
-        raise DockerIndisponivel("docker nao encontrado no PATH") from e
-    erro = r.stderr.decode("utf-8", "replace")
-    if r.returncode == 125 or "docker daemon" in erro.lower() or "cannot connect" in erro.lower():
-        raise DockerIndisponivel(erro.strip().splitlines()[-1] if erro.strip() else "docker falhou")
-    return r
+def _ultima_linha(texto: str) -> str:
+    linhas = texto.strip().splitlines()
+    return linhas[-1].strip() if linhas else "sem saida"
 
 
-def titulo_no_puml(fonte: Path) -> bool | None:
-    """`title` na fonte ja pre-processada (includes expandidos, %dirpath() resolvido, sem
-    comentarios). None se o PlantUML nao conseguiu pre-processar (ex.: include inexistente).
-    A fonte vai pelo nome, nao pela entrada padrao, para o PlantUML saber onde ela esta."""
+def _ler(arq: Path) -> str:
+    return arq.read_text(encoding="utf-8", errors="replace") if arq.exists() else ""
+
+
+def titulos_nas_fontes(fontes: list[Path]) -> tuple[list[str], list[str]]:
+    """Confere todas as fontes num so conteiner. Devolve (fontes com titulo, fontes nao
+    conferidas com o motivo).
+    .puml: `title` na fonte pre-processada pelo PlantUML (includes e variaveis expandidos,
+    sem comentarios), em qualquer .preproc gerado: o nome vem do `@startuml <nome>` quando
+    houver, e um arquivo com varios @startuml gera varios.
+    .dot: `label` do proprio grafo segundo o Graphviz (chave na raiz do JSON; labels de
+    subgrafos e nos ficam em "objects")."""
     with tempfile.TemporaryDirectory() as tmp:
-        r = _docker([IMAGEM_PLANTUML, "-preproc", "-o", "/out", fonte.name], fonte,
-                    saida=Path(tmp), entrada=False)
-        pre = Path(tmp) / fonte.with_suffix(".preproc").name
-        texto = pre.read_text(encoding="utf-8", errors="replace") if pre.exists() else ""
-    if r.returncode != 0:
-        print(f"AVISO {fonte.name}: o PlantUML nao pre-processou a fonte "
-              f"({' '.join(texto.split()[-4:]) or 'sem saida'}); titulo nao conferido")
-        return None
-    return bool(TITULO_PUML.search(texto))
-
-
-def titulo_no_dot(fonte: Path) -> bool | None:
-    """`label` do proprio grafo, segundo o Graphviz (chave na raiz do JSON; labels de
-    subgrafos e nos ficam em "objects"). None se o dot nao leu a fonte."""
-    r = _docker(["--entrypoint", "dot", IMAGEM_PLANTUML, "-Tjson0"], fonte)
-    try:
-        grafo = json.loads(r.stdout.decode("utf-8"))
-    except ValueError:
-        erro = r.stderr.decode("utf-8", "replace").strip().splitlines()
-        print(f"AVISO {fonte.name}: o Graphviz nao leu a fonte ({erro[-1] if erro else 'sem saida'}); "
-              "titulo nao conferido")
-        return None
-    return bool(str(grafo.get("label", "")).strip())
-
-
-def conferir_fonte_sem_titulo(arquivo: str) -> None:
-    for ext, tem_titulo in ((".puml", titulo_no_puml), (".dot", titulo_no_dot)):
-        fonte = DIAG / Path(arquivo).with_suffix(ext).name
-        if not fonte.exists():
-            continue
+        out = Path(tmp).resolve()  # caminho longo: o Docker nao monta nomes 8.3 (VITORF~1)
+        cmd = ["docker", "run", "--rm", "-v", f"{DIAG}:/data", "-w", "/data",
+               "-v", f"{out}:/out", "--entrypoint", "sh", IMAGEM_PLANTUML,
+               "-c", SCRIPT_CHECAGEM, "sh"] + [f.name for f in fontes]
+        motivo = None
         try:
-            achou = tem_titulo(fonte)
-        except DockerIndisponivel as e:
-            print(f"AVISO {fonte.name}: checagem de titulo pulada, Docker indisponivel ({e})")
-            continue
-        if achou:
-            raise SystemExit(f"{fonte.name}: tem titulo embutido; a legenda ABNT ja identifica "
-                             "a figura (tire o titulo e renderize de novo)")
+            r = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True,
+                               timeout=TEMPO_DOCKER)
+            if r.returncode != 0:
+                erro = [l for l in r.stderr.decode("utf-8", "replace").splitlines()
+                        if l.strip() and not l.startswith("Run 'docker")]
+                motivo = f"docker run falhou: {_ultima_linha(chr(10).join(erro))}"
+        except FileNotFoundError:
+            motivo = "docker nao encontrado no PATH"
+        except subprocess.TimeoutExpired:
+            motivo = f"docker nao terminou em {TEMPO_DOCKER} s"
+        if motivo:
+            return [], [f"{f.name}: {motivo}" for f in fontes]
+
+        com_titulo, nao_conferidas = [], []
+        for f in fontes:
+            rc = _ler(out / f"{f.name}.rc").strip()
+            log = _ultima_linha(_ler(out / f"{f.name}.log"))
+            if f.suffix == ".puml":
+                pre = sorted((out / f"{f.name}.d").glob("*.preproc"))
+                if rc != "0" or not pre:
+                    fim_texto = " ".join(" ".join(_ler(q) for q in pre).split()[-4:])
+                    nao_conferidas.append(f"{f.name}: o PlantUML nao pre-processou a fonte "
+                                          f"({log}{'; termina em: ' + fim_texto if fim_texto else ''})")
+                    continue
+                tem = any(TITULO_PUML.search(_ler(q)) for q in pre)
+            else:
+                try:
+                    grafo = json.loads(_ler(out / f"{f.name}.json"))
+                except ValueError:
+                    nao_conferidas.append(f"{f.name}: o Graphviz nao leu a fonte ({log})")
+                    continue
+                tem = bool(str(grafo.get("label", "")).strip())
+            if tem:
+                com_titulo.append(f.name)
+    return com_titulo, nao_conferidas
+
+
+def conferir_titulos(arquivos: list[str], sem_checagem: bool) -> None:
+    """Para antes de mexer em qualquer arquivo se uma fonte tem titulo embutido, ou se
+    alguma nao pode ser conferida (sem Docker, include inexistente...), a menos que
+    --sem-checagem tenha sido pedido: ai so avisa."""
+    fontes = [DIAG / Path(a).with_suffix(ext).name for a in arquivos for ext in (".puml", ".dot")]
+    fontes = [f for f in fontes if f.exists()]
+    if not fontes:
+        return
+    com_titulo, nao_conferidas = titulos_nas_fontes(fontes)
+    if com_titulo:
+        raise SystemExit(f"{', '.join(com_titulo)}: tem titulo embutido; a legenda ABNT ja "
+                         "identifica a figura (tire o titulo e renderize de novo)")
+    if nao_conferidas and not sem_checagem:
+        raise SystemExit("titulo dos diagramas nao conferido:\n  " + "\n  ".join(nao_conferidas)
+                         + "\nCorrija, ou rode com --sem-checagem para seguir sem a checagem.")
+    for m in nao_conferidas:
+        print(f"AVISO {m}; titulo nao conferido (--sem-checagem)")
 
 
 def localizar_figura(doc, titulo: str) -> InlineShape:
@@ -185,6 +217,11 @@ def localizar_figura(doc, titulo: str) -> InlineShape:
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--sem-checagem", action="store_true",
+                    help="segue mesmo se o titulo de algum diagrama nao puder ser conferido")
+    args = ap.parse_args()
+    conferir_titulos([a for _, a, _ in FIGURAS if a in SEM_TITULO], args.sem_checagem)
     SAIDA.mkdir(exist_ok=True)
     doc = Document(ALVO)
     pares = [(localizar_figura(doc, titulo), arquivo, largura)
@@ -194,7 +231,6 @@ def main() -> None:
         prop_doc = forma.width / forma.height
         prop_png = original.width / original.height
         if arquivo in SEM_TITULO:
-            conferir_fonte_sem_titulo(arquivo)
             nova = aparar(original.convert("RGB"))
         else:
             nova = recortar_titulo(DIAG / arquivo)
