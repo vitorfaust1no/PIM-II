@@ -167,12 +167,14 @@ SEGMENTOS = [
         "asset": "04_atividades.png",
         "narracao": (
             "O diagrama de atividades detalha essa mesma operação de ponta a ponta, "
-            "com as raias de responsabilidade. A cozinha avisa que o item esgotou; o gerente "
-            "acessa o painel e se autentica; o sistema valida as credenciais e, uma vez "
-            "confirmado, marca o produto como inativo. A mudança e o registro de histórico são "
-            "gravados juntos no MySQL e, em seguida, copiados para o MongoDB, usado nas "
-            "análises. Por fim, o cardápio público e as "
-            "maquininhas são atualizados, e o sistema confirma a operação ao gerente. "
+            "com as raias de responsabilidade. O gerente recebe o aviso do chef de que o item "
+            "esgotou e faz login; se as credenciais estiverem erradas, o sistema mostra o erro "
+            "e, na terceira tentativa inválida, nega o acesso. Autenticado, o gerente marca o "
+            "produto como inativo, e o sistema confere se a alteração é na filial dele. A "
+            "disponibilidade, o histórico e a pendência de replicação são gravados numa única "
+            "transação no MySQL. Depois, o cardápio público e as maquininhas são atualizados e "
+            "o gerente recebe a confirmação; em paralelo, o serviço de replicação copia o "
+            "evento para o MongoDB, usado nas análises. "
             "É a visão dinâmica que complementa os fluxogramas anteriores."
         ),
     },
